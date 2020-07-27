@@ -114,14 +114,16 @@ void spec_set_x( t_species* spec, const int range[][2] )
 	float start, end;
 	
 	// Calculate particle positions inside the cell
-	const int npc = spec->ppc[0]*spec->ppc[1];
-	t_part_data const dpcx = 1.0f/spec->ppc[0];
-	t_part_data const dpcy = 1.0f/spec->ppc[1];
+	const int npc = spec->ppc[0] * spec->ppc[1];
+	t_part_data const dpcx = 1.0f / spec->ppc[0];
+	t_part_data const dpcy = 1.0f / spec->ppc[1];
 	
 	poscell = malloc( 2 * npc * sizeof( t_part_data ) );
 	ip = 0;
-	for (j =0; j<spec->ppc[1]; j++) {
-		for (i=0; i<spec->ppc[0]; i++) {
+	for (j = 0; j < spec->ppc[1]; j++)
+	{
+		for (i = 0; i < spec->ppc[0]; i++)
+		{
 			poscell[ip]   = dpcx * ( i + 0.5 );
 			poscell[ip+1] = dpcy * ( j + 0.5 );
 			ip+=2;
@@ -131,17 +133,22 @@ void spec_set_x( t_species* spec, const int range[][2] )
 	ip = spec -> np;
 	
 	// Set position of particles in the specified grid range according to the density profile
-	switch ( spec -> density.type ) {
+	switch ( spec -> density.type )
+	{
 	case STEP: // Step like density profile
 		
 		// Get edge position normalized to cell size;
 		start = spec -> density.start / spec -> dx[0] - spec -> n_move;
 
-		for (j = range[1][0]; j <= range[1][1]; j++) {
-			for (i = range[0][0]; i <= range[0][1]; i++) {
+		for (j = range[1][0]; j <= range[1][1]; j++)
+		{
+			for (i = range[0][0]; i <= range[0][1]; i++)
+			{
 
-				for (k=0; k<npc; k++) {
-					if ( i + poscell[2*k] > start ) {
+				for (k=0; k<npc; k++)
+				{
+					if ( i + poscell[2*k] > start )
+					{
 						spec->part[ip].ix = i;
 						spec->part[ip].iy = j;
 						spec->part[ip].x = poscell[2*k];
@@ -156,14 +163,18 @@ void spec_set_x( t_species* spec, const int range[][2] )
 	case SLAB: // Slab like density profile
 		
 		// Get edge position normalized to cell size;
-		start = spec -> density.start / spec -> dx[0] - spec -> n_move;
-		end   = spec -> density.end / spec -> dx[0] - spec -> n_move;
+		start = spec->density.start / spec->dx[0] - spec->n_move;
+		end   = spec->density.end / spec->dx[0] - spec->n_move;
 
-		for (j = range[1][0]; j <= range[1][1]; j++) {
-			for (i = range[0][0]; i <= range[0][1]; i++) {
+		for (j = range[1][0]; j <= range[1][1]; j++)
+		{
+			for (i = range[0][0]; i <= range[0][1]; i++)
+			{
 
-				for (k=0; k<npc; k++) {
-					if ( i + poscell[2*k] > start &&  i + poscell[2*k] < end ) {
+				for (k=0; k<npc; k++)
+				{
+					if ( i + poscell[2*k] > start && i + poscell[2*k] < end )
+					{
 						spec->part[ip].ix = i;
 						spec->part[ip].iy = j;
 						spec->part[ip].x = poscell[2*k];
@@ -176,10 +187,13 @@ void spec_set_x( t_species* spec, const int range[][2] )
 		break;
 
 	default: // Uniform density
-		for (j = range[1][0]; j <= range[1][1]; j++) {
-			for (i = range[0][0]; i <= range[0][1]; i++) {
+		for (j = range[1][0]; j <= range[1][1]; j++)
+		{
+			for (i = range[0][0]; i <= range[0][1]; i++)
+			{
 
-				for (k=0; k<npc; k++) {
+				for (k=0; k<npc; k++)
+				{
 					spec->part[ip].ix = i;
 					spec->part[ip].iy = j;
 					spec->part[ip].x = poscell[2*k];
@@ -313,7 +327,6 @@ void spec_move_window( t_species *spec )
 		spec_inject_particles( spec, range );
 
 	}
-
 }
 
 void spec_delete( t_species* spec )
@@ -721,7 +734,6 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		x1 = spec -> part[i].x + dx; 
 		y1 = spec -> part[i].y + dy;
 		
-		// ????????????????????????????????????????????????????????????????????
 		di = ltrim(x1);
 		dj = ltrim(y1);
 
@@ -762,14 +774,14 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 
 		// Use absorbing boundaries along x, periodic along y
 		i = 0;
-		while ( i < spec -> np )
+		while ( i < spec->np )
 		{
-			if (( spec -> part[i].ix < 0 ) || ( spec -> part[i].ix >= nx0 ))
+			if (( spec->part[i].ix < 0 ) || ( spec->part[i].ix >= nx0 ))
 			{
-				spec -> part[i] = spec -> part[ -- spec -> np ];
+				spec->part[i] = spec->part[ -- spec->np ];
 				continue; 
 			}
-			spec -> part[i].iy += (( spec -> part[i].iy < 0 ) ? nx1 : 0 ) - (( spec -> part[i].iy >= nx1 ) ? nx1 : 0);
+			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
 			i++;
 		}
 
@@ -781,22 +793,22 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		for (i=0; i<spec->np; i++)
 		{
 
-			int old_ix = spec -> part[i].ix;
-			int old_iy = spec -> part[i].iy;
+			// int old_ix = spec->part[i].ix;
+			// int old_iy = spec->part[i].iy;
 
-			spec -> part[i].ix += (( spec -> part[i].ix < 0 ) ? nx0 : 0 ) - (( spec -> part[i].ix >= nx0 ) ? nx0 : 0);
-			spec -> part[i].iy += (( spec -> part[i].iy < 0 ) ? nx1 : 0 ) - (( spec -> part[i].iy >= nx1 ) ? nx1 : 0);
+			spec->part[i].ix += (( spec->part[i].ix < 0 ) ? nx0 : 0 ) - (( spec->part[i].ix >= nx0 ) ? nx0 : 0);
+			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
 
-			// if (spec -> part[i].ix != old_ix || old_iy != spec -> part[i].iy)
+			// if (spec->part[i].ix != old_ix || old_iy != spec->part[i].iy)
 			// {
 			// 	printf("particle old ix:%d iy:%d\n", old_ix, old_iy); fflush(stdout);
-			// 	printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec -> part[i].ix, spec -> part[i].iy, spec -> part[i].x, spec -> part[i].y); fflush(stdout);
+			// 	printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec->part[i].ix, spec->part[i].iy, spec->part[i].x, spec->part[i].y); fflush(stdout);
 			// }
 		}
 	}
 
 
-	/* else
+/* 	else
 	{
 		i = 0;
 		int last = spec->np;
@@ -804,21 +816,21 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		while(i<last)
 		{
 
-			int old_ix = spec -> part[i].ix;
-			int old_iy = spec -> part[i].iy;
+			int old_ix = spec->part[i].ix;
+			int old_iy = spec->part[i].iy;
 
-			spec -> part[i].ix += (( spec -> part[i].ix < 0 ) ? nx0 : 0 ) - (( spec -> part[i].ix >= nx0 ) ? nx0 : 0);
-			spec -> part[i].iy += (( spec -> part[i].iy < 0 ) ? nx1 : 0 ) - (( spec -> part[i].iy >= nx1 ) ? nx1 : 0);
+			spec->part[i].ix += (( spec->part[i].ix < 0 ) ? nx0 : 0 ) - (( spec->part[i].ix >= nx0 ) ? nx0 : 0);
+			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
 
-			if (spec -> part[i].ix != old_ix || old_iy != spec -> part[i].iy)
+			if (spec->part[i].ix != old_ix || old_iy != spec->part[i].iy)
 			{
-				printf("particle old ix:%d iy:%d\n", old_ix, old_iy); fflush(stdout);
-				printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec -> part[i].ix, spec -> part[i].iy, spec -> part[i].x, spec -> part[i].y); fflush(stdout);
+				// printf("particle old ix:%d iy:%d\n", old_ix, old_iy); fflush(stdout);
+				// printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec->part[i].ix, spec->part[i].iy, spec->part[i].x, spec->part[i].y); fflush(stdout);
 
 				//switch moved particle with the last particle of the array, same as the gaspi version
-				t_part temp = spec -> part[i];
-				spec -> part[i] = spec -> part[last-1];
-				spec -> part[last-1] = temp;
+				t_part temp = spec->part[i];
+				spec->part[i] = spec->part[last-1];
+				spec->part[last-1] = temp;
 
 				last--;
 				continue;

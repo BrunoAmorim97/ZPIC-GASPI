@@ -63,8 +63,6 @@ double spec_perf( void )
  Initialization
  *********************************************************************************************/
 
-// assuming ( range[0][0] >= proc_block_low[0] && proc_block_high[0] <= range[0][1] ) &&
-//			( range[1][0] >= proc_block_low[1] && proc_block_high[1] <= range[1][1] )
 void spec_set_u( t_species* spec, const int start, const int range[NUM_DIMS][NUM_DIMS])
 {
 	const int npc = spec->ppc[0] * spec->ppc[1];
@@ -86,7 +84,7 @@ void spec_set_u( t_species* spec, const int start, const int range[NUM_DIMS][NUM
 		// for each row
 		for (int x = range[0][0]; x <= range[0][1]; x++)
 		{
-			// for particle in this cell
+			// for particles in this cell
 			for (int part = 0; part < npc; part++)
 			{
 				rand_norm(); rand_norm(); rand_norm();
@@ -101,30 +99,34 @@ void spec_set_u( t_species* spec, const int start, const int range[NUM_DIMS][NUM
 		// for each cell on this line before the first proc cell
 		for (x = range[0][0]; x < proc_block_low[0]; x++)
 		{
-			// for particle in this cell
+			// for particles in this cell
 			for (int part = 0; part < npc; part++)
 			{
 				rand_norm(); rand_norm(); rand_norm();
 			}
 		}
 
-		// for the particles that belong to this proc
+		// for cells with x contained in this procs simulation zone
 		for (x = proc_block_low[0]; x <= proc_block_high[0]; x++)
 		{
-			// for particle in this cell
+			// if x is not inside the injection range
+			if( x < range[0][0] || x > range[0][1] )
+				continue;
+
+			// for particles in this cell
 			for (int part = 0; part < npc; part++, i++)
 			{
 				// save the values
-				spec->part[i].ux = spec -> ufl[0] + spec -> uth[0] * rand_norm();
-				spec->part[i].uy = spec -> ufl[1] + spec -> uth[1] * rand_norm(); 
-				spec->part[i].uz = spec -> ufl[2] + spec -> uth[2] * rand_norm();
+				spec->part[i].ux = spec->ufl[0] + spec->uth[0] * rand_norm();
+				spec->part[i].uy = spec->ufl[1] + spec->uth[1] * rand_norm(); 
+				spec->part[i].uz = spec->ufl[2] + spec->uth[2] * rand_norm();
 			}
 		}
 
 		// for each cell on this line, after the last proc cell
 		for (x = proc_block_high[0] + 1; x <= range[0][1]; x++)
 		{
-			// for particle in this cell
+			// for particles in this cell
 			for (int part = 0; part < npc; part++)
 			{
 				rand_norm(); rand_norm(); rand_norm();
@@ -200,18 +202,18 @@ void spec_set_u( t_species* spec, const int start, const int range[NUM_DIMS][NUM
 
 void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 {
-	int i, j, k, ip;
+	int i, j, k;
 	
 	float* poscell;
 	float start, end;
 	
 	// Calculate particle positions inside the cell
-	const int npc = spec->ppc[0]*spec->ppc[1];
-	t_part_data const dpcx = 1.0f/spec->ppc[0];
-	t_part_data const dpcy = 1.0f/spec->ppc[1];
+	const int npc = spec->ppc[0] * spec->ppc[1];
+	t_part_data const dpcx = 1.0f / spec->ppc[0];
+	t_part_data const dpcy = 1.0f / spec->ppc[1];
 	
 	poscell = malloc( 2 * npc * sizeof( t_part_data ) );
-	ip = 0;
+	int ip = 0;
 	for (j = 0; j < spec->ppc[1]; j++)
 	{
 		for (i = 0; i < spec->ppc[0]; i++)
@@ -222,14 +224,15 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 		}
 	}
 
-	ip = spec -> np;
+	ip = spec->np;
 	
 	// Set position of particles in the specified grid range according to the density profile
-	switch ( spec -> density.type ) {
+	switch ( spec->density.type )
+	{
 	case STEP: // Step like density profile
 		
 		// Get edge position normalized to cell size;
-		start = spec -> density.start / spec -> dx[0] - spec -> n_move;
+		start = spec->density.start / spec->dx[0] - spec->n_move;
 
 		for (j = range[1][0]; j <= range[1][1]; j++)
 		{
@@ -253,8 +256,8 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 	case SLAB: // Slab like density profile
 		
 		// Get edge position normalized to cell size;
-		start = spec -> density.start / spec -> dx[0] - spec -> n_move;
-		end   = spec -> density.end / spec -> dx[0] - spec -> n_move;
+		start = spec->density.start / spec->dx[0] - spec->n_move;
+		end   = spec->density.end / spec->dx[0] - spec->n_move;
 
 		for (j = range[1][0]; j <= range[1][1]; j++)
 		{
@@ -276,10 +279,13 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 		break;
 
 	default: // Uniform density
-		for (j = range[1][0]; j <= range[1][1]; j++) {
-			for (i = range[0][0]; i <= range[0][1]; i++) {
+		for (j = range[1][0]; j <= range[1][1]; j++)
+		{
+			for (i = range[0][0]; i <= range[0][1]; i++)
+			{
 
-				for (k=0; k<npc; k++) {
+				for (k=0; k<npc; k++)
+				{
 					spec->part[ip].ix = i;
 					spec->part[ip].iy = j;
 					spec->part[ip].x = poscell[2*k];
@@ -298,10 +304,10 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 // Check if buffer is large enough and if not reallocate
 void check_part_buffer_size(t_species* spec, int np_inj)
 {
-	if ( spec -> np + np_inj > spec -> np_max )
+	if ( spec->np + np_inj > spec->np_max )
 	{
-		spec -> np_max = (( spec -> np_max + np_inj )/1024 + 1) * 1024;
-		spec -> part = realloc( (void*) spec -> part, spec -> np_max * sizeof(t_part) );
+		spec->np_max = (( spec->np_max + np_inj )/1024 + 1) * 1024;
+		spec->part = realloc( (void*) spec->part, spec->np_max * sizeof(t_part) );
 
 		// check if realloc was successful
 		assert(spec->part);
@@ -310,11 +316,11 @@ void check_part_buffer_size(t_species* spec, int np_inj)
 
 void spec_inject_particles( t_species* spec, const int range[NUM_DIMS][NUM_DIMS], const int range_local[NUM_DIMS][NUM_DIMS])
 {
-	int start = spec -> np;
+	int start = spec->np;
 
-	// Get maximum number of particles to inject
-	int np_inj = ( range[0][1] - range[0][0] + 1 ) * ( range[1][1] - range[1][0] + 1 ) * 
-				spec -> ppc[0] * spec -> ppc[1];	
+	// Get maximum number of particles to inject, on this proc
+	int np_inj = ( range_local[0][1] - range_local[0][0] + 1 ) * ( range_local[1][1] - range_local[1][0] + 1 ) * 
+				spec->ppc[0] * spec->ppc[1];
 
 	// Check if buffer is large enough and if not reallocate
 	check_part_buffer_size(spec, np_inj);
@@ -338,7 +344,7 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 	int i, npc;
 	
 	// Species name
-	strncpy( spec -> name, name, MAX_SPNAME_LEN );
+	strncpy( spec->name, name, MAX_SPNAME_LEN );
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
@@ -428,61 +434,68 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 	spec_inject_particles( spec, range, range_local);
 }
 
+// Removes particles that have left the simulation space
+void remove_outer_particles(t_species *spec)
+{
+	// If proc is on the left edge of the simulation space
+	if (proc_coords[0] == 0)
+	{
+		// Use absorbing boundaries along the left edge
+		int i = 0;
+		while ( i < spec->np )
+		{
+			if (spec->part[i].ix < 0)
+			{
+				spec->part[i] = spec->part[ --spec->np ];
+				continue;
+			}
+			i++;
+		}
+	}
+
+	// If proc is on the right edge of the simulation space
+	if (proc_coords[0] == dims[0] - 1)
+	{
+		const int max_ix = spec->nx_local[0] - 1;
+		
+		// Use absorbing boundaries along the right edge
+		int i = 0;
+		while ( i < spec->np )
+		{
+			if (spec->part[i].ix > max_ix)
+			{
+				spec->part[i] = spec->part[ --spec->np ];
+				continue;
+			}
+			i++;
+		}
+	}
+}
+
+// Also removes particles that are outside the simulation space
 void spec_move_window( t_species *spec )
 {
+	// If the window needs to be moved this iteration
 	if ( (spec->iter * spec->dt ) > (spec->dx[0] * (spec->n_move + 1)) )
-	{	
-
-		// shift all particles left
-		// particles leaving the box will be removed later
-		int i;
-		for( i = 0; i < spec->np; i++ )
+	{
+		// Shift all particles 1 cell to the left
+		for(int i = 0; i < spec->np; i++ )
 		{
 			spec->part[i].ix--;
 		}
 
-		// If proc is on the left edge of the simulation space
-		if (proc_coords[0] == 0)
-		{
-			// Use absorbing boundaries along the left edge if the global simulation space
-			i = 0;
-			while ( i < spec -> np )
-			{
-				if (spec -> part[i].ix < 0)
-				{
-					spec -> part[i] = spec -> part[ -- spec -> np ];
-					continue;
-				}
-				i++;
-			}
-		}
-		// If proc is on the right edge of the simulation space
-		else if (proc_coords[0] == dims[0] - 1)
-		{
-			const int nxl0 = spec->nx_local[0] - 1;
-			
-			// Use absorbing boundaries along the right edge if the global simulation space
-			i = 0;
-			while ( i < spec -> np )
-			{
-				if (spec -> part[i].ix > nxl0 - 1)
-				{
-					spec -> part[i] = spec -> part[ -- spec -> np ];
-					continue;
-				}
-				i++;
-			}
-		}
+		// Remove particles that left the simulation space
+		remove_outer_particles(spec);
 
 		// Increase moving window counter
-		spec -> n_move++;
+		spec->n_move++;
 
-		// if proc is in the right edge of the simulation space
+		// if proc is on the right edge of the simulation space
 		if(proc_coords[0] == dims[0] - 1)
 		{
-			// Inject particles in the right edge of the simulation box
-			const int range[NUM_DIMS][NUM_DIMS] =  {{spec->nx[0]-1,spec->nx[0]-1},
-													{            0,spec->nx[1]-1}};
+			// Inject particles on the right edge of the simulation box
+			const int range[NUM_DIMS][NUM_DIMS] =	{{spec->nx[0]-1,spec->nx[0]-1},
+													{			  0,spec->nx[1]-1}};
 
 			const int range_local[NUM_DIMS][NUM_DIMS] =  {{spec->nx_local[0]-1, spec->nx_local[0]-1},
 												  		  {					 0, spec->nx_local[1]-1}};
@@ -490,95 +503,19 @@ void spec_move_window( t_species *spec )
 			spec_inject_particles(spec, range, range_local);
 		}
 	}
+	else
+	{
+		// Remove particles that left the simulation space
+		remove_outer_particles(spec);
+	}
+	
 }
 
 /*********************************************************************************************
  
- Cuurent deposition
+ Current deposition
  
  *********************************************************************************************/
-
-void dep_current_esk( int ix0, int iy0, int di, int dj,
-							 t_part_data x0, t_part_data y0, t_part_data x1, t_part_data y1, 
-							 t_part_data qvx, t_part_data qvy, t_part_data qvz, 
-							 t_current *current )
-{
-
-	int i, j;
-	t_fld S0x[4], S0y[4], S1x[4], S1y[4], DSx[4], DSy[4];
-	t_fld Wx[16], Wy[16], Wz[16];
-	
-	S0x[0] = 0.0f;
-	S0x[1] = 1.0f - x0;
-	S0x[2] = x0;
-	S0x[3] = 0.0f;
-
-	S0y[0] = 0.0f;
-	S0y[1] = 1.0f - y0;
-	S0y[2] = y0;
-	S0y[3] = 0.0f;
-	
-	for (i=0; i<4; i++) {
-		S1x[i] = 0.0f;
-		S1y[i] = 0.0f;
-	}
-	
-	S1x[ 1 + di ] = 1.0f - x1;
-	S1x[ 2 + di ] = x1;
-
-	S1y[ 1 + dj ] = 1.0f - y1;
-	S1y[ 2 + dj ] = y1;
-
-	for (i=0; i<4; i++) {
-		DSx[i] = S1x[i] - S0x[i];
-		DSy[i] = S1y[i] - S0y[i];
-	}
-	
-	for (j=0; j<4; j++) {
-		for (i=0; i<4; i++) {
-			Wx[i + 4*j] = DSx[i] * ( S0y[j] + DSy[j]/2.0f );
-			Wy[i + 4*j] = DSy[j] * ( S0x[i] + DSx[i]/2.0f );
-			Wz[i + 4*j] = S0x[i] * S0y[j] + DSx[i]*S0y[j]/2.0f +
-						  S0x[i]*DSy[j]/2.0f + DSx[i]*DSy[j]/3.0f;
-		}
-	}
-		
-	// jx
-	const int nrow = current->nrow_local; // Local nrow
-	t_vfld* restrict const J = current -> J;
-	
-	for (j=0; j<4; j++) {
-		t_fld c;
-		
-		c = -qvx * Wx[4*j];
-		J[ ix0 - 1 + (iy0 - 1 + j)*nrow ].x += c;
-		for (i=1; i<4; i++) {
-			c -= qvx * Wx[i+4*j];
-			J[ ix0 + i - 1 + (iy0 -1 + j)*nrow ].x += c;
-		}
-	}
-
-	// jy
-	for (i=0; i<4; i++) {
-		t_fld c;
-
-		c = -qvy * Wy[i];
-		J[ ix0 + i - 1 + (iy0 - 1)*nrow ].y += c;
-		for (j=1; j<4; j++) {
-			c -= qvy * Wy[i+4*j];
-			J[ ix0 + i - 1 + (iy0 -1 + j)*nrow ].y += c;
-		}
-	}
-	
-	// jz
-	for (j=0; j<4; j++) {
-		for (i=0; i<4; i++) {
-			J[ ix0 + i - 1 + (iy0 -1 + j)*nrow ].z += qvz * Wz[ i + 4*j ];
-		}
-	}
-	
-	
-}
 
 void dep_current_zamb(int ix, int iy, int di, int dj, 
 					  float x0, float y0, float dx, float dy,
@@ -726,7 +663,6 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 		wp2[0] = 0.5f*(S0x[0] + S1x[0]);
 		wp2[1] = 0.5f*(S0x[1] + S1x[1]);
 		
-		// CHANGING GLOBAL CURRENT MATRIX
 		J[ vp[k].ix + nrow*vp[k].iy     ].x += wl1 * wp1[0];
 		J[ vp[k].ix + nrow*(vp[k].iy+1) ].x += wl1 * wp1[1];
 
@@ -747,7 +683,6 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
  
  *********************************************************************************************/
 
-// ONLY CHANGES LOCAL VARIABLES
 void interpolate_fld( const t_vfld* restrict const E, const t_vfld* restrict const B, const int nrow, 
 			  const t_part* restrict const part, t_vfld* restrict const Ep, t_vfld* restrict const Bp )
 {
@@ -789,8 +724,7 @@ void interpolate_fld( const t_vfld* restrict const E, const t_vfld* restrict con
 
 	Bp->z = ( B[ih +     jh*nrow].z * (1.0f - w1h) + B[ih+1 +     jh*nrow].z * w1h ) * (1.0f - w2h ) +
 			( B[ih + (jh+1)*nrow].z * (1.0f - w1h) + B[ih+1 + (jh+1)*nrow].z * w1h ) * w2h;
-
-}	
+}
 
 int ltrim( t_part_data x )
 {
@@ -802,8 +736,6 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 {
 	int num_new_part[n_spec][NUM_ADJ];
 	int num_new_part_spec[n_spec]; memset(num_new_part_spec, 0, n_spec * sizeof(int));
-	
-	SUCCESS_OR_DIE( gaspi_wait(Q_PARTICLES, GASPI_BLOCK) );
 
 	for (int spec_i = 0; spec_i < n_spec; spec_i++)
 	{
@@ -835,7 +767,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 			gaspi_notification_t value;
 			SUCCESS_OR_DIE( gaspi_notify_reset(dir, id, &value) );
 
-			// Number of particles of a received species is saved in the ix field of the first particle of that species
+			// Number of particles received is saved in the ix field of the first particle of that species
 			// -1 because of the fake particle
 			const int num_part = particle_segments[dir][spec_starting_index[dir]].ix - 1;
 
@@ -858,28 +790,32 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 			const int num_part = num_new_part[spec_i][dir];
 			const int starting_index = spec_starting_index[dir] + 1;
 
-			// printf("num_part:%d, starting_index:%d\n", num_part, starting_index);
+			// printf("dir: %d, num_part:%d\n", dir, num_part);
 
 			memcpy(&species_array[spec_i].part[copy_index], &particle_segments[dir][starting_index], num_part * sizeof(t_part));
 			copy_index += num_part;
-
-			// for (int part_i = starting_index; part_i < starting_index + num_part; part_i++)
-			// {
-			// 	// printf("Copying particle ix:%d iy:%d, x:%f y:%f segment index:%d to spec index: %d\n", particle_segments[dir][part_i].ix, particle_segments[dir][part_i].iy, particle_segments[dir][part_i].x, particle_segments[dir][part_i].y, part_i, copy_index); fflush(stdout);
-			// 	species_array[spec_i].part[copy_index] = particle_segments[dir][part_i];
-			// 	copy_index++;
-			// }
 		}
 
 		// update the number of particles of this species
 		species_array[spec_i].np += num_new_part_spec[spec_i];
 	}
+
+	// // Print particles
+	// for (int i = 0; i < n_spec; i++)
+	// {
+	// 	printf("part from species %d: %d\n", i, species_array[i].np);
+	// 	for (int j = 0; j < species_array[i].np; j++)
+	// 	{
+	// 		t_part part = species_array[i].part[j];
+	// 		printf("Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
+	// 	}
+	// }
 }
 
 
 // get the direction from which the particle left the proc zone, based on its cell coordinates
 // If particle does no leave this proc, return -1
-inline int get_part_seg_direction(int ix, int iy, int nx_local[NUM_DIMS])
+/*inline*/ int get_part_seg_direction(int ix, int iy, int nx_local[NUM_DIMS])
 {
 	// Top border
 	if( iy < 0 )
@@ -917,7 +853,7 @@ inline int get_part_seg_direction(int ix, int iy, int nx_local[NUM_DIMS])
 }
 
 // Correct particle coords to coords relative to the new proc
-inline t_part correct_coords(t_part* part_pointer, int dir)
+/*inline*/ t_part correct_coords(t_part* part_pointer, int dir)
 {
 	const int corr_x = neighbour_nx[dir][0] - 1;
 	const int corr_y = neighbour_nx[dir][1] - 1;
@@ -955,20 +891,23 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 {	
 	const int spec_id = spec->id;
 
-	// index of the fake particle for each direction for this species
+	// index of the fake particle on each direction for this species
 	int fake_part_index[NUM_ADJ];
 	
 	// Add fake particle to the start of the particles of this species on each segment.
 	// This particle will be used to transmit the number of particles on this write.
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		// these values are set only to make this particle easy to identify on debugging situations
+		// these values are set to make this particle easy to identify on debugging situations
 		t_part fake_part =
 		{
 			//.ix = -42,
 			.iy = -42,
 			.x = 0.42,
-			.y = 0.42
+			.y = 0.42,
+			.ux = 0.42,
+			.uy = 0.42,
+			.uz = 0.42
 		};
 
 		// Save the index of the fake particle
@@ -1001,7 +940,6 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 			// 	printf("old part x:%d, y:%d\n", old_x, old_y);
 			// 	printf("NEW part x:%d, y:%d\n\n", particle_segments[dir][ part_seg_write_index[dir]-1 ].ix, particle_segments[dir][ part_seg_write_index[dir]-1 ].iy);
 			// }
-			
 
 			// Increment part send count for this segment, for this species
 			num_part_to_send[spec_id][dir]++;
@@ -1020,20 +958,14 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 		assert(part_seg_write_index[dir] < part_send_seg_size[dir]);
 	}
 
+	// Make sure it is safe to change the segment data
+	SUCCESS_OR_DIE( gaspi_wait(Q_PARTICLES, GASPI_BLOCK) );
+
 	// printf("Sending particles from species %d\n", spec_id); fflush(stdout);
 
 	// Send particles on each segment
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		// index of the first particle of this species to send, for this segment
-		// int starting_send_index = 0;
-		// for (int spec_i = 0; spec_i < spec_id; spec_i++)
-		// {
-		// 	starting_send_index += num_part_to_send[spec_i][dir];
-		// }
-
-		//printf("Starting index for dir:%d will be %d\n", dir, starting_send_index); fflush(stdout);
-
 		//if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
 		int new_dir = OPPOSITE_DIR(dir);
 
@@ -1041,7 +973,7 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 		gaspi_offset_t remote_offset = (fake_part_index[dir] + part_send_seg_size[dir]) * sizeof(t_part); // in bytes
 		gaspi_size_t size = num_part_to_send[spec_id][dir] * sizeof(t_part); // in bytes
 
-		// Save the number of particles sent on the ix field of the fake particle, for this species, for this dir
+		// Save the number of particles sent (including fake part) to the ix field of the fake particle, for this species, for this dir
 		particle_segments[dir][ fake_part_index[dir] ].ix = num_part_to_send[spec_id][dir];
 
 		SUCCESS_OR_DIE( gaspi_write_notify(
@@ -1059,13 +991,14 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 
 		// if (num_part_to_send[spec_id][dir] == 1)
 		// {
-		// 	continue;	
+		// 	continue;
 		// }
 
-		// printf("Sending %d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir], neighbour_rank[dir], new_dir); fflush(stdout);
+		// printf("Sending %d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], new_dir);
 		// for (int i = 0; i < num_part_to_send[spec_id][dir]-1; i++)
 		// {
-		// 	printf("Sent particle ix:%d iy:%d, x:%f y:%f\n", particle_segments[dir][starting_send_index + i].ix, particle_segments[dir][starting_send_index + i].iy, particle_segments[dir][starting_send_index + i].x, particle_segments[dir][starting_send_index + i].y); fflush(stdout);
+		// 	t_part part = particle_segments[dir][fake_part_index[dir] + i + 1];
+		// 	printf("Sent particle ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
 		// }
 		// printf("\n"); fflush(stdout);
 	}
@@ -1073,22 +1006,18 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 
 void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
 {
-	int i;
-	t_part_data qnx, qny, qvz;
+	// uint64_t t0 = timer_ticks();
 	
-	uint64_t t0;
-	t0 = timer_ticks();
-	
-	const t_part_data tem   = 0.5 * spec->dt/spec -> m_q;
+	const t_part_data tem   = 0.5 * spec->dt / spec->m_q;
 	const t_part_data dt_dx = spec->dt / spec->dx[0];
 	const t_part_data dt_dy = spec->dt / spec->dx[1];
 
 	// Auxiliary values for current deposition
-	qnx = spec -> q *  spec->dx[0] / spec->dt;
-	qny = spec -> q *  spec->dx[1] / spec->dt;
+	t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
+	t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	// Advance particles
-	for (i = 0; i < spec->np; i++)
+	for (int i = 0; i < spec->np; i++)
 	{
 		t_vfld Ep, Bp;
 		t_part_data utx, uty, utz;
@@ -1101,12 +1030,12 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 		float dx, dy;
 
 		// Load particle momenta
-		ux = spec -> part[i].ux;
-		uy = spec -> part[i].uy;
-		uz = spec -> part[i].uz;
+		ux = spec->part[i].ux;
+		uy = spec->part[i].uy;
+		uz = spec->part[i].uz;
 
 		// interpolate fields ONLY CHANGES LOCAL VARIABLES
-		interpolate_fld( emf -> E, emf -> B, emf -> nrow_local, &spec -> part[i], &Ep, &Bp );
+		interpolate_fld( emf->E, emf->B, emf->nrow_local, &spec->part[i], &Ep, &Bp );
 		
 		// advance u using Boris scheme
 		Ep.x *= tem;
@@ -1146,9 +1075,9 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 		uz = utz + Ep.z;
 		
 		// Store new momenta
-		spec -> part[i].ux = ux;
-		spec -> part[i].uy = uy;
-		spec -> part[i].uz = uz;
+		spec->part[i].ux = ux;
+		spec->part[i].uy = uy;
+		spec->part[i].uz = uz;
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
@@ -1156,8 +1085,8 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 		dx = dt_dx * rg * ux;
 		dy = dt_dy * rg * uy;
 		
-		x1 = spec -> part[i].x + dx; 
-		y1 = spec -> part[i].y + dy;
+		x1 = spec->part[i].x + dx; 
+		y1 = spec->part[i].y + dy;
 		
 		di = ltrim(x1);
 		dj = ltrim(y1);
@@ -1165,39 +1094,32 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 		x1 -= di;
 		y1 -= dj;
 		
-		qvz = spec->q * uz * rg;
-		
-		// deposit current using Eskirepov method
-		// dep_current_esk( spec -> part[i].ix, spec -> part[i].iy, di, dj, 
-		// 				 spec -> part[i].x, spec -> part[i].y, x1, y1, 
-		// 				 qnx, qny, qvz, 
-		// 				 current );
+		t_part_data qvz = spec->q * uz * rg;
 
-		// CHANGES GLOBAL CURRENT MATRIX (ADDITION)
-		dep_current_zamb(spec -> part[i].ix, spec -> part[i].iy, di, dj, 
-						 spec -> part[i].x , spec -> part[i].y , dx, dy, 
+		dep_current_zamb(spec->part[i].ix, spec->part[i].iy, di, dj, 
+						 spec->part[i].x , spec->part[i].y , dx, dy, 
 						 qnx, qny, qvz, current );
 
 		// Store results
-		spec -> part[i].x = x1;
-		spec -> part[i].y = y1;
-		spec -> part[i].ix += di;
-		spec -> part[i].iy += dj;
+		spec->part[i].x = x1;
+		spec->part[i].y = y1;
+		spec->part[i].ix += di;
+		spec->part[i].iy += dj;
 	}
 
 	// Advance internal iteration number
-	spec -> iter += 1;
-	_spec_npush += spec -> np;
+	spec->iter += 1;
+	_spec_npush += spec->np;
 
 	// Move simulation window if needed
-	if ( spec -> moving_window )
+	if ( spec->moving_window )
 	{
 		spec_move_window( spec );
 	}
 
 	send_particles(spec, part_seg_write_index, num_part_to_send);
 	
-	_spec_time += timer_interval_seconds( t0, timer_ticks() );
+	//_spec_time += timer_interval_seconds( t0, timer_ticks() );
 }
 
 /*********************************************************************************************

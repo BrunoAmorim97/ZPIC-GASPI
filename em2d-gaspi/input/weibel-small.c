@@ -45,21 +45,23 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW );
 }
 
 void sim_report( t_simulation* sim )
 {
-
-	// Bx, By
-	emf_report( &sim->emf, BFLD, 0 );
-	emf_report( &sim->emf, BFLD, 1 );
-
-	// Jz
+	// Jx, Jy, Jz
+	current_report( &sim->current, 0 );
+	current_report( &sim->current, 1 );
 	current_report( &sim->current, 2 );
 
-	// electron and positron density
-	// spec_report( &sim->species[0], CHARGE, NULL, NULL );
-	// spec_report( &sim->species[1], CHARGE, NULL, NULL );
+	// Bx, By, Bz
+	emf_report( &sim->emf, BFLD, 0 );
+	emf_report( &sim->emf, BFLD, 1 );
+	emf_report( &sim->emf, BFLD, 2 );
 
+	// Ex, Ey, Ez
+	emf_report( &sim->emf, EFLD, 0 );
+	emf_report( &sim->emf, EFLD, 1 );
+	emf_report( &sim->emf, EFLD, 2 );
 }

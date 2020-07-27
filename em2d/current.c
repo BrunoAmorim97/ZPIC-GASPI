@@ -213,7 +213,7 @@ void current_update( t_current *current )
 	// Smoothing
 	current_smooth( current );
 
-	// printf("AFTER SMOOTHING\n"); fflush(stdout);
+	// printf("CURR AFTER SMOOTHING\n"); fflush(stdout);
 	// print_current(current);
 
 	current -> iter++;
@@ -298,6 +298,7 @@ void current_report( const t_current *current, const char jc )
     };
 
 	zdf_save_grid( buf, &info, &iter, "/home/bruno/zpic-out/serial/CURRENT" );
+		// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/serial/CURRENT" ); 
 	
 	// free local data
 	free( buf );

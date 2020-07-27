@@ -51,14 +51,12 @@ enum seg_id {
 				EMF_UP_RIGHT = DIR_TO_EMF_SEG_ID(UP_RIGHT),
 
 				REPORTING, CURRENT_REPORT, EMF_B_REPORT, EMF_E_REPORT,
-
-				CURRENT
 			};
 
 
-enum queue_id {Q_PARTICLES, Q_CURRENT, Q_EMF, Q_REPORTING};
+enum queue_id {Q_PARTICLES, Q_CURRENT, Q_CURRENT_KERNEL, Q_EMF, Q_REPORTING};
 
-enum notification_id {NOTIF_ID_CURRENT, NOTIF_ID_CURRENT_KERNEL, NOTIF_ID_EMF, NOTIF_ID_EMF_B, NOTIF_ID_EMF_E, NOTIF_ID_REPORTING};
+enum notification_id {NOTIF_ID_CURRENT, NOTIF_ID_CURRENT_KERNEL_EVEN, NOTIF_ID_CURRENT_KERNEL_ODD, NOTIF_ID_EMF, NOTIF_ID_EMF_B, NOTIF_ID_EMF_E, NOTIF_ID_REPORTING};
 
 int* get_factors(int num, int* num_factors);
 void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS]);
@@ -68,4 +66,4 @@ void cart_coords(int rank, int coords[NUM_DIMS]);
 void assign_proc_blocks(int const nx[NUM_DIMS]);
 void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[NUM_DIMS]);
 int periodic_coord(int coord, int coord_max);
-int can_send_gc(const int moving_window, const int dir);
+int use_pediodic_boundaries(const int moving_window, const int dir);

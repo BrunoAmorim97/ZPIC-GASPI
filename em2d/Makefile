@@ -1,6 +1,6 @@
 # GCC options
 CC = gcc
-CFLAGS = -O3 -std=c99 -pedantic
+CFLAGS = -std=c99 -pedantic -Wall -Wextra -Wno-stringop-truncation -O3
 
 # Intel icc compiler
 #CC = icc
@@ -17,16 +17,10 @@ SOURCE = current.c emf.c particles.c random.c timer.c main.c simulation.c zdf.c
 
 TARGET = zpic
 
-OBJ = $(SOURCE:.c=.o)
+all : clean $(TARGET)
 
-all : clean $(SOURCE) $(TARGET)
-
-$(TARGET) : $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o $@
-
-.c.o:
-	$(CC) -c $(CFLAGS) $< $(LDFLAGS) -o $@
+$(TARGET) :
+	$(CC) $(CFLAGS) $(SOURCE) $(LDFLAGS) -o $@
 
 clean:
-	@touch $(TARGET) $(OBJ)
-	rm -f $(TARGET) $(OBJ)
+	rm -f $(TARGET)

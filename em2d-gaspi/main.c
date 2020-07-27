@@ -33,10 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-#include "input/weibel-test-large.c"
+// #include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
+// #include "input/weibel.c"
+// #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
+#include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -82,7 +85,7 @@ int curr_send_size[NUM_ADJ][NUM_DIMS];
 int curr_cell_to_send_starting_coord[NUM_ADJ][NUM_DIMS];
 
 // Current kernel transmission sizes
-int curr_kernel_sizes[NUM_ADJ][NUM_DIMS];
+int curr_kernel_size[NUM_ADJ][NUM_DIMS];
 
 // Top left coord of the curr kernel cells to send
 int curr_kernel_send_coord[NUM_ADJ][NUM_DIMS];
@@ -146,7 +149,7 @@ int main(int argc, char * argv[])
 
 	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
 
-	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
+	SUCCESS_OR_DIE( gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK) );
 	t0 = timer_ticks();
 
 	if (proc_rank == ROOT)
@@ -159,7 +162,7 @@ int main(int argc, char * argv[])
 	{
 		if (proc_rank == ROOT)
 		{
-			printf("n = %i, t = %f\n\n", n, t); fflush(stdout);
+			printf("n = %i, t = %f\n", n, t); fflush(stdout);
 		}
 		
 		if ( report ( n , sim.ndump ) ) 

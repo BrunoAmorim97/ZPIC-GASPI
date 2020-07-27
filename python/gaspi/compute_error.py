@@ -13,7 +13,7 @@ gaspi_folder_name = "gaspi/"
 emf_folder = "EMF/"
 current_folder = "CURRENT/"
 
-iteration = sys.argv[1].zfill(6)
+iteration = str( eval(sys.argv[1]) ).zfill(6)
 
 current_files = ["J1-" + iteration + ".zdf", "J2-" + iteration + ".zdf", "J3-" + iteration + ".zdf"]
 emf_b_files = ["B1-" + iteration + ".zdf", "B2-" + iteration + ".zdf", "B3-" + iteration + ".zdf"]
@@ -43,7 +43,7 @@ for file_name in emf_b_files + emf_e_files:
 
 for i in range(NUM_FILES):
 	if (data[i].shape != data_gaspi[i].shape):
-		print("ERROR: Data files have diferent shapes, aborting")
+		print(f"ERROR: Data files have diferent shapes (serial:{data[i].shape}, gaspi:{data_gaspi[i].shape}), aborting")
 		exit()
 
 # print("Serial\n")
@@ -84,7 +84,7 @@ for data_i in range(NUM_FILES):
 
 
 
-print(f"In {num_cells} cells [{data[0].shape[0]},{data[0].shape[1]}] we got:")
+print(f"With {num_cells} cells [{data[0].shape[0]},{data[0].shape[1]}] got:")
 for data_i in range(NUM_FILES):
 	if data_i != 0 and data_i % 3 == 0:
 		print()

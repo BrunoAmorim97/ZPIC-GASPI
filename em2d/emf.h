@@ -50,18 +50,18 @@ typedef struct {
 
 	enum emf_laser_type type;		// Laser pulse type
 	
-	float start;	// Front edge of the laser pulse, in simulation units
-	float fwhm;		// FWHM of the laser pulse duration, in simulation units
-	float rise, flat, fall; // Rise, flat and fall time of the laser pulse, in simulation units 
+	float start;					// Front edge of the laser pulse, in simulation units
+	float fwhm;						// FWHM of the laser pulse duration, in simulation units
+	float rise, flat, fall; 		// Rise, flat and fall time of the laser pulse, in simulation units 
 	
-	float a0;		// Normalized peak vector potential of the pulse
-	float omega0;	// Laser frequency, normalized to the plasma frequency
+	float a0;						// Normalized peak vector potential of the pulse
+	float omega0;					// Laser frequency, normalized to the plasma frequency
 	
 	float polarization; 
 	
-	float W0;		// Gaussian beam waist, in simulation units
-	float focus;	// Focal plane position, in simulation units
-	float axis;     // Position of optical axis, in simulation units
+	float W0;						// Gaussian beam waist, in simulation units
+	float focus;					// Focal plane position, in simulation units
+	float axis;						// Position of optical axis, in simulation units
 	
 } t_emf_laser;
 

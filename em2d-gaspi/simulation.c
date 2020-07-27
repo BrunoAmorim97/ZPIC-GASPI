@@ -122,26 +122,15 @@ void sim_iter( t_simulation* sim )
 	{
 		spec_advance(&sim -> species[i], &sim -> emf, &sim -> current, part_seg_write_index, num_part_to_send);
 	}
-	
-
-	// for (int i = 0; i < sim -> n_species; i++)
-	// {
-	// 	printf("part from species %d: %d\n", i, sim->species[i].np);
-	// 	for (int j = 0; j < sim->species[i].np; j++)
-	// 	{
-	// 		t_part part = sim->species[i].part[j];
-	// 		printf("Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
-	// 	}
-	// }
 
 	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
 
 	send_current(&sim->current);
 
+	wait_save_update_current(&sim->current);
+
 	wait_save_particles(sim->species, sim->n_species);
 
-	wait_save_update_current(&sim->current);
-	
 	// Advance EM fields
 	emf_advance(&sim->emf, &sim->current);
 }
@@ -209,12 +198,12 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 	}
 }
 
-void sim_add_laser( t_simulation* sim,  t_emf_laser* laser )
+void sim_add_laser( t_simulation* sim, t_emf_laser* laser )
 {
 	emf_add_laser( &sim->emf, laser );
 }
 
-void sim_set_smooth( t_simulation* sim,  t_smooth* smooth )
+void sim_set_smooth( t_simulation* sim, t_smooth* smooth )
 {   
 	if ( (smooth -> xtype != NONE) && (smooth -> xlevel <= 0) )
 	{
@@ -367,10 +356,9 @@ void gaspi_report(t_simulation* sim)
 	const t_vfld* const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
 	const gaspi_segment_id_t remote_segments[NUM_REPORTING_DATA_TYPES] = {CURRENT_REPORT, EMF_B_REPORT, EMF_E_REPORT};
 
-	SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
-
 	for (int i = 0; i < NUM_REPORTING_DATA_TYPES; i++)
 	{
+
 		const t_vfld* const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
 
@@ -384,6 +372,8 @@ void gaspi_report(t_simulation* sim)
 		
 		gaspi_offset_t local_offset = i * size_x * size_y * sizeof(t_vfld); // in bytes
 		gaspi_offset_t remote_offset = (global_buff_offset + proc_block_low[0] + (proc_block_low[1] * global_nrow)) * sizeof(t_vfld); // in bytes
+
+		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
 
 		// Send data on segment
 		for (int y = 0; y < size_y; y++)

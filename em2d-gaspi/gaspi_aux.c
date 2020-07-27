@@ -10,6 +10,8 @@ extern int dims[NUM_DIMS];
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern unsigned int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
+extern gaspi_rank_t proc_rank;
+
 int cart_rank(int coords[NUM_DIMS])
 {
 	return coords[0] + (coords[1] * dims[0]);
@@ -82,8 +84,8 @@ void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
 	// assign factors from highest to lowest
 	for (int i = num_factors - 1; i >= 0; i--)
 	{
-		// assign to dimention with the lowest number of divisions, prioritize divisions on the y axis
-		if (dims[0] <= dims[1])
+		// assign to dimention with the lowest number of divisions
+		if (dims[0] < dims[1])
 			dims[0] *= factors[i];
 		
 		else
@@ -117,7 +119,7 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 }
 
 // periodic boundary enforcer. If a coord leaves its allowed range, enforce a periodic boundary
-inline int periodic_coord(int coord, int coord_max)
+/*inline*/ int periodic_coord(int coord, int coord_max)
 {
 	if(coord < 0)
 		return coord + coord_max;
@@ -128,12 +130,12 @@ inline int periodic_coord(int coord, int coord_max)
 	return coord;
 }
 
-// populate the neighbour_rank array with correct rank in that direction and save their simulation space size
+// populate the neighbour_rank array wit the rank on that direction and save their simulation space size
 void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[NUM_DIMS])
 {
-	int adj_i = 0;
+	int dir = 0;
 
-	for (int y = -1; y <= 1; y++)
+	for (int y = 1; y >= -1; y--)
 	{
 		for (int x = -1; x <= 1; x++)
 		{
@@ -147,58 +149,33 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 
 			for (int dim = 0; dim < NUM_DIMS; dim++)
 			{
-				neighbour_nx[adj_i][dim] = BLOCK_SIZE(coords[dim], dims[dim], nx[dim]);
+				neighbour_nx[dir][dim] = BLOCK_SIZE(coords[dim], dims[dim], nx[dim]);
 			}
 
-			neighbour_rank[adj_i++] = cart_rank(coords);
-			//printf("rank x:%d y:%d = %d\n", nx, ny, cart_rank(coords));
+			neighbour_rank[dir++] = cart_rank(coords);
+			// printf("rank at x:%d y:%d dir:%d = %d\n", new_x, new_y, dir-1, neighbour_rank[dir-1]);
 		}
 	}
 
-/* 	for (int dir = 0; dir < NUM_ADJ; dir++)
+	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		printf("In dir %d I have proc %d, he has x:%d y:%d\n", dir, neighbour_rank[dir], neighbour_nx[dir][0], neighbour_nx[dir][1]);
-		fflush(stdout);
-	} */
+		printf("Me proc: %d, on dir %d have proc %d, he has x:%d y:%d\n", proc_rank, dir, neighbour_rank[dir], neighbour_nx[dir][0], neighbour_nx[dir][1]);
+	} fflush(stdout);
 }
-
-
-/* See macro
-int get_opposite_dir(int dir)
-{
-	switch (dir)
-	{
-		case DOWN_LEFT:		return UP_RIGHT;
-		case DOWN: 			return UP;
-		case DOWN_RIGHT:	return UP_LEFT;
-		case LEFT:			return RIGHT;
-		case RIGHT:			return LEFT;
-		case UP_LEFT:		return DOWN_RIGHT;
-		case UP:			return DOWN;
-		case UP_RIGHT:		return DOWN_LEFT;
-
-		default:
-			printf("ERROR: get_opposite_dir reached default."); fflush(stdout);
-			return -1;
-	}
-
-	return abs( dir - (NUM_ADJ-1) );
-}
-*/
 
 // returns 1 if proc can send/receive gc data to/from neighbour at direction dir, 0 otherwise
-inline int can_send_gc(const int moving_window, const int dir)
+/*inline*/ int use_pediodic_boundaries(const int moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )
 		return 1;
 	
 	// if proc is on the left edge of the simulation space, dont send gc data to the left
-	if ( (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) && proc_coords[0] == 0 )
+	if ( (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) && (proc_coords[0] == 0) )
 		return 0;
 	
 	// if proc is on the right edge of the simulation space, dont send gc data to the right
-	if ( (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) && proc_coords[0] == dims[0] - 1 )
+	if ( (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) && (proc_coords[0] == dims[0] - 1) )
 		return 0;
 	
 	return 1;

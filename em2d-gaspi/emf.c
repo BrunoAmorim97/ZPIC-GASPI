@@ -164,7 +164,7 @@ void print_emf_b(t_emf* emf)
 	}
 }
 
-inline int max_int(int a, int b)
+/*inline*/ int max_int(int a, int b)
 {
 	return (a > b) ? a : b;
 }
@@ -174,8 +174,8 @@ double emf_time( void )
 	return _emf_time;
 }
 
-// size_x moving window iterations difference to normal iterations, on the perspective of the sender
-inline int get_moving_iter_size_x_diff(const int dir)
+// size_x moving window iterations difference to normal iterations, perspective of the sender
+/*inline*/ int get_moving_iter_size_x_diff(const int dir)
 {
 	/* 
 	int moving_size_diffs[NUM_ADJ][NUM_DIMS] = // {size_diff_x, size_diff_y}
@@ -192,8 +192,8 @@ inline int get_moving_iter_size_x_diff(const int dir)
 	return 0;
 }
 
-// starting_x moving window iterations difference to normal iterations, on the perspective of the receiver
-inline int get_moving_iter_starting_write_x_diff(const int dir)
+// starting_x moving window iterations difference to normal iterations, perspective of the receiver
+/*inline*/ int get_moving_iter_starting_write_x_diff(const int dir)
 {
 	/*
 	int moving_starting_write_coord_diffs[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
@@ -236,7 +236,7 @@ if (moving_window)
 }*/
 
 // x_size normal iterations difference to normal iterations on moving window simulations
-inline int get_moving_window_edge_proc_size_x_diff(const int dir)
+/*inline*/ int get_moving_window_edge_proc_size_x_diff(const int dir)
 {	
 	if ( dir == DOWN || dir == UP )
 	{
@@ -256,7 +256,7 @@ inline int get_moving_window_edge_proc_size_x_diff(const int dir)
 }
 
 // starting send/write coord normal iterations difference on moving window simulations
-inline int get_moving_window_edge_proc_coord_x_diff(const int dir)
+/*inline*/ int get_moving_window_edge_proc_coord_x_diff(const int dir)
 {
 	if ( dir == DOWN || dir == UP )
 	{
@@ -282,7 +282,7 @@ void create_emf_segments(const int nx_local[NUM_DIMS])
 	const int nxl0 = nx_local[0];
 	const int nxl1 = nx_local[1];
 
-	// size of each of the emf segments, on the perspective of the sender
+	// size of the emf transmissions, in number of cells, perspective of the sender
 	int sizes[NUM_ADJ][NUM_DIMS] = // {size_x, size_y}
 	{
 		//LEFT					CENTER				RIGHT
@@ -291,7 +291,7 @@ void create_emf_segments(const int nx_local[NUM_DIMS])
 		{gc[0][1], gc[1][1]},	{nxl0, gc[1][1]},	{gc[0][0], gc[1][1]}	// UP !!!
 	};
 
-	// top left coord of the cells this proc will send to each direction, on the perspective of the sender
+	// top left coord of the cells this proc will send to each direction, perspective of the sender
 	int starting_send_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
 	{
 		//LEFT			CENTER			RIGHT
@@ -300,7 +300,7 @@ void create_emf_segments(const int nx_local[NUM_DIMS])
 		{0, 0},			{0, 0},			{nxl0 - 1, 0}			// UP !!!
 	};
 
-	// top left coord of the cells this proc will override with received cells from each direction, on the perspective of the receiver
+	// top left coord of the cells this proc will override with received cells from each direction, perspective of the receiver
 	int starting_write_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
 	{
 		//LEFT						CENTER				RIGHT
@@ -350,8 +350,8 @@ void emf_new(t_emf *emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 	emf->B_buf = calloc(num_cells, sizeof(t_vfld));
 	assert( emf->E_buf && emf->B_buf );
 
-	emf -> nrow = gc[0][0] + nx[0] + gc[0][1];
-	emf -> nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
+	emf->nrow = gc[0][0] + nx[0] + gc[0][1];
+	emf->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
 
 	// Make E and B point to local cell [0][0]
 	emf->E = emf->E_buf + gc[0][0] + (gc[1][0] * emf->nrow_local);
@@ -369,25 +369,25 @@ void emf_new(t_emf *emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 	}
 
 	// store time step values
-	emf -> dt = dt;
+	emf->dt = dt;
 
 	// Set cell sizes and box limits
 	for(int i = 0; i < NUM_DIMS; i++)
 	{
-		emf -> box[i] = box[i];
-		emf -> dx[i] = box[i] / nx[i];
-		emf -> box_local[i] = emf->dx[i] * emf->nx_local[i];
+		emf->box[i] = box[i];
+		emf->dx[i] = box[i] / nx[i];
+		emf->box_local[i] = emf->dx[i] * emf->nx_local[i];
 	}
 
 	// Set time step
-	emf -> dt = dt;
+	emf->dt = dt;
 
 	// Reset iteration number
-	emf -> iter = 0;
+	emf->iter = 0;
 
 	// Set moving window information
-	emf -> moving_window = moving_window;
-	emf -> n_move = 0;
+	emf->moving_window = moving_window;
+	emf->n_move = 0;
 }
 /*********************************************************************************************
  
@@ -575,11 +575,11 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 					r = j * dy - r_center;
 					r_2 = r + dy/2;
 
-					// E_global[i + j*nrow].x = 0.0
+					// E_global[i + j*nrow].x += 0.0
 					E_global[i + j*nrow].y = +lenv * gauss_phase( laser, z  , r_2 ) * cos_pol;
 					E_global[i + j*nrow].z = +lenv * gauss_phase( laser, z  , r   ) * sin_pol;
 					
-					// B_global[i + j*nrow].x = 0.0
+					// B_global[i + j*nrow].x += 0.0
 					B_global[i + j*nrow].y = -lenv_2 * gauss_phase( laser, z_2, r   ) * sin_pol;
 					B_global[i + j*nrow].z = +lenv_2 * gauss_phase( laser, z_2, r_2 ) * cos_pol;
 				}
@@ -587,7 +587,6 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 
 			div_corr_x(emf, E_global, B_global);
 
-			// Copy values to segments
 			const int nrow_local = emf->nrow_local; // Local nrow
 
 			// j represents global y coord
@@ -596,8 +595,8 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 				// Get local y coord corresponding to global coord j
 				int y = j - proc_block_low[1];
 
-				memcpy(&B[y * nrow_local], &B_global[j * nrow], proc_block_size[0] * sizeof(t_vfld));
-				memcpy(&E[y * nrow_local], &E_global[j * nrow], proc_block_size[0] * sizeof(t_vfld));
+				memcpy(&B[y * nrow_local], &B_global[proc_block_low[0] + j * nrow], proc_block_size[0] * sizeof(t_vfld));
+				memcpy(&E[y * nrow_local], &E_global[proc_block_low[0] + j * nrow], proc_block_size[0] * sizeof(t_vfld));
 			}
 			
 			free(B_global_buff);
@@ -613,6 +612,9 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 	// Set guard cell values
 	emf_update_gc_gaspi(emf, 0);
 	
+	// printf("AFTER EMF LAZER GC UPDATE\n");
+	// print_emf_e(emf);
+	// print_emf_b(emf);
 }
 
 /*********************************************************************************************
@@ -722,7 +724,7 @@ void emf_report( const t_emf *emf, const char field, const char fc )
 	};
 
 	zdf_save_grid( buf, &info, &iter, "/home/bruno/zpic-out/gaspi/EMF" );
-	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/gaspi/EMF-gaspi" ); 
+	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/gaspi/EMF" ); 
 
 	// free local data
 	free( buf );
@@ -738,23 +740,19 @@ void emf_report( const t_emf *emf, const char field, const char fc )
 
 void yee_b( t_emf *emf, const float dt )
 {
-	// these must not be unsigned because we access negative cell indexes
-	int i,j;
-	t_fld dt_dx, dt_dy;
-	
 	t_vfld* const restrict B = emf -> B;
 	const t_vfld* const restrict E = emf -> E;
 
-	dt_dx = dt / emf->dx[0];
-	dt_dy = dt / emf->dx[1];
+	const t_fld dt_dx = dt / emf->dx[0];
+	const t_fld dt_dy = dt / emf->dx[1];
 	
 	// Canonical implementation
 	const int nrow = emf->nrow_local; // Local nrow
 
 	// j = -gc[1][0]; j < nx_local + gc[1][1] - 1
-	for (j = -1; j <= emf->nx_local[1]; j++)
+	for (int j = -1; j <= emf->nx_local[1]; j++)
 	{
-		for (i = -1; i <= emf->nx_local[0]; i++)
+		for (int i = -1; i <= emf->nx_local[0]; i++)
 		{
 			B[ i + j*nrow ].x += ( - dt_dy * ( E[i+(j+1)*nrow].z - E[i+j*nrow].z) );
 			B[ i + j*nrow ].y += (   dt_dx * ( E[(i+1)+j*nrow].z - E[i+j*nrow].z) );
@@ -767,11 +765,8 @@ void yee_b( t_emf *emf, const float dt )
 
 void yee_e( t_emf *emf, const t_current *current, const float dt )
 {
-	int i,j;
-	t_fld dt_dx, dt_dy;
-	
-	dt_dx = dt / emf->dx[0];
-	dt_dy = dt / emf->dx[1];
+	t_fld dt_dx = dt / emf->dx[0];
+	t_fld dt_dy = dt / emf->dx[1];
 
 	t_vfld* const restrict E = emf -> E;
 	const t_vfld* const restrict B = emf -> B;
@@ -781,9 +776,9 @@ void yee_e( t_emf *emf, const t_current *current, const float dt )
 	const int nrow_e = emf->nrow_local;
 	const int nrow_j = current->nrow_local;
 	
-	for (j = 0; j <= emf->nx_local[1] + 1; j++)
+	for (int j = 0; j <= emf->nx_local[1] + 1; j++)
 	{
-		for (i = 0; i <= emf->nx_local[0] + 1; i++)
+		for (int i = 0; i <= emf->nx_local[0] + 1; i++)
 		{
 			E[i+j*nrow_e].x += ( + dt_dy * ( B[i+j*nrow_e].z - B[i+(j-1)*nrow_e].z) ) - dt * J[i+j*nrow_j].x;  
 			
@@ -865,7 +860,7 @@ void emf_update_gc( t_emf *emf )
 	}
 }
 
-void send_emf_gc(t_emf* emf, const int moving_window_iter)
+void send_emf_gc(t_emf* emf, const char moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
 	const int moving_window = emf->moving_window;
@@ -873,10 +868,13 @@ void send_emf_gc(t_emf* emf, const int moving_window_iter)
 	const t_vfld* const restrict B = emf->B;
 	const t_vfld* const restrict E = emf->E;
 
+	// Make sure there are no uncompleted outgoing write requests
+	SUCCESS_OR_DIE( gaspi_wait(Q_EMF, GASPI_BLOCK) );
+
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !can_send_gc(moving_window, dir) )
+		if ( !use_pediodic_boundaries(moving_window, dir) )
 			continue;
 
 		int starting_x = emf_cell_to_send_starting_coord[dir][0];
@@ -953,7 +951,7 @@ void send_emf_gc(t_emf* emf, const int moving_window_iter)
 }
 
 // Wait and save received EMF from each dir
-void wait_save_emf_gc(t_emf* emf, const int moving_window_iter)
+void wait_save_emf_gc(t_emf* emf, const char moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
 	const int moving_window = emf->moving_window;
@@ -961,13 +959,10 @@ void wait_save_emf_gc(t_emf* emf, const int moving_window_iter)
 	t_vfld* const restrict B = emf->B;
 	t_vfld* const restrict E = emf->E;
 
-	// Make sure there are no uncompleted outgoing write requests
-	SUCCESS_OR_DIE( gaspi_wait(Q_EMF, GASPI_BLOCK) );
-
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !can_send_gc(moving_window, dir) )
+		if ( !use_pediodic_boundaries(moving_window, dir) )
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);
@@ -1035,7 +1030,7 @@ void wait_save_emf_gc(t_emf* emf, const int moving_window_iter)
 
 void emf_move_window( t_emf *emf )
 {
-	printf("MOVING WINDOW NOW!\n"); fflush(stdout);
+	// printf("MOVING WINDOW NOW!\n"); fflush(stdout);
 
 	int i, j;
 	const int nrow = emf->nrow_local; // Local nrow
@@ -1043,14 +1038,10 @@ void emf_move_window( t_emf *emf )
 	const int nxl0 = emf->nx_local[0];
 	const int nxl1 = emf->nx_local[1];
 
-	t_vfld* const restrict B = emf -> B;
-	t_vfld* const restrict E = emf -> E;
+	t_vfld* const restrict B = emf->B;
+	t_vfld* const restrict E = emf->E;
 
 	const t_vfld zero_fld = {0.,0.,0.};
-
-	// Make sure it is safe to change the segment data
-	SUCCESS_OR_DIE( gaspi_wait(Q_EMF, GASPI_BLOCK) );
-
 
 	// Shift data left 1 cell
 	for (j = 0; j < nxl1; j++)
@@ -1081,7 +1072,7 @@ void emf_move_window( t_emf *emf )
 	emf -> n_move++;
 }
 
-void emf_update_gc_gaspi(t_emf *emf, const int moving_window_iter)
+void emf_update_gc_gaspi(t_emf *emf, const char moving_window_iter)
 {
 	send_emf_gc(emf, moving_window_iter);
 
@@ -1104,17 +1095,17 @@ void emf_advance( t_emf *emf, const t_current *current )
 
 	yee_b( emf, dt/2.0f );
 	
-	// printf("BEFORE EMF UPDATE\n");
+	// printf("BEFORE EMF GC UPDATE\n");
 	// print_emf_e(emf);
 	// print_emf_b(emf);
 
 	// 1 if window will be moved on this iteration, 0 otherwise
-	const int moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * dt) > (emf->dx[0] * (emf->n_move + 1)) );
 
 	// Update guard cells with new values and, if needed, move window
 	emf_update_gc_gaspi(emf, moving_window_iter);
 
-	// printf("AFTER EMF UPDATE\n");
+	// printf("AFTER EMF GC UPDATE\n");
 	// print_emf_e(emf);
 	// print_emf_b(emf);
 
@@ -1132,9 +1123,9 @@ void emf_get_energy( const t_emf *emf, double energy[] )
 	t_vfld* const restrict B = emf -> B;
 	const int nrow = emf -> nrow;
 
-	for( i = 0; i<6; i++) energy[i] = 0;
+	for(i = 0; i < 6; i++) energy[i] = 0;
 
-	for( j = 0; i < emf -> nx[1]; j ++ ) {
+	for(j = 0; i < emf -> nx[1]; j ++ ) {
 		for( i = 0; i < emf -> nx[0]; i ++ ) {
 			energy[0] += E[i + j*nrow].x * E[i + j*nrow].x;
 			energy[1] += E[i + j*nrow].y * E[i + j*nrow].y;

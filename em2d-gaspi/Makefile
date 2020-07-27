@@ -1,14 +1,13 @@
 # GCC options
 CC = mpicc
-CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation
+CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation -O3
 
 # Intel icc compiler
 #CC = icc
 #CFLAGS = -restrict -Ofast -std=c99 -pedantic
 
 # degub flags
-# CFLAGS += -g
-CFLAGS += -O3
+# CFLAGS += -g -ggdb
 
 GPI2_HOME = /home/bruno/GPI-2-MPI
 INCLUDE_DIR += $(GPI2_HOME)/include
@@ -35,6 +34,5 @@ zpic :
 	$(CC) $(CFLAGS) $(SOURCE) $(LDFLAGS) -o $@ $(addprefix -l, $(LIB))
 
 clean:
-	@touch $(TARGET)
 	rm -f .gpi2.*
 	rm -f $(TARGET)

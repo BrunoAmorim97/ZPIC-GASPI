@@ -9,8 +9,8 @@ void sim_init( t_simulation* sim )
 	float tmax = 35.00;
 
 	// Simulation box
-	int   nx[2]  = { 6, 6 };
-	float box[2] = { 0.6, 0.6 };
+	int   nx[2]  = { 9, 9 };
+	float box[2] = { 0.9, 0.9 };
 
 	// Diagnostic frequency
 	int ndump = 100;

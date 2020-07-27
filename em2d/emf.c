@@ -404,6 +404,9 @@ void emf_add_laser( t_emf* const emf, t_emf_laser* laser )
 	// Set guard cell values
 	emf_update_gc( emf );
 	
+	// printf("AFTER EMF LAZER GC UPDATE\n");
+	// print_emf_e(emf);
+	// print_emf_b(emf);
 }
 
 /*********************************************************************************************
@@ -513,6 +516,7 @@ void emf_report( const t_emf *emf, const char field, const char fc )
 	};
 
 	zdf_save_grid( buf, &info, &iter, "/home/bruno/zpic-out/serial/EMF" );
+	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/serial/EMF" ); 
 
 	// free local data
 	free( buf );
@@ -659,7 +663,7 @@ void emf_move_window( t_emf *emf )
 {
 	if ( ( emf -> iter * emf -> dt ) > emf->dx[0]*( emf -> n_move + 1 ) )
 	{
-		printf("MOVING WINDOW NOW!\n"); fflush(stdout);
+		// printf("MOVING WINDOW NOW!\n"); fflush(stdout);
 
 		int i,j;
 		const int nrow = emf->nrow;
@@ -710,12 +714,12 @@ void emf_advance( t_emf *emf, const t_current *current )
 	// Update guard cells with new values
 	emf_update_gc( emf );
 
-
 	// Advance internal iteration number
-	emf -> iter += 1;
+	emf->iter += 1;
 
 	// Move simulation window if needed
-	if ( emf -> moving_window ) {
+	if ( emf->moving_window )
+	{
 		emf_move_window( emf );
 	}
 

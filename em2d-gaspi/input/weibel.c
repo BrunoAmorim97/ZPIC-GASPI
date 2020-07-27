@@ -15,8 +15,8 @@ Particle advance [Mpart/sec] = 10.022454
 #include <stdlib.h>
 #include "../simulation.h"
 
-void sim_init( t_simulation* sim )
-{
+void sim_init( t_simulation* sim ){
+
 	// Time step
 	float dt = 0.07;
 	float tmax = 35.0;
@@ -32,7 +32,7 @@ void sim_init( t_simulation* sim )
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
 
-	// Use 2x2 particles per cell
+	// Use 4x4 particles per cell
 	int ppc[] = {4,4};
 
 	// Initial fluid and thermal velocities
@@ -45,24 +45,24 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
 
 }
 
-void sim_report( t_simulation* sim ){
+void sim_report( t_simulation* sim )
+{
+	// Jx, Jy, Jz
+	current_report( &sim->current, 0 );
+	current_report( &sim->current, 1 );
+	current_report( &sim->current, 2 );
 
 	// Bx, By, Bz
 	emf_report( &sim->emf, BFLD, 0 );
 	emf_report( &sim->emf, BFLD, 1 );
-	// emf_report( &sim->emf, BFLD, 2 );
+	emf_report( &sim->emf, BFLD, 2 );
 
-	
-	// Jz
-	current_report( &sim->current, 2 );
-
-	// electron and positron density
-	// spec_report( &sim->species[0], CHARGE, NULL, NULL );
-	// spec_report( &sim->species[1], CHARGE, NULL, NULL );
-	
-
+	// Ex, Ey, Ez
+	emf_report( &sim->emf, EFLD, 0 );
+	emf_report( &sim->emf, EFLD, 1 );
+	emf_report( &sim->emf, EFLD, 2 );
 }

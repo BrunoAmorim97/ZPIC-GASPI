@@ -51,11 +51,18 @@ void sim_init( t_simulation* sim ){
 
 void sim_report( t_simulation* sim )
 {
+	// Jx, Jy, Jz
+	current_report( &sim->current, 0 );
+	current_report( &sim->current, 1 );
+	current_report( &sim->current, 2 );
 
-	// Bx, By
+	// Bx, By, Bz
 	emf_report( &sim->emf, BFLD, 0 );
 	emf_report( &sim->emf, BFLD, 1 );
+	emf_report( &sim->emf, BFLD, 2 );
 
-	// Jz
-	current_report( &sim->current, 2 );
+	// Ex, Ey, Ez
+	emf_report( &sim->emf, EFLD, 0 );
+	emf_report( &sim->emf, EFLD, 1 );
+	emf_report( &sim->emf, EFLD, 2 );
 }

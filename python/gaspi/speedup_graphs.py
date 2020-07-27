@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-times = [602.2, 281.0, 124.3, 55.3, 28.1, 14.65, 5.3]
-num_procs = [1, 2, 4, 8, 16, 32, 64]
+times = [9688, 4871, 2461, 1226, 630, 322]
+num_procs = [1, 2, 4, 8, 16, 32]
 
 num_procs_str = list(map(str, num_procs))
 
@@ -17,25 +17,16 @@ for i in range(len(times)):
 	efficiency.append( speedup/num_procs[i] * 100)
 
 
-print(num_procs)
-print(times)
-print(speedups)
-print(efficiency)
+print("Speedups:\n" + str(speedups))
+print("Efficiencies:\n" + str(efficiency))
 
+plt.title("Weibel [512,512]")
 
-plt.title("Weibel [128,128]")
-
-#times
-# plt.subplot(1, 3, 1)
-# plt.plot(num_procs, times, 'o-')
-# plt.ylabel('Execution Times (s)')
-# plt.xlabel('Num Procs')
-# plt.yscale('log')
 
 
 #speedup
 # plt.subplot(1, 3, 2)
-plt.plot(num_procs_str, speedups, "o-")
+plt.plot(num_procs_str, speedups, "o-", label="GASPI")
 
 # zip joins x and y coordinates in pairs
 for x,y in zip(num_procs_str, speedups):
@@ -45,18 +36,17 @@ for x,y in zip(num_procs_str, speedups):
 	plt.annotate(label, # this is the text
 				 (x,y), # this is the point to label
 				 textcoords="offset points", # how to position the text
-				 xytext=(0,10), # distance from text to points (x,y)
+				 xytext=(10,-15), # distance from text to points (x,y)
 				 ha='center') # horizontal alignment can be left, right or center
 
+
+
+plt.plot(num_procs_str, num_procs, "--", label="1:1")
 plt.ylabel('Speedup')
+plt.yscale("log")
+plt.yticks([])
 plt.xlabel('Num Procs')
-
-#efficiency
-# plt.subplot(1, 3, 3)
-# plt.plot(num_procs, efficiency, 'o-')
-# plt.ylabel('Efficiency (%)')
-# plt.xlabel('Num Procs')
-
+plt.legend()
 
 plt.show()
 
