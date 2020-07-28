@@ -163,18 +163,18 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 	// } fflush(stdout);
 }
 
-// returns 1 if proc can send/receive gc data to/from neighbour at direction dir, 0 otherwise
-inline int use_pediodic_boundaries(const int moving_window, const int dir)
+// returns 1 if this proc can send/receive data to/from neighbour at direction dir, 0 otherwise
+inline char use_pediodic_boundaries(const char moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )
 		return 1;
 	
-	// if proc is on the left edge of the simulation space, dont send gc data to the left
+	// if proc is on the left edge of the simulation space, dont send data to the left
 	if ( (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) && (proc_coords[0] == 0) )
 		return 0;
 	
-	// if proc is on the right edge of the simulation space, dont send gc data to the right
+	// if proc is on the right edge of the simulation space, dont send data to the right
 	if ( (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) && (proc_coords[0] == dims[0] - 1) )
 		return 0;
 	

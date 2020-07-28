@@ -755,6 +755,11 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
+
+			// Check if we will receive particles from this dir
+			if ( !use_pediodic_boundaries(species_array->moving_window, dir) )
+				continue;
+
 			gaspi_notification_id_t id;
 			SUCCESS_OR_DIE( gaspi_notify_waitsome(
 			dir,			// The segment id, = to direction
@@ -787,6 +792,10 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 		int copy_index = species_array[spec_i].np;
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
+			// Check if we will receive particles from this dir
+			if ( !use_pediodic_boundaries(species_array->moving_window, dir) )
+				continue;
+
 			const int num_part = num_new_part[spec_i][dir];
 			const int starting_index = spec_starting_index[dir] + 1;
 
@@ -859,46 +868,6 @@ inline int get_part_seg_direction(const t_part* const part_pointer, const int nx
 	return -1;
 }
 
-inline int get_part_seg_direction_old(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
-{
-	const int ix = part_pointer->ix;
-	const int iy = part_pointer->iy;
-
-	// Top border
-	if( iy < 0 )
-	{
-		if ( ix < 0 )
-			return UP_LEFT;
-
-		if ( ix >= nx_local[0] )
-			return UP_RIGHT;
-		
-		return UP;
-	}
-
-	// Bottom border
-	if ( iy >= nx_local[1] )
-	{
-		if ( ix < 0 )
-			return DOWN_LEFT;
-
-		if ( ix >= nx_local[0] )
-			return DOWN_RIGHT;
-		
-		return DOWN;
-	}
-	
-	// Left border
-	if (ix < 0)
-		return LEFT;
-	
-	// Right border
-	if (ix >= nx_local[0])
-		return RIGHT;
-
-	return -1;
-}
-
 // Correct particle coords to coords relative to the new proc
 inline void correct_coords(t_part* const part_pointer, const int dir)
 {
@@ -938,8 +907,12 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 	// This particle will be used to transmit the number of particles on this write.
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
+		// Check if we can send particles to this dir
+		if ( !use_pediodic_boundaries(spec->moving_window, dir) )
+			continue;
+
 		// these values are set to make this particle easy to identify on debugging situations
-		t_part fake_part =
+		static const t_part fake_part =
 		{
 			//.ix = -42,
 			.iy = -42,
@@ -976,6 +949,8 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 
 			// Correct part coords relative to new proc
 			correct_coords(&spec->part[i], dir);
+
+			// Copy particle to segment
 			particle_segments[dir][ part_seg_write_index[dir]++ ] = spec->part[i];
 
 			// if (old_x != particle_segments[dir][ part_seg_write_index[dir]-1 ].ix || old_y != particle_segments[dir][part_seg_write_index[dir]-1].iy)
@@ -1009,7 +984,11 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 	// Send particles on each segment
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		//if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
+		// Check if we can send particles to this dir
+		if ( !use_pediodic_boundaries(spec->moving_window, dir) )
+			continue;
+
+		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
 		int new_dir = OPPOSITE_DIR(dir);
 
 		gaspi_offset_t local_offset = fake_part_index[dir] * sizeof(t_part); // in bytes
@@ -1152,7 +1131,7 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 
 	// Advance internal iteration number
 	spec->iter += 1;
-	_spec_npush += spec->np;
+	// _spec_npush += spec->np;
 
 	// Move simulation window if needed
 	if ( spec->moving_window )

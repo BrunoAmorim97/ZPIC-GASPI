@@ -66,4 +66,4 @@ void cart_coords(int rank, int coords[NUM_DIMS]);
 void assign_proc_blocks(int const nx[NUM_DIMS]);
 void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[NUM_DIMS]);
 int periodic_coord(int coord, int coord_max);
-int use_pediodic_boundaries(const int moving_window, const int dir);
+char use_pediodic_boundaries(const char moving_window, const int dir);
