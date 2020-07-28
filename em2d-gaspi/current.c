@@ -713,7 +713,7 @@ void get_smooth_comp( int n, t_fld* sa, t_fld* sb)
 	*sb = b / total;
 }
 
-/*inline*/ void kernel_gc_update(t_current* current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
+inline void kernel_gc_update(t_current* current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
 {
 	// SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 

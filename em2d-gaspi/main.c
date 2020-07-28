@@ -33,13 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
+#include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
-#include "input/lwfa.c"
+// #include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -63,7 +63,7 @@ int proc_block_high[NUM_DIMS];
 // Process cell block sizes
 int proc_block_size[NUM_DIMS];
 
-// Rank at every direction
+// Rank on every direction
 gaspi_rank_t neighbour_rank[NUM_ADJ];
 
 // Simulation space size of neighbour procs
@@ -157,7 +157,6 @@ int main(int argc, char * argv[])
 		printf("Starting simulation ...\n\n"); fflush(stdout);
 	}
 	
-
 	for (n = 0, t = 0.0; t <= sim.tmax; n++, t = n * sim.dt)
 	{
 		if (proc_rank == ROOT)
@@ -165,7 +164,7 @@ int main(int argc, char * argv[])
 			printf("n = %i, t = %f\n", n, t); fflush(stdout);
 		}
 		
-		if ( report ( n , sim.ndump ) ) 
+		if ( report ( n , sim.ndump ) )
 		{
 			gaspi_report( &sim );
 		}

@@ -119,7 +119,7 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 }
 
 // periodic boundary enforcer. If a coord leaves its allowed range, enforce a periodic boundary
-/*inline*/ int periodic_coord(int coord, int coord_max)
+inline int periodic_coord(int coord, int coord_max)
 {
 	if(coord < 0)
 		return coord + coord_max;
@@ -157,14 +157,14 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 		}
 	}
 
-	for (int dir = 0; dir < NUM_ADJ; dir++)
-	{
-		printf("Me proc: %d, on dir %d have proc %d, he has x:%d y:%d\n", proc_rank, dir, neighbour_rank[dir], neighbour_nx[dir][0], neighbour_nx[dir][1]);
-	} fflush(stdout);
+	// for (int dir = 0; dir < NUM_ADJ; dir++)
+	// {
+	// 	printf("Me proc: %d, on dir %d have proc %d, he has x:%d y:%d\n", proc_rank, dir, neighbour_rank[dir], neighbour_nx[dir][0], neighbour_nx[dir][1]);
+	// } fflush(stdout);
 }
 
 // returns 1 if proc can send/receive gc data to/from neighbour at direction dir, 0 otherwise
-/*inline*/ int use_pediodic_boundaries(const int moving_window, const int dir)
+inline int use_pediodic_boundaries(const int moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )
