@@ -743,7 +743,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 
 		// Index of first received particle of this species on each segment.
 		// Starts with part_send_seg_size because the receive zone starts at that index.
-		int spec_starting_index[NUM_ADJ]; for (int i = 0; i < NUM_ADJ; i++) spec_starting_index[i] = part_send_seg_size[i];
+		int spec_starting_index[NUM_ADJ]; memcpy(spec_starting_index, part_send_seg_size, NUM_ADJ * sizeof(int));
 
 		for (int spec_i_2 = 0; spec_i_2 < spec_i; spec_i_2++)
 		{

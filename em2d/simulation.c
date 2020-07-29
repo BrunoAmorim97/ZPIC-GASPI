@@ -58,7 +58,7 @@ void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 )
 
 	fprintf(stdout, "Time for spec. advance = %f s\n", spec_time());
 	fprintf(stdout, "Time for emf   advance = %f s\n", emf_time());
-	fprintf(stdout, "Total simulation time  = %f s\n", timer_interval_seconds(t0, t1));
+	fprintf(stdout, "\nTotal simulation time  = %f s\n", timer_interval_seconds(t0, t1));
 	fprintf(stdout, "\n");
 
 	if (spec_time()>0)
