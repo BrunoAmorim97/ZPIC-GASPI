@@ -27,6 +27,8 @@ extern gaspi_rank_t num_procs;
 extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
 extern t_vfld* current_segments[NUM_ADJ];
+extern t_vfld* current_kernel_smoothing_segments[NUM_ADJ];
+
 extern int curr_send_size[NUM_ADJ][NUM_DIMS];
 extern int curr_cell_to_send_starting_coord[NUM_ADJ][NUM_DIMS];
 
@@ -114,7 +116,7 @@ void curr_set_moving_window(t_current* curr)
 }
 
 // create the segments that will be used to send and receive current values from other procs
-void create_current_segments(const int nx_local[NUM_DIMS], const int moving_window)
+void create_current_segments(const int nx_local[NUM_DIMS])
 {
 	const int nxl0 = nx_local[0];
 	const int nxl1 = nx_local[1];
@@ -137,7 +139,34 @@ void create_current_segments(const int nx_local[NUM_DIMS], const int moving_wind
 		{-gc[0][0], -gc[1][0]}, 						{nxl0 - 1, -gc[1][0]},	// CENTER
 		{-gc[0][0], -gc[1][0]},	{-gc[0][0], -gc[1][0]},	{nxl0 - 1, -gc[1][0]}	// UP !!!
 	};
+	
+	gaspi_pointer_t pointer;
+	for (int dir = 0; dir < NUM_ADJ; dir++)
+	{
+		for (int dim = 0; dim < NUM_DIMS; dim++)
+		{
+			curr_send_size[dir][dim] = sizes[dir][dim];
+			curr_cell_to_send_starting_coord[dir][dim] = starting_local_coord[dir][dim];
+		}
 
+		const unsigned int curr_size_send = sizes[dir][0] * sizes[dir][1];
+		const unsigned int curr_size_recv = sizes[OPPOSITE_DIR(dir)][0] * sizes[OPPOSITE_DIR(dir)][1];
+
+		const gaspi_size_t seg_size = ( curr_size_send + curr_size_recv ) * sizeof(t_vfld);
+
+		SUCCESS_OR_DIE( gaspi_segment_alloc(DIR_TO_CURR_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED) );
+		SUCCESS_OR_DIE( gaspi_segment_register(DIR_TO_CURR_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK) );
+
+		SUCCESS_OR_DIE( gaspi_segment_ptr(DIR_TO_CURR_SEG_ID(dir), &pointer) );
+		current_segments[dir] = (t_vfld*) pointer;
+	}
+}
+
+// create the segments that will be used to send and receive current kernel smoothing data
+void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], const int num_dirs, const int dirs[], const char moving_window)
+{
+	const int nxl0 = nx_local[0];
+	const int nxl1 = nx_local[1];
 
 	// ===== Kernel smoothing GC sizes and coordinates =====
 	// size of the curr kernel smoothing data transmissions, in number of cells, perspective of the sender
@@ -167,7 +196,7 @@ void create_current_segments(const int nx_local[NUM_DIMS], const int moving_wind
 		{-gc[0][0], -gc[1][0]},			{0, -gc[1][0]},			{nxl0, -gc[1][0]}	// UP !!!
 	};
 
-	// In moving window simulations
+	// On moving window simulations
 	if (moving_window)
 	{
 		// If proc is on the left edge of the simulation space
@@ -190,40 +219,33 @@ void create_current_segments(const int nx_local[NUM_DIMS], const int moving_wind
 			kernel_sizes[UP][0] += gc[0][1];
 		}
 	}
-	
-	gaspi_pointer_t array;
-	for (int dir = 0; dir < NUM_ADJ; dir++)
+
+	gaspi_pointer_t pointer;
+	for (int dir_i = 0; dir_i < num_dirs; dir_i++)
 	{
+		const int dir = dirs[dir_i];
+
 		for (int dim = 0; dim < NUM_DIMS; dim++)
 		{
-			curr_send_size[dir][dim] = sizes[dir][dim];
-			curr_cell_to_send_starting_coord[dir][dim] = starting_local_coord[dir][dim];
-
 			curr_kernel_size[dir][dim] = kernel_sizes[dir][dim];
 			curr_kernel_send_coord[dir][dim] = kernel_starting_send_coord[dir][dim];
 			curr_kernel_write_coord[dir][dim] = kernel_starting_write_coord[dir][dim];
 		}
 
-		const gaspi_size_t curr_size_send = sizes[dir][0] * sizes[dir][1];
-		const gaspi_size_t curr_size_recv = sizes[OPPOSITE_DIR(dir)][0] * sizes[OPPOSITE_DIR(dir)][1];
-
-		// Kernel gc communication will use the same segments as normal current cell update.
-		// Extend segment size so that both communications have their own dedicated segment zone.
-		// The gc zones have size*2 beacause they have alternating zones depending if smothing pass iteration
+		// The gc zones have size*2 because they have alternating zones depending if smothing pass iteration
 		// number is even or odd, this is to avoid possible data overwrite by a faster neighbour 
-		const gaspi_size_t kernel_size_send = kernel_sizes[dir][0] * kernel_sizes[dir][1];
-		const gaspi_size_t kernel_size_recv = kernel_sizes[OPPOSITE_DIR(dir)][0] * kernel_sizes[OPPOSITE_DIR(dir)][1];
+		const unsigned int kernel_size_send = kernel_sizes[dir][0] * kernel_sizes[dir][1];
+		const unsigned int kernel_size_recv = kernel_sizes[OPPOSITE_DIR(dir)][0] * kernel_sizes[OPPOSITE_DIR(dir)][1];
 
 		// Segment will be used as follows:
-		// Segment => 	[Curr send zone, Curr receive zone,
-		// 				Curr even Kernel Send zone, Curr even Kernel Receive zone, Curr odd Kernel Send zone, Curr odd Kernel Receive zone]
-		const gaspi_size_t seg_size = ( curr_size_send + curr_size_recv + (2 * (kernel_size_send + kernel_size_recv)) ) * sizeof(t_vfld);
+		// Segment => 	[Curr even Kernel Send zone, Curr even Kernel Receive zone, Curr odd Kernel Send zone, Curr odd Kernel Receive zone]
+		const gaspi_size_t seg_size = (2 * (kernel_size_send + kernel_size_recv)) * sizeof(t_vfld);
 
-		SUCCESS_OR_DIE( gaspi_segment_alloc(DIR_TO_CURR_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED) );
-		SUCCESS_OR_DIE( gaspi_segment_register(DIR_TO_CURR_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK) );
+		SUCCESS_OR_DIE( gaspi_segment_alloc(DIR_TO_CURR_KER_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED) );
+		SUCCESS_OR_DIE( gaspi_segment_register(DIR_TO_CURR_KER_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK) );
 
-		SUCCESS_OR_DIE( gaspi_segment_ptr(DIR_TO_CURR_SEG_ID(dir), &array) );
-		current_segments[dir] = (t_vfld*) array;
+		SUCCESS_OR_DIE( gaspi_segment_ptr(DIR_TO_CURR_KER_SEG_ID(dir), &pointer) );
+		current_kernel_smoothing_segments[dir] = (t_vfld*) pointer;
 	}
 }
 
@@ -249,7 +271,7 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 
 	current->moving_window = moving_window;
 
-	create_current_segments(nx_local, moving_window);
+	create_current_segments(nx_local);
 	
 	// Make J point to local cell [0][0]
 	current->buff_offset = gc[0][0] + (gc[1][0] * current->nrow_local); //offset not in bytes
@@ -275,6 +297,32 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 	current -> iter = 0;
 	current -> dt = dt;
 
+}
+
+void curr_set_smooth(t_current* current, t_smooth* smooth)
+{
+	if ( (smooth->xtype != NONE) && (smooth->xlevel <= 0) )
+	{
+		fprintf(stdout, "Invalid smooth level along x direction\n");
+		exit(-1);
+	}
+	else
+	{
+		create_current_kernel_smoothing_segments(current->nx_local, NUM_KERNEL_X_DIRS, kernel_x_directions, current->moving_window);
+	}
+	
+
+	if ( (smooth->ytype != NONE) && (smooth->ylevel <= 0) )
+	{
+		fprintf(stdout, "Invalid smooth level along y direction\n");
+		exit(-1);
+	}
+	else
+	{
+		create_current_kernel_smoothing_segments(current->nx_local, NUM_KERNEL_Y_DIRS, kernel_y_directions, current->moving_window);
+	}
+
+	current->smooth = *smooth;
 }
 
 void current_zero( t_current *current )
@@ -492,11 +540,9 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 
 		const int opposite_dir = OPPOSITE_DIR(dir);
 
-		int copy_index = curr_send_size[dir][0] * curr_send_size[dir][1] + curr_send_size[opposite_dir][0] * curr_send_size[opposite_dir][1];
+		int copy_index = 0;
 
-		gaspi_offset_t remote_offset =
-		curr_send_size[opposite_dir][0] * curr_send_size[opposite_dir][1] + curr_send_size[dir][0] * curr_send_size[dir][1] + 
-		curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
+		gaspi_offset_t remote_offset = curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
 
 		gaspi_notification_id_t notification_id = NOTIF_ID_CURRENT_KERNEL_EVEN;
 
@@ -523,8 +569,8 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 			copy_index += size_x;
 		}
 
-		gaspi_segment_id_t local_segment_id = DIR_TO_CURR_SEG_ID(dir);
-		gaspi_segment_id_t remote_segment_id = DIR_TO_CURR_SEG_ID(opposite_dir);
+		gaspi_segment_id_t local_segment_id = DIR_TO_CURR_KER_SEG_ID(dir);
+		gaspi_segment_id_t remote_segment_id = DIR_TO_CURR_KER_SEG_ID(opposite_dir);
 
 		gaspi_size_t size = curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld); // in bytes
 
@@ -571,8 +617,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		const int starting_y = curr_kernel_write_coord[dir][1];
 		const int max_y = curr_kernel_write_coord[dir][1] + curr_kernel_size[opposite_dir][1];
 
-		int copy_index = curr_send_size[dir][0] * curr_send_size[dir][1] + curr_send_size[opposite_dir][0] * curr_send_size[opposite_dir][1] + 
-						curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
+		int copy_index = curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
 
 		gaspi_notification_id_t notification_id = NOTIF_ID_CURRENT_KERNEL_EVEN;
 
@@ -587,7 +632,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 
 		gaspi_notification_id_t id;
 		SUCCESS_OR_DIE( gaspi_notify_waitsome(
-		DIR_TO_CURR_SEG_ID(dir),	// The segment id
+		DIR_TO_CURR_KER_SEG_ID(dir),	// The segment id
 		notification_id,			// The notification id to wait for
 		1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
 		&id,						// Output parameter with the id of a received notification
@@ -595,7 +640,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		));
 
 		gaspi_notification_t value;
-		SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_SEG_ID(dir), id, &value) );
+		SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value) );
 		
 		// printf("Received:\n");
 		// for (int i = copy_index; i < copy_index + starting_x + starting_y * ; i++)

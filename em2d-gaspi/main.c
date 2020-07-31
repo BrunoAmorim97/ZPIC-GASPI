@@ -33,13 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
+#include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
-#include "input/lwfa.c"
+// #include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -77,6 +77,9 @@ unsigned int part_send_seg_size[NUM_ADJ];
 
 // Pointers to current segments
 t_vfld* current_segments[NUM_ADJ];
+
+// Pointers to current kernel smoothing segments
+t_vfld* current_kernel_smoothing_segments[NUM_ADJ];
 
 // Current segment sizes
 int curr_send_size[NUM_ADJ][NUM_DIMS];

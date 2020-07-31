@@ -4,11 +4,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include  <GASPI_Ext.h>
-
 #include "simulation.h"
 #include "timer.h"
-#include "particles.h"
 #include "current.h"
 
 extern int proc_coords[NUM_DIMS];
@@ -16,7 +13,7 @@ extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
 extern int dims[NUM_DIMS];
 
-extern int gc[NUM_DIMS][NUM_DIMS];
+extern const int gc[NUM_DIMS][NUM_DIMS];
 
 extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
@@ -78,14 +75,10 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation* sim)
 
 	for (int i = 0; i < sim->n_species; i++)
 	{
-		//allocate enough segment size so that, on a single iteration, ppc * MAX_PPC_MULTIPLIER particles will move between procs, per border cell, per species
+		//allocate enough segment size so that, on a single iteration, ppc * MAX_PPC_MULTIPLIER particles can move between procs, per border cell, per species
 		max_particles_cell += sim->species[i].ppc[0] * sim->species[i].ppc[1] * MAX_PPC_MULTIPLIER;
 	}
 	
-	// Create the particle segments, segments are created with size*2 because they are both send and receive segments
-	gaspi_size_t size;
-	gaspi_pointer_t array;
-
 	const gaspi_size_t sizes[NUM_ADJ] =
 	{
 		//	LEFT							CENTER								RIGHT
@@ -94,6 +87,10 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation* sim)
 		max_particles_cell * 1,				max_particles_cell * nx_local[0],	max_particles_cell * 1				// UP !!!
 	};
 
+	gaspi_size_t size;
+	gaspi_pointer_t array;
+
+	// Create the particle segments, segments are created with size*2 because they are both send and receive segments
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		size = sizes[dir];
@@ -148,16 +145,16 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 
 	discover_neighbours(proc_coords, dims, nx);
 
-	sim -> n_species = n_species;
-	sim -> species = species;
+	sim->n_species = n_species;
+	sim->species = species;
 
 	if (moving_window)
 		sim_set_spec_moving_window(sim);
 	
 
-	sim -> dt = dt;
-	sim -> tmax = tmax;
-	sim -> ndump = ndump;
+	sim->dt = dt;
+	sim->tmax = tmax;
+	sim->ndump = ndump;
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
@@ -177,11 +174,6 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 	// To prevent those configurations:
 	assert( !(neighbour_rank[DOWN] == neighbour_rank[UP] && neighbour_nx[DOWN][1] <= gc[1][1] && num_procs > 1) );
 	assert( !(neighbour_rank[LEFT] == neighbour_rank[RIGHT] && neighbour_nx[LEFT][0] <= gc[0][1] && num_procs > 1) );
-
-	// If this fails, change number of procs. Increase num_proc or try a different value.
-	// gaspi_write_list has a maximum number of elements it can write.
-	// gaspi_number_t max_nx_local; gaspi_rw_list_elem_max(&max_nx_local);
-	// assert( (unsigned int)(gc[0][0] + nx_local[0] + gc[0][1]) <= max_nx_local && (unsigned int)(gc[1][0] + nx_local[1] + gc[1][1]) <= max_nx_local);
 
 
 	create_particle_segments(nx_local, sim);
@@ -204,20 +196,8 @@ void sim_add_laser( t_simulation* sim, t_emf_laser* laser )
 }
 
 void sim_set_smooth( t_simulation* sim, t_smooth* smooth )
-{   
-	if ( (smooth -> xtype != NONE) && (smooth -> xlevel <= 0) )
-	{
-		fprintf(stdout, "Invalid smooth level along x direction\n");
-		exit(-1);
-	}
-
-	if ( (smooth -> ytype != NONE) && (smooth -> ylevel <= 0) )
-	{
-		fprintf(stdout, "Invalid smooth level along y direction\n");
-		exit(-1);
-	}
-
-	sim -> current.smooth = *smooth;
+{
+	curr_set_smooth( &sim->current, smooth);
 }
 
 void sim_report_energy( t_simulation* sim )

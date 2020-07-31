@@ -72,6 +72,7 @@ void current_zero( t_current *current );
 void current_update( t_current *current );
 void current_report( const t_current *current, const char jc );
 void current_smooth( t_current* const current );
+void curr_set_smooth(t_current* current, t_smooth* smooth);
 
 void wait_save_update_current(t_current* current);
 

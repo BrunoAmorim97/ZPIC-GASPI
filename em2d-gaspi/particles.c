@@ -31,7 +31,7 @@ extern int proc_coords[NUM_DIMS];
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
 extern int dims[NUM_DIMS];
-extern int gc[NUM_DIMS][NUM_DIMS];
+extern const int gc[NUM_DIMS][NUM_DIMS];
 
 extern int part_send_seg_size[NUM_ADJ];
 
@@ -209,8 +209,8 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 	
 	// Calculate particle positions inside the cell
 	const int npc = spec->ppc[0] * spec->ppc[1];
-	t_part_data const dpcx = 1.0f / spec->ppc[0];
-	t_part_data const dpcy = 1.0f / spec->ppc[1];
+	const t_part_data dpcx = 1.0f / spec->ppc[0];
+	const t_part_data dpcy = 1.0f / spec->ppc[1];
 	
 	poscell = malloc( 2 * npc * sizeof( t_part_data ) );
 	int ip = 0;
@@ -1035,8 +1035,8 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 	const t_part_data dt_dy = spec->dt / spec->dx[1];
 
 	// Auxiliary values for current deposition
-	t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
-	t_part_data qny = spec->q * spec->dx[1] / spec->dt;
+	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
+	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	// Advance particles
 	for (int i = 0; i < spec->np; i++)

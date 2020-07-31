@@ -58,7 +58,6 @@ void sim_init( t_simulation* sim ){
 	};
 
 	sim_set_smooth( sim, &smooth );
-
 }
 
 
