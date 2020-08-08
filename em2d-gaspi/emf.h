@@ -89,6 +89,8 @@ void emf_update_gc( t_emf *emf );
 
 double emf_time();
 
+void yee_b( t_emf *emf, const float dt );
+
 void emf_update_gc_gaspi(t_emf *emf, const char moving_window_iter);
 
 void print_emf_e(t_emf* emf);

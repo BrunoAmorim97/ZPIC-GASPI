@@ -7,6 +7,7 @@
 #include "simulation.h"
 #include "timer.h"
 #include "current.h"
+#include "emf.h"
 
 extern int proc_coords[NUM_DIMS];
 extern int proc_block_low[NUM_DIMS];
@@ -123,6 +124,9 @@ void sim_iter( t_simulation* sim )
 	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
 
 	send_current(&sim->current);
+
+	// Advance EM field using Yee algorithm while we wait for current data
+	yee_b( &sim->emf, sim->dt/2.0f );
 
 	wait_save_update_current(&sim->current);
 

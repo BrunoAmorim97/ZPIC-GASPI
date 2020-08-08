@@ -1089,7 +1089,7 @@ void emf_advance( t_emf *emf, const t_current *current )
 	const float dt = emf->dt;
 	
 	// Advance EM field using Yee algorithm modified for having E and B time centered
-	yee_b( emf, dt/2.0f );
+	// yee_b( emf, dt/2.0f ); // this is now done in sim_iter
 	
 	yee_e( emf, current, dt );
 
