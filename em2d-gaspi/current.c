@@ -396,6 +396,9 @@ void send_current(t_current* current)
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const t_vfld* restrict const J = current -> J;
+	
+	// Make sure there are no uncompleted outgoing writes
+	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT, GASPI_BLOCK) );
 
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
@@ -453,9 +456,6 @@ void wait_save_update_current(t_current* current)
 
 	// printf("BEFORE CURRENT GC ADD\n"); fflush(stdout);
 	// print_local_current(current);
-
-	// Make sure there are no uncompleted outgoing writes
-	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT, GASPI_BLOCK) );
 
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
