@@ -10,11 +10,11 @@ dims_name = ["x", "y", "z"]
 
 folder = "/home/bruno/zpic-out/"
 
-emf_folder_gaspi = "EMF-gaspi/"
-current_folder_gaspi = "CURRENT-gaspi/"
+emf_folder_gaspi = "gaspi/EMF/"
+current_folder_gaspi = "gaspi/CURRENT/"
 
-emf_folder = "EMF/"
-current_folder = "CURRENT/"
+emf_folder = "serial/EMF/"
+current_folder = "serial/CURRENT/"
 
 iteration = sys.argv[1].zfill(6)
 

@@ -4,15 +4,17 @@ import matplotlib.pyplot as plt
 
 folder = "/home/bruno/zpic-out/"
 
-emf_folder_gaspi = "EMF-gaspi/"
-emf_folder = "EMF/"
+emf_folder_gaspi = "gaspi/EMF/"
+emf_folder = "serial/EMF/"
 
-nx = (128, 128)
+# nx = (512, 512)
+nx = (2000, 256)
+
 norm = 0.5 * nx[0] * nx[1]
 
 
-diag_freq = 10
-num_iter = 500
+diag_freq = 50
+num_iter = 1450
 
 t_max = 35.0
 
@@ -43,7 +45,7 @@ plt.plot(np.linspace(0, t_max, num = int(num_iter/diag_freq)), Bperp_gaspi, line
 
 plt.yscale('log')
 plt.grid(True)
-plt.legend(['Serial', 'GASPI'], loc='upper left')
+plt.legend(['Serial', 'GASPI'], loc='upper right')
 plt.xlabel("$t$ [$1/\omega_n$]")
 plt.ylabel("$B_{\perp}$ energy [$m_e c^2$]")
 plt.title("Magnetic field energy")
