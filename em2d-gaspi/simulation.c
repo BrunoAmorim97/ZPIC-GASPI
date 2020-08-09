@@ -142,7 +142,7 @@ void sim_set_spec_moving_window( t_simulation* sim )
 		sim->species[i].moving_window = 1;
 }
 
-void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species* species, int n_species, const int moving_window)
+void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species* species, int n_species, const char moving_window)
 {
 	// Probably not necessary, just to be sure
 	assign_proc_blocks(nx);

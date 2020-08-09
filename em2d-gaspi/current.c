@@ -249,7 +249,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	}
 }
 
-void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const int moving_window)
+void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const char moving_window)
 {
 	// Allocate local current array, innitialized to 0
 
@@ -397,6 +397,9 @@ void send_current(t_current* current)
 	const int nrow = current->nrow_local; // Local nrow
 	const t_vfld* restrict const J = current -> J;
 
+	// Make sure there are no uncompleted outgoing writes
+	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT, GASPI_BLOCK) );
+
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
@@ -422,12 +425,12 @@ void send_current(t_current* current)
 		
 		// Sending to opposite direction segment, if I send current values to the proc to my RIGHT,
 		// I want those values to be written to the remote LEFT current segment
-		gaspi_segment_id_t local_segment_id = DIR_TO_CURR_SEG_ID(dir);
-		gaspi_segment_id_t remote_segment_id = DIR_TO_CURR_SEG_ID(OPPOSITE_DIR(dir));
+		const gaspi_segment_id_t local_segment_id = DIR_TO_CURR_SEG_ID(dir);
+		const gaspi_segment_id_t remote_segment_id = DIR_TO_CURR_SEG_ID(OPPOSITE_DIR(dir));
 
-		gaspi_size_t size = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
-		gaspi_offset_t remote_offset = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
-		gaspi_offset_t local_offset = 0;
+		const gaspi_size_t size = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
+		const gaspi_offset_t remote_offset = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
+		const gaspi_offset_t local_offset = 0;
 
 		// Send data
 		SUCCESS_OR_DIE( gaspi_write_notify(
@@ -448,20 +451,60 @@ void send_current(t_current* current)
 // Also applies current smoothing if necessary
 void wait_save_update_current(t_current* current)
 {
-	t_vfld* restrict const J = current->J;
-	const int nrow = current->nrow_local; // Local nrow
-
 	// printf("BEFORE CURRENT GC ADD\n"); fflush(stdout);
 	// print_local_current(current);
 
-	// Make sure there are no uncompleted outgoing writes
-	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT, GASPI_BLOCK) );
+	t_vfld* restrict const J = current->J;
+	const int nrow = current->nrow_local; // Local nrow
 
-	for (int dir = 0; dir < NUM_ADJ; dir++)
+	char received_notif[NUM_ADJ] = {0};
+	int num_received_notif = 0;
+
+	const int num_expected_notifs = get_num_incoming_notifs(current->moving_window);
+
+	// Get a dir that has an unprocessed write
+	while (num_received_notif != num_expected_notifs)
 	{
-		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !use_pediodic_boundaries(current->moving_window, dir) )
-			continue;
+		int dir = 0;
+
+		while( 1 )
+		{
+			// Check if we have not received a notif from this dir
+			// For moving window simulations dont use pediodic boundaries for the left and right edge procs
+			if ( !received_notif[dir] && use_pediodic_boundaries(current->moving_window, dir))
+			{
+				gaspi_notification_id_t id;
+				gaspi_return_t return_value;
+
+				// Test if the notification has arrived
+				SUCCESS_TIMEOUT_OR_DIE( return_value = gaspi_notify_waitsome(
+				DIR_TO_CURR_SEG_ID(dir),	// The segment id
+				NOTIF_ID_CURRENT,			// The notification id to wait for
+				1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
+				&id,						// Output parameter with the id of a received notification
+				GASPI_TEST					// Timeout in milliseconds, wait until write is completed
+				));
+				
+				// If this notification has arrived
+				if (return_value == GASPI_SUCCESS)
+				{
+					received_notif[dir] = 1;
+					num_received_notif++;
+
+					// Reset notification
+					gaspi_notification_t value;
+					SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_SEG_ID(dir), id, &value) );
+
+					break;
+				}
+			}
+
+			// Try next dir
+			dir = (dir + 1) % NUM_ADJ;
+		}
+		
+		// Process received write
+		// printf("Processing write from dir %d\n", dir); fflush(stdout);
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction
 		const int starting_x = curr_cell_to_send_starting_coord[dir][0];
@@ -470,22 +513,8 @@ void wait_save_update_current(t_current* current)
 		const int max_x = curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
 		const int max_y = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
-		// printf("\nFrom dir %d\n", dir); fflush(stdout);
 
 		int seg_index = curr_send_size[dir][0] * curr_send_size[dir][1];
-
-		// Wait for the write
-		gaspi_notification_id_t id;
-		SUCCESS_OR_DIE( gaspi_notify_waitsome(
-		DIR_TO_CURR_SEG_ID(dir),	// The segment id
-		NOTIF_ID_CURRENT,			// The notification id to wait for
-		1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
-		&id,						// Output parameter with the id of a received notification
-		GASPI_BLOCK					// Timeout in milliseconds, wait until write is completed
-		));
-
-		gaspi_notification_t value;
-		SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_SEG_ID(dir), id, &value) );
 
 		for (int y = starting_y; y < max_y; y++)
 		{

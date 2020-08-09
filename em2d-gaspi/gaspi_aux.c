@@ -180,3 +180,24 @@ inline char use_pediodic_boundaries(const char moving_window, const int dir)
 	
 	return 1;
 }
+
+// returns the number of dirs that this proc will receive notifs from
+inline int get_num_incoming_notifs(const char moving_window)
+{
+	// On static window simulations
+	if ( !moving_window )
+		// will receive cell data from every dir
+		return NUM_ADJ;
+
+	// If proc is on both the right and left edges of the simulation space
+	if ( (proc_coords[0] == 0) && (proc_coords[0] == dims[0] - 1) )
+		// will only receive cell data from UP and DOWN dirs
+		return NUM_ADJ - 6;
+	
+	// If proc is either on the left or right edge of the simulation space
+	if ( (proc_coords[0] == 0) || (proc_coords[0] == dims[0] - 1) )
+		// will not receive data from the dirs on the edge of the simulation space
+		return NUM_ADJ - 3;
+	
+	return NUM_ADJ;
+}
