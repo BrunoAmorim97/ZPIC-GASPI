@@ -457,21 +457,31 @@ void wait_save_update_current(t_current* current)
 	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
-	char received_notif[NUM_ADJ] = {0};
+	char received_notif[NUM_ADJ];
+	int num_expected_notifs = 0;
+
+	// Check if we are expecting notif from each direction
+	for (int dir = 0; dir < NUM_ADJ; dir++)
+	{
+		const char expecting_notif = use_pediodic_boundaries(current->moving_window, dir);
+
+		// if not, mark this dir as "received"
+		received_notif[dir] = !expecting_notif;
+		num_expected_notifs += expecting_notif;
+	}
+	
+
 	int num_received_notif = 0;
-
-	const int num_expected_notifs = get_num_incoming_notifs(current->moving_window);
-
-	// Get a dir that has an unprocessed write
+	// While we have not received all the notifs we need
 	while (num_received_notif != num_expected_notifs)
 	{
+		// Get a dir that has an unprocessed write
 		int dir = 0;
 
 		while( 1 )
 		{
-			// Check if we have not received a notif from this dir
-			// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-			if ( !received_notif[dir] && use_pediodic_boundaries(current->moving_window, dir))
+			// Check if we are expecting a notif from this dir
+			if ( !received_notif[dir] )
 			{
 				gaspi_notification_id_t id;
 				gaspi_return_t return_value;
