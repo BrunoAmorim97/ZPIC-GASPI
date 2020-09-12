@@ -164,11 +164,6 @@ void print_emf_b(t_emf* emf)
 	}
 }
 
-inline int max_int(int a, int b)
-{
-	return (a > b) ? a : b;
-}
-
 double emf_time( void )
 {
 	return _emf_time;
@@ -897,7 +892,7 @@ void send_emf_gc(t_emf* emf, const char moving_window_iter)
 				// Apply propper size difference if window will be moved
 				size_x += get_moving_iter_size_x_diff(dir);
 			}
-			// Iterations where the window is not move
+			// Iterations where the window is not moved
 			else
 			{
 				// These only apply if proc is on the left or right simulation edges !!!				
@@ -987,7 +982,7 @@ void wait_save_emf_gc(t_emf* emf, const char moving_window_iter)
 				size_x += get_moving_iter_size_x_diff(opposite_dir);
 				starting_x += get_moving_iter_starting_write_x_diff(dir);
 			}
-			// Iterations where the window is not move
+			// Iterations where the window is not moved
 			else
 			{
 				// These only apply if proc is on the left or right simulation edges !!!
@@ -1113,7 +1108,7 @@ void emf_advance( t_emf *emf, const t_current *current )
 	emf->iter++;
 	
 	// Update timing information
-	_emf_time += timer_interval_seconds(t0, timer_ticks());
+	// _emf_time += timer_interval_seconds(t0, timer_ticks());
 }
 
 void emf_get_energy( const t_emf *emf, double energy[] )

@@ -408,19 +408,20 @@ void send_current(t_current* current)
 
 		// printf("Sending current to dir %d, proc %d\n", dir, neighbour_rank[dir]); fflush(stdout);
 
-		const int size_x = curr_send_size[dir][0];
-		const size_t size_x_bytes = size_x * sizeof(t_vfld); // in bytes
-		const int starting_x = curr_cell_to_send_starting_coord[dir][0];
+		const int num_columns = curr_send_size[dir][0];
+		const size_t column_size_bytes = num_columns * sizeof(t_vfld); // in bytes
 
-		const int starting_y = curr_cell_to_send_starting_coord[dir][1];
-		const int max_y = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
+		const int starting_column = curr_cell_to_send_starting_coord[dir][0];
+		const int starting_row = 	curr_cell_to_send_starting_coord[dir][1];
+
+		const int max_row = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
 		int copy_index = 0;
 		// Copy data to segment
-		for (int y = starting_y; y < max_y; y++)
+		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&current_segments[dir][copy_index], &J[starting_x + y * nrow], size_x_bytes);
-			copy_index += size_x;
+			memcpy(&current_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
+			copy_index += num_columns;
 		}
 		
 		// Sending to opposite direction segment, if I send current values to the proc to my RIGHT,
@@ -460,12 +461,12 @@ void wait_save_update_current(t_current* current)
 	char received_notif[NUM_ADJ];
 	int num_expected_notifs = 0;
 
-	// Check if we are expecting notif from each direction
+	// Check each dir for expected notifs
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
+		// 1 if we are expecting a notif from dir, 0 otherwise
 		const char expecting_notif = use_pediodic_boundaries(current->moving_window, dir);
 
-		// if not, mark this dir as "received"
 		received_notif[dir] = !expecting_notif;
 		num_expected_notifs += expecting_notif;
 	}
@@ -475,12 +476,12 @@ void wait_save_update_current(t_current* current)
 	// While we have not received all the notifs we need
 	while (num_received_notif != num_expected_notifs)
 	{
-		// Get a dir that has an unprocessed write
 		int dir = 0;
 
+		// Get a dir that has an unprocessed write
 		while( 1 )
 		{
-			// Check if we are expecting a notif from this dir
+			// If we are expecting a notif from this dir
 			if ( !received_notif[dir] )
 			{
 				gaspi_notification_id_t id;
@@ -492,7 +493,7 @@ void wait_save_update_current(t_current* current)
 				NOTIF_ID_CURRENT,			// The notification id to wait for
 				1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
 				&id,						// Output parameter with the id of a received notification
-				GASPI_TEST					// Timeout in milliseconds, wait until write is completed
+				GASPI_TEST					// Timeout in milliseconds, check if notification has arrived, do not block
 				));
 				
 				// If this notification has arrived
@@ -514,21 +515,22 @@ void wait_save_update_current(t_current* current)
 		}
 		
 		// Process received write
+		
 		// printf("Processing write from dir %d\n", dir); fflush(stdout);
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction
-		const int starting_x = curr_cell_to_send_starting_coord[dir][0];
-		const int starting_y = curr_cell_to_send_starting_coord[dir][1];
+		const int starting_column = curr_cell_to_send_starting_coord[dir][0];
+		const int starting_row = 	curr_cell_to_send_starting_coord[dir][1];
 
-		const int max_x = curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
-		const int max_y = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
+		const int max_column = 	curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
+		const int max_row = 	curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
 
 		int seg_index = curr_send_size[dir][0] * curr_send_size[dir][1];
 
-		for (int y = starting_y; y < max_y; y++)
+		for (int y = starting_row; y < max_row; y++)
 		{
-			for (int x = starting_x; x < max_x; x++)
+			for (int x = starting_column; x < max_column; x++)
 			{
 				// printf("adding to cell x:%d y:%d, value.z:%f\n", x, y, current_segments[dir][seg_index].z); fflush(stdout);
 
@@ -557,7 +559,7 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
-	const t_vfld* restrict const J = current -> J;
+	const t_vfld* restrict const J = current->J;
 
 	// Make sure it is safe to modify the segment data
 	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT_KERNEL, GASPI_BLOCK) );
@@ -570,12 +572,12 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		if ( !use_pediodic_boundaries(moving_window, dir) )
 			continue;
 
-		const int size_x = curr_kernel_size[dir][0];
-		const size_t size_x_bytes = size_x * sizeof(t_vfld); // in bytes
-		const int starting_x = curr_kernel_send_coord[dir][0];
+		const int num_columns = curr_kernel_size[dir][0];
+		const size_t column_size_bytes = num_columns * sizeof(t_vfld); // in bytes
+		const int starting_column = curr_kernel_send_coord[dir][0];
 
-		const int starting_y = curr_kernel_send_coord[dir][1];
-		const int max_y = starting_y + curr_kernel_size[dir][1];
+		const int starting_row = curr_kernel_send_coord[dir][1];
+		const int max_row = starting_row + curr_kernel_size[dir][1];
 
 		const int opposite_dir = OPPOSITE_DIR(dir);
 
@@ -602,10 +604,10 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		remote_offset *= sizeof(t_vfld);
 
 		// Copy data to segment
-		for (int y = starting_y; y < max_y; y++)
+		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&current_segments[dir][copy_index], &J[starting_x + y * nrow], size_x_bytes);
-			copy_index += size_x;
+			memcpy(&current_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
+			copy_index += num_columns;
 		}
 
 		gaspi_segment_id_t local_segment_id = DIR_TO_CURR_KER_SEG_ID(dir);
@@ -650,11 +652,11 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		
 		const int opposite_dir = OPPOSITE_DIR(dir);
 
-		const int starting_x = curr_kernel_write_coord[dir][0];
-		const int size_x = curr_kernel_size[opposite_dir][0];
+		const int starting_column = curr_kernel_write_coord[dir][0];
+		const int num_columns = curr_kernel_size[opposite_dir][0];
 
-		const int starting_y = curr_kernel_write_coord[dir][1];
-		const int max_y = curr_kernel_write_coord[dir][1] + curr_kernel_size[opposite_dir][1];
+		const int starting_row = curr_kernel_write_coord[dir][1];
+		const int max_row = curr_kernel_write_coord[dir][1] + curr_kernel_size[opposite_dir][1];
 
 		int copy_index = curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
 
@@ -682,15 +684,15 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value) );
 		
 		// printf("Received:\n");
-		// for (int i = copy_index; i < copy_index + starting_x + starting_y * ; i++)
+		// for (int i = copy_index; i < copy_index + starting_column + starting_ * ; i++)
 		// {
 		// 	printf("%f %f %f\n", current_segments[dir][copy_index].x, current_segments[dir][copy_index].y, current_segments[dir][copy_index].z);
 		// }
 
-		for (int y = starting_y; y < max_y; y++)
+		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&J[starting_x + y * nrow], &current_segments[dir][copy_index], size_x * sizeof(t_vfld));
-			copy_index += size_x;
+			memcpy(&J[starting_column + row * nrow], &current_segments[dir][copy_index], num_columns * sizeof(t_vfld));
+			copy_index += num_columns;
 		}
 	}
 }
@@ -799,15 +801,9 @@ void get_smooth_comp( int n, t_fld* sa, t_fld* sb)
 
 inline void kernel_gc_update(t_current* current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
 {
-	// SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
-
 	send_current_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 
-	// SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
-
 	wait_save_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
-
-	// SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 }
 
 void kernel_x( t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
@@ -904,37 +900,37 @@ void current_smooth( t_current* const current )
 	int i;
 
 	// x-direction filtering
-	if ( current -> smooth.xtype != NONE )
+	if ( current->smooth.xtype != NONE )
 	{
 		// binomial filter
 		sa = 0.25; sb = 0.5;
-		for( i = 0; i < current -> smooth.xlevel; i++)
+		for( i = 0; i < current->smooth.xlevel; i++)
 		{
 			kernel_x( current, 0.25, 0.5, i);
 		}
 
 		// Compensator
-		if ( current -> smooth.xtype == COMPENSATED )
+		if ( current->smooth.xtype == COMPENSATED )
 		{
-			get_smooth_comp( current -> smooth.xlevel, &sa, &sb );
+			get_smooth_comp( current->smooth.xlevel, &sa, &sb );
 			kernel_x( current, sa, sb, i);
 		}
 	}
 
 	// y-direction filtering
-	if ( current -> smooth.ytype != NONE )
+	if ( current->smooth.ytype != NONE )
 	{
 		// binomial filter
 		sa = 0.25; sb = 0.5;
-		for( i = 0; i < current -> smooth.xlevel; i++)
+		for( i = 0; i < current->smooth.xlevel; i++)
 		{
 			kernel_y( current, 0.25, 0.5, i);
 		}
 
 		// Compensator
-		if ( current -> smooth.ytype == COMPENSATED )
+		if ( current->smooth.ytype == COMPENSATED )
 		{
-			get_smooth_comp( current -> smooth.ylevel, &sa, &sb );
+			get_smooth_comp( current->smooth.ylevel, &sa, &sb );
 			kernel_y( current, sa, sb, i);
 		}
 	}
