@@ -604,8 +604,10 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 			break;
 	}
 	
-	// Set guard cell values
-	emf_update_gc_gaspi(emf, 0);
+	// Update guard cells with new values
+	send_emf_gc(emf, 0);
+
+	wait_save_emf_gc(emf, 0);
 	
 	// printf("AFTER EMF LAZER GC UPDATE\n");
 	// print_emf_e(emf);
@@ -1041,7 +1043,7 @@ void emf_move_window( t_emf *emf )
 	// Shift data left 1 cell
 	for (j = 0; j < nxl1; j++)
 	{
-		// Dont update the last row of cells, it will be overwritten later
+		// Dont update the last column of cells, it will be overwritten later
 		for (i = -gc[0][0]; i <= nxl0 - 2; i++)
 		{
 			B[ i + j*nrow ] = B[ i + 1 + j*nrow ];
@@ -1052,7 +1054,7 @@ void emf_move_window( t_emf *emf )
 	// If proc is on the right edge of the simulation space
 	if (proc_coords[0] == dims[0] - 1)
 	{
-		// Zero 3 leftmost cells on each line
+		// Zero 3 leftmost cells on each row
 		for (j = -gc[1][0]; j < nxl1 + gc[1][1]; j++)
 		{
 			for (i = nxl0 - 1; i < nxl0 + gc[0][1]; i++)
@@ -1067,23 +1069,13 @@ void emf_move_window( t_emf *emf )
 	emf -> n_move++;
 }
 
-void emf_update_gc_gaspi(t_emf *emf, const char moving_window_iter)
-{
-	send_emf_gc(emf, moving_window_iter);
-
-	// Move window if needed
-	if(moving_window_iter)
-		emf_move_window(emf);
-
-	wait_save_emf_gc(emf, moving_window_iter);
-}
-
 void emf_advance( t_emf *emf, const t_current *current )
 {
-	uint64_t t0 = timer_ticks();
+	// uint64_t t0 = timer_ticks();
 	const float dt = emf->dt;
 	
 	// Advance EM field using Yee algorithm modified for having E and B time centered
+	
 	// yee_b( emf, dt/2.0f ); // this is now done in sim_iter
 	
 	yee_e( emf, current, dt );
@@ -1094,11 +1086,18 @@ void emf_advance( t_emf *emf, const t_current *current )
 	// print_emf_e(emf);
 	// print_emf_b(emf);
 
-	// 1 if window will be moved on this iteration, 0 otherwise
+	// 1 if window will be moved this iteration, 0 otherwise
 	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * dt) > (emf->dx[0] * (emf->n_move + 1)) );
 
-	// Update guard cells with new values and, if needed, move window
-	emf_update_gc_gaspi(emf, moving_window_iter);
+	// Update guard cells with new values
+	
+	send_emf_gc(emf, moving_window_iter);
+
+	// Move window if needed
+	if(moving_window_iter)
+		emf_move_window(emf);
+
+	wait_save_emf_gc(emf, moving_window_iter);
 
 	// printf("AFTER EMF GC UPDATE\n");
 	// print_emf_e(emf);

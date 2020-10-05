@@ -21,22 +21,21 @@ extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern gaspi_rank_t proc_rank;
 extern gaspi_rank_t num_procs;
 
-extern t_part* particle_segments[NUM_ADJ];
+extern t_part *particle_segments[NUM_ADJ];
 
 extern int part_send_seg_size[NUM_ADJ];
 
-extern t_vfld* emf_e_report_array;
-extern t_vfld* emf_b_report_array;
-extern t_vfld* current_report_array;
+extern t_vfld *emf_e_report_array;
+extern t_vfld *emf_b_report_array;
+extern t_vfld *current_report_array;
 
-extern t_vfld* reporting_data;
+extern t_vfld *reporting_data;
 
-
-int report( int n, int ndump )
+int report(int n, int ndump)
 {
 	if (ndump > 0)
 	{
-		return ! (n % ndump);
+		return !(n % ndump);
 	}
 	else
 	{
@@ -44,15 +43,15 @@ int report( int n, int ndump )
 	}
 }
 
-void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 )
+void sim_timings(t_simulation *sim, uint64_t t0, uint64_t t1)
 {
 
 	int npart = 0;
 	int i;
 
-	for(i = 0; i < sim->n_species; i++)
+	for (i = 0; i < sim->n_species; i++)
 	{
-		npart += sim -> species[i].np;
+		npart += sim->species[i].np;
 	}
 
 	// fprintf(stdout, "Time for spec. advance = %f s\n", spec_time());
@@ -60,7 +59,7 @@ void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 )
 	fprintf(stdout, "Total simulation time on %d procs = %f s\n", num_procs, timer_interval_seconds(t0, t1));
 	fprintf(stdout, "\n");
 
-/* 	if (spec_time() > 0)
+	/* 	if (spec_time() > 0)
 	{
 		double perf = spec_perf();
 		fprintf(stdout, "Particle advance [nsec/part] = %f \n", 1.e9*perf);
@@ -69,7 +68,7 @@ void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 )
 }
 
 // create the segments that will be used to transfer particles to and from other procs
-void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation* sim)
+void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation *sim)
 {
 	// maximum number of particles that will move between procs on a single iteration, per cell, per species. Used to compute the segment size
 	unsigned int max_particles_cell = 0;
@@ -79,14 +78,14 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation* sim)
 		//allocate enough segment size so that, on a single iteration, ppc * MAX_PPC_MULTIPLIER particles can move between procs, per border cell, per species
 		max_particles_cell += sim->species[i].ppc[0] * sim->species[i].ppc[1] * MAX_PPC_MULTIPLIER;
 	}
-	
+
 	const gaspi_size_t sizes[NUM_ADJ] =
-	{
-		//	LEFT							CENTER								RIGHT
-		max_particles_cell * 1,				max_particles_cell * nx_local[0],	max_particles_cell * 1, 			// DOWN !!!
-		max_particles_cell * nx_local[1],										max_particles_cell * nx_local[1],	// CENTER
-		max_particles_cell * 1,				max_particles_cell * nx_local[0],	max_particles_cell * 1				// UP !!!
-	};
+		{
+			//LEFT								CENTER								RIGHT
+			max_particles_cell * 1,				max_particles_cell * nx_local[0],	max_particles_cell * 1,				// DOWN !!!
+			max_particles_cell * nx_local[1], 										max_particles_cell * nx_local[1],	// CENTER
+			max_particles_cell * 1,				max_particles_cell * nx_local[0],	max_particles_cell * 1				// UP !!!
+		};
 
 	gaspi_size_t size;
 	gaspi_pointer_t array;
@@ -97,17 +96,17 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation* sim)
 		size = sizes[dir];
 		part_send_seg_size[dir] = size;
 
-		SUCCESS_OR_DIE( gaspi_segment_alloc(dir, size * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED) );
-		SUCCESS_OR_DIE( gaspi_segment_register(dir, neighbour_rank[dir], GASPI_BLOCK) );
+		SUCCESS_OR_DIE(gaspi_segment_alloc(dir, size * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED));
+		SUCCESS_OR_DIE(gaspi_segment_register(dir, neighbour_rank[dir], GASPI_BLOCK));
 
 		SUCCESS_OR_DIE(gaspi_segment_ptr(dir, &array));
-		particle_segments[dir] = (t_part*) array;
+		particle_segments[dir] = (t_part *)array;
 	}
 }
 
-void sim_iter( t_simulation* sim )
+void sim_iter(t_simulation *sim)
 {
-	current_zero( &sim -> current );
+	current_zero(&sim->current);
 
 	// Number of particles this process will send to each direction, per species
 	int num_part_to_send[sim->n_species][NUM_ADJ]; memset(num_part_to_send, 0, sim->n_species * NUM_ADJ * sizeof(int));
@@ -116,17 +115,17 @@ void sim_iter( t_simulation* sim )
 	int part_seg_write_index[NUM_ADJ] = {0};
 
 	// Advance particles and deposit current
-	for (int i = 0; i < sim -> n_species; i++)
+	for (int i = 0; i < sim->n_species; i++)
 	{
-		spec_advance(&sim -> species[i], &sim -> emf, &sim -> current, part_seg_write_index, num_part_to_send);
+		// advance and send particles of this species
+		spec_advance(&sim->species[i], &sim->emf, &sim->current, part_seg_write_index, num_part_to_send);
 	}
 
 	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
-
 	send_current(&sim->current);
 
-	// Advance EM field using Yee algorithm while we wait for current data
-	yee_b( &sim->emf, sim->dt/2.0f );
+	// While we wait for current data, advance EM field using Yee algorithm 
+	yee_b(&sim->emf, sim->dt / 2.0f);
 
 	wait_save_update_current(&sim->current);
 
@@ -136,13 +135,13 @@ void sim_iter( t_simulation* sim )
 	emf_advance(&sim->emf, &sim->current);
 }
 
-void sim_set_spec_moving_window( t_simulation* sim )
+void sim_set_spec_moving_window(t_simulation *sim)
 {
-	for(int i = 0; i < sim->n_species; i++)
+	for (int i = 0; i < sim->n_species; i++)
 		sim->species[i].moving_window = 1;
 }
 
-void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species* species, int n_species, const char moving_window)
+void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species, const char moving_window)
 {
 	// Probably not necessary, just to be sure
 	assign_proc_blocks(nx);
@@ -154,7 +153,6 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 
 	if (moving_window)
 		sim_set_spec_moving_window(sim);
-	
 
 	sim->dt = dt;
 	sim->tmax = tmax;
@@ -162,8 +160,7 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
-
-	// If this fails change number of nodes or increase simulation nx size, number of procs should not be a prime number
+	// If this check fails change number of nodes or increase simulation nx size, number of procs should not be a prime number
 	// Proc simulation regions need to have at least 2 cells on each dimention
 	// On moving window simulations, procs need at least 3 cells on the x axis
 	if (!moving_window)
@@ -176,9 +173,8 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 	// The method used to update guard cells current will lead to desynchronization between edge guard cells
 	// that represent the same cell on specific configurations with few procs and small numbers of cells per proc.
 	// To prevent those configurations:
-	assert( !(neighbour_rank[DOWN] == neighbour_rank[UP] && neighbour_nx[DOWN][1] <= gc[1][1] && num_procs > 1) );
-	assert( !(neighbour_rank[LEFT] == neighbour_rank[RIGHT] && neighbour_nx[LEFT][0] <= gc[0][1] && num_procs > 1) );
-
+	assert(!(neighbour_rank[DOWN] == neighbour_rank[UP] && neighbour_nx[DOWN][1] <= gc[1][1] && num_procs > 1));
+	assert(!(neighbour_rank[LEFT] == neighbour_rank[RIGHT] && neighbour_nx[LEFT][0] <= gc[0][1] && num_procs > 1));
 
 	create_particle_segments(nx_local, sim);
 
@@ -186,48 +182,47 @@ void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 	current_new(&sim->current, nx, nx_local, box, dt, moving_window);
 
 	// Check time step
-	float cour = sqrtf( 1.0f/( 1.0f/(sim->emf.dx[0]*sim->emf.dx[0]) + 1.0f/(sim->emf.dx[1]*sim->emf.dx[1]) ) );
-	if ( dt >= cour )
+	float cour = sqrtf(1.0f / (1.0f / (sim->emf.dx[0] * sim->emf.dx[0]) + 1.0f / (sim->emf.dx[1] * sim->emf.dx[1])));
+	if (dt >= cour)
 	{
-		fprintf(stdout, "Invalid timestep, courant condition violation, dtmax = %f \n", cour );
+		fprintf(stdout, "Invalid timestep, courant condition violation, dtmax = %f \n", cour);
 		exit(-1);
 	}
 }
 
-void sim_add_laser( t_simulation* sim, t_emf_laser* laser )
+void sim_add_laser(t_simulation *sim, t_emf_laser *laser)
 {
-	emf_add_laser( &sim->emf, laser );
+	emf_add_laser(&sim->emf, laser);
 }
 
-void sim_set_smooth( t_simulation* sim, t_smooth* smooth )
+void sim_set_smooth(t_simulation *sim, t_smooth *smooth)
 {
-	curr_set_smooth( &sim->current, smooth);
+	curr_set_smooth(&sim->current, smooth);
 }
 
-void sim_report_energy( t_simulation* sim )
+void sim_report_energy(t_simulation *sim)
 {
 	int i;
 
 	double emf_energy[6];
-	double part_energy[ sim -> n_species ];
+	double part_energy[sim->n_species];
 
-	emf_get_energy( &sim -> emf, emf_energy );
+	emf_get_energy(&sim->emf, emf_energy);
 	double tot_emf = emf_energy[0];
-	for( i = 0; i < 6; i++ )
+	for (i = 0; i < 6; i++)
 	{
 		tot_emf += emf_energy[i];
 	}
 
 	double tot_part = 0;
-	for( i = 0; i < sim -> n_species; i++ )
+	for (i = 0; i < sim->n_species; i++)
 	{
-		part_energy[i] = sim -> species[i].energy;
+		part_energy[i] = sim->species[i].energy;
 		tot_part += part_energy[i];
 	}
 
 	printf("Energy (fields | particles | total) = %e %e %e\n",
-		tot_emf, tot_part, tot_emf+tot_part);
-
+		   tot_emf, tot_part, tot_emf + tot_part);
 }
 
 void create_root_reporting_segments(int nx[NUM_DIMS])
@@ -235,26 +230,26 @@ void create_root_reporting_segments(int nx[NUM_DIMS])
 	gaspi_size_t size = (gc[0][0] + nx[0] + gc[0][1]) * (gc[1][0] + nx[1] + gc[1][1]) * sizeof(t_vfld);
 	gaspi_pointer_t pointer;
 
-	SUCCESS_OR_DIE( gaspi_segment_alloc(CURRENT_REPORT, size, GASPI_MEM_INITIALIZED) );
-	SUCCESS_OR_DIE( gaspi_segment_alloc(EMF_B_REPORT, size, GASPI_MEM_INITIALIZED) );
-	SUCCESS_OR_DIE( gaspi_segment_alloc(EMF_E_REPORT, size, GASPI_MEM_INITIALIZED) );
+	SUCCESS_OR_DIE(gaspi_segment_alloc(CURRENT_REPORT, size, GASPI_MEM_INITIALIZED));
+	SUCCESS_OR_DIE(gaspi_segment_alloc(EMF_B_REPORT, size, GASPI_MEM_INITIALIZED));
+	SUCCESS_OR_DIE(gaspi_segment_alloc(EMF_E_REPORT, size, GASPI_MEM_INITIALIZED));
 
 	// Resgister segments on all procs
 	for (int proc_i = 0; proc_i < num_procs; proc_i++)
 	{
-		SUCCESS_OR_DIE( gaspi_segment_register(CURRENT_REPORT, proc_i, GASPI_BLOCK) );
-		SUCCESS_OR_DIE( gaspi_segment_register(EMF_B_REPORT, proc_i, GASPI_BLOCK) );
-		SUCCESS_OR_DIE( gaspi_segment_register(EMF_E_REPORT, proc_i, GASPI_BLOCK) );
+		SUCCESS_OR_DIE(gaspi_segment_register(CURRENT_REPORT, proc_i, GASPI_BLOCK));
+		SUCCESS_OR_DIE(gaspi_segment_register(EMF_B_REPORT, proc_i, GASPI_BLOCK));
+		SUCCESS_OR_DIE(gaspi_segment_register(EMF_E_REPORT, proc_i, GASPI_BLOCK));
 	}
 
-	SUCCESS_OR_DIE( gaspi_segment_ptr(CURRENT_REPORT, &pointer) );
-	current_report_array = (t_vfld*)pointer;
+	SUCCESS_OR_DIE(gaspi_segment_ptr(CURRENT_REPORT, &pointer));
+	current_report_array = (t_vfld *)pointer;
 
-	SUCCESS_OR_DIE( gaspi_segment_ptr(EMF_B_REPORT, &pointer) );
-	emf_b_report_array = (t_vfld*)pointer;
+	SUCCESS_OR_DIE(gaspi_segment_ptr(EMF_B_REPORT, &pointer));
+	emf_b_report_array = (t_vfld *)pointer;
 
-	SUCCESS_OR_DIE( gaspi_segment_ptr(EMF_E_REPORT,  &pointer) );
-	emf_e_report_array = (t_vfld*)pointer;
+	SUCCESS_OR_DIE(gaspi_segment_ptr(EMF_E_REPORT, &pointer));
+	emf_e_report_array = (t_vfld *)pointer;
 }
 
 // Wait for report writes
@@ -267,45 +262,42 @@ void wait_report_writes()
 		gaspi_notification_t value;
 
 		// Wait for Current
-		SUCCESS_OR_DIE( gaspi_notify_waitsome(
+		SUCCESS_OR_DIE(gaspi_notify_waitsome(
 			CURRENT_REPORT,
 			proc_i,
 			1,
 			&id,
-			GASPI_BLOCK
-		));
-		SUCCESS_OR_DIE( gaspi_notify_reset(CURRENT_REPORT, id, &value) );
+			GASPI_BLOCK));
+		SUCCESS_OR_DIE(gaspi_notify_reset(CURRENT_REPORT, id, &value));
 
 		// Wait for EMF B
-		SUCCESS_OR_DIE( gaspi_notify_waitsome(
+		SUCCESS_OR_DIE(gaspi_notify_waitsome(
 			EMF_B_REPORT,
 			proc_i,
 			1,
 			&id,
-			GASPI_BLOCK
-		));
-		SUCCESS_OR_DIE( gaspi_notify_reset(EMF_B_REPORT, id, &value) );
+			GASPI_BLOCK));
+		SUCCESS_OR_DIE(gaspi_notify_reset(EMF_B_REPORT, id, &value));
 
 		// Wait for EMF E
-		SUCCESS_OR_DIE( gaspi_notify_waitsome(
+		SUCCESS_OR_DIE(gaspi_notify_waitsome(
 			EMF_E_REPORT,
 			proc_i,
 			1,
 			&id,
-			GASPI_BLOCK
-		));
-		SUCCESS_OR_DIE( gaspi_notify_reset(EMF_E_REPORT, id, &value) );
+			GASPI_BLOCK));
+		SUCCESS_OR_DIE(gaspi_notify_reset(EMF_E_REPORT, id, &value));
 	}
 }
 
-void gaspi_report(t_simulation* sim)
+void gaspi_report(t_simulation *sim)
 {
 	#define NUM_REPORTING_DATA_TYPES 3
 
 	// printf("GASPI REPORT\n"); fflush(stdout);
 	static char created_segments = 0;
 
-	t_current* current = &sim->current;
+	t_current *current = &sim->current;
 	const int size_x = current->nx_local[0];
 	const int size_y = current->nx_local[1];
 	const int nrow = current->nrow_local; // Local nrow
@@ -326,24 +318,24 @@ void gaspi_report(t_simulation* sim)
 
 		// Reporting segment will be used as follows:
 		// Reporting => [Curr, EMF B, EMF E]
-		SUCCESS_OR_DIE( gaspi_segment_alloc(REPORTING, seg_size, GASPI_MEM_UNINITIALIZED) );
+		SUCCESS_OR_DIE(gaspi_segment_alloc(REPORTING, seg_size, GASPI_MEM_UNINITIALIZED));
 
-		SUCCESS_OR_DIE( gaspi_segment_ptr(REPORTING, &array_pointer) );
-		reporting_data = (t_vfld*) array_pointer;
+		SUCCESS_OR_DIE(gaspi_segment_ptr(REPORTING, &array_pointer));
+		reporting_data = (t_vfld *)array_pointer;
 
-		SUCCESS_OR_DIE( gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK) );
+		SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	}
-	
+
 	int copy_index = 0;
 	const size_t size_x_bytes = size_x * sizeof(t_vfld);
 
-	const t_vfld* const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
+	const t_vfld *const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
 	const gaspi_segment_id_t remote_segments[NUM_REPORTING_DATA_TYPES] = {CURRENT_REPORT, EMF_B_REPORT, EMF_E_REPORT};
 
 	for (int i = 0; i < NUM_REPORTING_DATA_TYPES; i++)
 	{
 
-		const t_vfld* const restrict data_array = data_pointers[i];
+		const t_vfld *const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
 
 		// Copy data from simulation arrays to the segment
@@ -353,8 +345,8 @@ void gaspi_report(t_simulation* sim)
 			memcpy(&reporting_data[copy_index], &data_array[y * nrow], size_x_bytes);
 			copy_index += size_x;
 		}
-		
-		gaspi_offset_t local_offset = i * size_x * size_y * sizeof(t_vfld); // in bytes
+
+		gaspi_offset_t local_offset = i * size_x * size_y * sizeof(t_vfld);															  // in bytes
 		gaspi_offset_t remote_offset = (global_buff_offset + proc_block_low[0] + (proc_block_low[1] * global_nrow)) * sizeof(t_vfld); // in bytes
 
 		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
@@ -363,38 +355,43 @@ void gaspi_report(t_simulation* sim)
 		for (int y = 0; y < size_y; y++)
 		{
 			// Send each line
-			SUCCESS_OR_DIE( gaspi_write(
-				REPORTING,				// The segment id where data is located.
-				local_offset,			// The offset where the data is located.
-				ROOT,					// The rank where to write and notify.
-				remote_segment,			// The remote segment id to write the data to.
-				remote_offset,			// The remote offset where to write to.
-				size_x_bytes,			// The size of the data to write.
-				Q_REPORTING,			// The queue where to post the request.
-				GASPI_BLOCK				// Timeout in milliseconds.
-			));
+			SUCCESS_OR_DIE(gaspi_write(
+				REPORTING,		// The segment id where data is located.
+				local_offset,	// The offset where the data is located.
+				ROOT,			// The rank where to write and notify.
+				remote_segment, // The remote segment id to write the data to.
+				remote_offset,	// The remote offset where to write to.
+				size_x_bytes,	// The size of the data to write.
+				Q_REPORTING,	// The queue where to post the request.
+				GASPI_BLOCK		// Timeout in milliseconds.
+				));
 
 			local_offset += size_x_bytes;
 			remote_offset += global_nrow * sizeof(t_vfld);
 		}
 
 		// Send notification
-		SUCCESS_OR_DIE( gaspi_notify(
-			remote_segment,			// The remote segment id.
-			ROOT,					// The rank to notify.
-			proc_rank,				// The notification id.
-			1,						// The notification value.
-			Q_REPORTING,			// The queue to post the notification request.
-			GASPI_BLOCK				// Timeout in milliseconds
-		));
+		SUCCESS_OR_DIE(gaspi_notify(
+			remote_segment, // The remote segment id.
+			ROOT,			// The rank to notify.
+			proc_rank,		// The notification id.
+			1,				// The notification value.
+			Q_REPORTING,	// The queue to post the notification request.
+			GASPI_BLOCK		// Timeout in milliseconds
+			));
 	}
 
 	if (proc_rank == ROOT)
 	{
 		// Save original array pointers
-		t_vfld* B_real = sim->emf.B; t_vfld* B_buf_real = sim->emf.B_buf;
-		t_vfld* E_real = sim->emf.E; t_vfld* E_buf_real = sim->emf.E_buf;
-		t_vfld* J_real = sim->current.J; t_vfld* J_buf_real = sim->current.J_buf;
+		t_vfld *B_real = sim->emf.B;
+		t_vfld *B_buf_real = sim->emf.B_buf;
+
+		t_vfld *E_real = sim->emf.E;
+		t_vfld *E_buf_real = sim->emf.E_buf;
+
+		t_vfld *J_real = sim->current.J;
+		t_vfld *J_buf_real = sim->current.J_buf;
 
 		// Change simulation struct emf and current array pointers to report segments
 		sim->emf.B = emf_b_report_array + global_buff_offset;
@@ -409,12 +406,15 @@ void gaspi_report(t_simulation* sim)
 		wait_report_writes();
 
 		// Call the original ZPIC report function
-		sim_report( sim );
+		sim_report(sim);
 
 		// Switch simulation struct emf and current array pointers back
-		sim->emf.B = B_real; sim->emf.B_buf = B_buf_real;
-		sim->emf.E = E_real; sim->emf.E_buf = E_buf_real;
-		sim->current.J = J_real; sim->current.J_buf = J_buf_real;
+		sim->emf.B = B_real;
+		sim->emf.B_buf = B_buf_real;
+		sim->emf.E = E_real;
+		sim->emf.E_buf = E_buf_real;
+		sim->current.J = J_real;
+		sim->current.J_buf = J_buf_real;
 	}
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
@@ -464,7 +464,7 @@ void gaspi_report(t_simulation* sim)
 		}
 		printf("\n"); fflush(stdout); */
 
-		/* printf("CURRENT X\n");
+/* printf("CURRENT X\n");
 		for (int y = -gc[1][0]; y < current->nx[1] + gc[1][1]; y++)
 		{
 			if (y == 0 || y == current->nx[1])

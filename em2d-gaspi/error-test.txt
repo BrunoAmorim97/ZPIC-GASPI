@@ -1,0 +1,41 @@
+Baseline (weibel-test-large 4 procs):
+
+Current Total Error Sum = 0.9038703144, Total Average: 0.0000183893, Max 0.0005133958
+EMF B   Total Error Sum = 0.1663320810, Total Average: 0.0000033840, Max 0.0000366264
+EMF E   Total Error Sum = 0.3602029979, Total Average: 0.0000073283, Max 0.0000531129
+
+=======================================================================================================================
+
+Current Total Error Sum = 0.8175588846, Total Average: 0.0000166333, Max 0.0004742655
+EMF B   Total Error Sum = 0.1610425077, Total Average: 0.0000032764, Max 0.0000303802
+EMF E   Total Error Sum = 0.3283460140, Total Average: 0.0000066802, Max 0.0000514933
+
+===========================================================
+
+Current Total Error Sum = 0.8752591312, Total Average: 0.0000178072, Max 0.0004638182
+EMF B   Total Error Sum = 0.1726866774, Total Average: 0.0000035133, Max 0.0000304747
+EMF E   Total Error Sum = 0.3421973363, Total Average: 0.0000069620, Max 0.0000560256
+
+===========================================================
+
+Current Total Error Sum = 0.8625504673, Total Average: 0.0000175486, Max 0.0005449206
+EMF B   Total Error Sum = 0.1665331945, Total Average: 0.0000033881, Max 0.0000355353
+EMF E   Total Error Sum = 0.3421317339, Total Average: 0.0000069607, Max 0.0000563590
+
+===========================================================
+
+Current Total Error Sum = 0.8088543266, Total Average: 0.0000164562, Max 0.0005780256
+EMF B   Total Error Sum = 0.1605151594, Total Average: 0.0000032657, Max 0.0000296719
+EMF E   Total Error Sum = 0.3252745792, Total Average: 0.0000066177, Max 0.0000534975
+
+===========================================================
+
+Current Total Error Sum = 0.9341987073, Total Average: 0.0000190063, Max 0.0006326879
+EMF B   Total Error Sum = 0.1866818331, Total Average: 0.0000037981, Max 0.0000360045
+EMF E   Total Error Sum = 0.3740491122, Total Average: 0.0000076100, Max 0.0000582738
+
+===========================================================
+
+Current Total Error Sum = 0.8495143652, Total Average: 0.0000172834, Max 0.0003877475
+EMF B   Total Error Sum = 0.1675058603, Total Average: 0.0000034079, Max 0.0000278479
+EMF E   Total Error Sum = 0.3343571424, Total Average: 0.0000068025, Max 0.0000524549

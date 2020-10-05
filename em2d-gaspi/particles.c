@@ -943,7 +943,7 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 
 		// check if particle left the proc zone
 		if ( dir != -1 )
-		{	
+		{
 			// int old_x = spec->part[i].ix;
 			// int old_y = spec->part[i].iy;
 
@@ -973,6 +973,12 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 	// Check if segment size is respected before sending
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
+		if (proc_rank == 1)
+		{
+			printf("Sending %5d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], OPPOSITE_DIR(dir));
+			printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
+		}
+
 		assert(part_seg_write_index[dir] < part_send_seg_size[dir]);
 	}
 
@@ -1015,8 +1021,7 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 		// {
 		// 	continue;
 		// }
-
-		// printf("Sending %d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], new_dir);
+		
 		// for (int i = 0; i < num_part_to_send[spec_id][dir]-1; i++)
 		// {
 		// 	t_part part = particle_segments[dir][fake_part_index[dir] + i + 1];

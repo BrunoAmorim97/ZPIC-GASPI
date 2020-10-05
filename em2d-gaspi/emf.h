@@ -87,11 +87,12 @@ void emf_move_window( t_emf *emf );
 
 void emf_update_gc( t_emf *emf );
 
+void send_emf_gc(t_emf* emf, const char moving_window_iter);
+void wait_save_emf_gc(t_emf* emf, const char moving_window_iter);
+
 double emf_time();
 
 void yee_b( t_emf *emf, const float dt );
-
-void emf_update_gc_gaspi(t_emf *emf, const char moving_window_iter);
 
 void print_emf_e(t_emf* emf);
 void print_emf_b(t_emf* emf);

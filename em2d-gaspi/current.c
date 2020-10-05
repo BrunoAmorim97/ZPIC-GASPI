@@ -26,8 +26,8 @@ extern gaspi_rank_t num_procs;
 
 extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
-extern t_vfld* current_segments[NUM_ADJ];
-extern t_vfld* current_kernel_smoothing_segments[NUM_ADJ];
+extern t_vfld *current_segments[NUM_ADJ];
+extern t_vfld *current_kernel_smoothing_segments[NUM_ADJ];
 
 extern int curr_send_size[NUM_ADJ][NUM_DIMS];
 extern int curr_cell_to_send_starting_coord[NUM_ADJ][NUM_DIMS];
@@ -40,11 +40,11 @@ extern int curr_kernel_write_coord[NUM_ADJ][NUM_DIMS];
 const int kernel_x_directions[NUM_KERNEL_X_DIRS] = {LEFT, RIGHT};
 
 #define NUM_KERNEL_Y_DIRS 6
-const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = {DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP , UP_RIGHT};
+const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = {DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP, UP_RIGHT};
 
-void print_local_current(t_current* current)
+void print_local_current(t_current *current)
 {
-	t_vfld* J = current->J;
+	t_vfld *J = current->J;
 	int nrow = current->nrow_local;
 	printf("CURRENT X\n");
 	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
@@ -53,20 +53,21 @@ void print_local_current(t_current* current)
 		{
 			printf("\n");
 		}
-		
+
 		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
 		{
 			if (x == 0 || x == current->nx_local[0])
 			{
 				printf("    ");
 			}
-			
+
 			printf("%f ", J[y * nrow + x].x);
 		}
 		printf("\n");
 	}
-	printf("\n"); fflush(stdout);
-	
+	printf("\n");
+	fflush(stdout);
+
 	printf("CURRENT Y\n");
 	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
 	{
@@ -74,19 +75,20 @@ void print_local_current(t_current* current)
 		{
 			printf("\n");
 		}
-		
+
 		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
 		{
 			if (x == 0 || x == current->nx_local[0])
 			{
 				printf("    ");
 			}
-			
+
 			printf("%f ", J[y * nrow + x].y);
 		}
 		printf("\n");
 	}
-	printf("\n"); fflush(stdout);
+	printf("\n");
+	fflush(stdout);
 
 	printf("CURRENT Z\n");
 	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
@@ -95,22 +97,23 @@ void print_local_current(t_current* current)
 		{
 			printf("\n");
 		}
-		
+
 		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
 		{
 			if (x == 0 || x == current->nx_local[0])
 			{
 				printf("    ");
 			}
-			
+
 			printf("%f ", J[y * nrow + x].z);
 		}
 		printf("\n");
 	}
-	printf("\n"); fflush(stdout);
+	printf("\n");
+	fflush(stdout);
 }
 
-void curr_set_moving_window(t_current* curr)
+void curr_set_moving_window(t_current *curr)
 {
 	curr->moving_window = 1;
 }
@@ -139,7 +142,7 @@ void create_current_segments(const int nx_local[NUM_DIMS])
 		{-gc[0][0], -gc[1][0]}, 						{nxl0 - 1, -gc[1][0]},	// CENTER
 		{-gc[0][0], -gc[1][0]},	{-gc[0][0], -gc[1][0]},	{nxl0 - 1, -gc[1][0]}	// UP !!!
 	};
-	
+
 	gaspi_pointer_t pointer;
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
@@ -152,13 +155,13 @@ void create_current_segments(const int nx_local[NUM_DIMS])
 		const unsigned int curr_size_send = sizes[dir][0] * sizes[dir][1];
 		const unsigned int curr_size_recv = sizes[OPPOSITE_DIR(dir)][0] * sizes[OPPOSITE_DIR(dir)][1];
 
-		const gaspi_size_t seg_size = ( curr_size_send + curr_size_recv ) * sizeof(t_vfld);
+		const gaspi_size_t seg_size = (curr_size_send + curr_size_recv) * sizeof(t_vfld);
 
-		SUCCESS_OR_DIE( gaspi_segment_alloc(DIR_TO_CURR_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED) );
-		SUCCESS_OR_DIE( gaspi_segment_register(DIR_TO_CURR_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK) );
+		SUCCESS_OR_DIE(gaspi_segment_alloc(DIR_TO_CURR_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED));
+		SUCCESS_OR_DIE(gaspi_segment_register(DIR_TO_CURR_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK));
 
-		SUCCESS_OR_DIE( gaspi_segment_ptr(DIR_TO_CURR_SEG_ID(dir), &pointer) );
-		current_segments[dir] = (t_vfld*) pointer;
+		SUCCESS_OR_DIE(gaspi_segment_ptr(DIR_TO_CURR_SEG_ID(dir), &pointer));
+		current_segments[dir] = (t_vfld *)pointer;
 	}
 }
 
@@ -171,30 +174,30 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	// ===== Kernel smoothing GC sizes and coordinates =====
 	// size of the curr kernel smoothing data transmissions, in number of cells, perspective of the sender
 	int kernel_sizes[NUM_ADJ][NUM_DIMS] = // {size_x, size_y}
-	{
-		//LEFT					CENTER				RIGHT
-		{gc[0][1], gc[1][0]},	{nxl0, gc[1][0]},	{gc[0][0], gc[1][0]},	// DOWN !!!
-		{gc[0][1], nxl1},							{gc[0][0], nxl1},		// CENTER
-		{gc[0][1], gc[1][1]},	{nxl0, gc[1][1]},	{gc[0][0], gc[1][1]}	// UP !!!
-	};
+		{
+			//LEFT					CENTER				RIGHT
+			{gc[0][1], gc[1][0]},	{nxl0, gc[1][0]},	{gc[0][0], gc[1][0]},	// DOWN !!!
+			{gc[0][1], nxl1},							{gc[0][0], nxl1}, 		// CENTER
+			{gc[0][1], gc[1][1]},	{nxl0, gc[1][1]},	{gc[0][0], gc[1][1]}	// UP !!!
+		};
 
 	// top left coord of the cells this proc will send to each direction, perspective of the sender
 	int kernel_starting_send_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
-	{
-		//LEFT			CENTER			RIGHT
-		{0, nxl1 - 1},	{0, nxl1 - 1},	{nxl0 - 1, nxl1 - 1},	// DOWN !!!
-		{0, 0},							{nxl0 - 1, 0},			// CENTER
-		{0, 0},			{0, 0},			{nxl0 - 1, 0}			// UP !!!
-	};
+		{
+			//LEFT			CENTER			RIGHT
+			{0, nxl1 - 1},	{0, nxl1 - 1},	{nxl0 - 1, nxl1 - 1},	// DOWN !!!
+			{0, 0},							{nxl0 - 1, 0},			// CENTER
+			{0, 0},			{0, 0},			{nxl0 - 1, 0}			// UP !!!
+		};
 
 	// top left coord of the cells this proc will override with received cells from each direction, perspective of the receiver
 	int kernel_starting_write_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
-	{
-		//LEFT							CENTER					RIGHT
-		{-gc[0][0], nxl1},				{0, nxl1},				{nxl0, nxl1},		// DOWN !!!
-		{-gc[0][0], 0},											{nxl0, 0},			// CENTER
-		{-gc[0][0], -gc[1][0]},			{0, -gc[1][0]},			{nxl0, -gc[1][0]}	// UP !!!
-	};
+		{
+			//LEFT							CENTER					RIGHT
+			{-gc[0][0], nxl1},				{0, nxl1},				{nxl0, nxl1},		// DOWN !!!
+			{-gc[0][0], 0},											{nxl0, 0},			// CENTER
+			{-gc[0][0], -gc[1][0]},			{0, -gc[1][0]},			{nxl0, -gc[1][0]}	// UP !!!
+		};
 
 	// On moving window simulations
 	if (moving_window)
@@ -233,7 +236,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 		}
 
 		// The gc zones have size*2 because they have alternating zones depending if smothing pass iteration
-		// number is even or odd, this is to avoid possible data overwrite by a faster neighbour 
+		// number is even or odd, this is to avoid possible data overwrite by a faster neighbour
 		const unsigned int kernel_size_send = kernel_sizes[dir][0] * kernel_sizes[dir][1];
 		const unsigned int kernel_size_recv = kernel_sizes[OPPOSITE_DIR(dir)][0] * kernel_sizes[OPPOSITE_DIR(dir)][1];
 
@@ -241,11 +244,11 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 		// Segment => 	[Curr even Kernel Send zone, Curr even Kernel Receive zone, Curr odd Kernel Send zone, Curr odd Kernel Receive zone]
 		const gaspi_size_t seg_size = (2 * (kernel_size_send + kernel_size_recv)) * sizeof(t_vfld);
 
-		SUCCESS_OR_DIE( gaspi_segment_alloc(DIR_TO_CURR_KER_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED) );
-		SUCCESS_OR_DIE( gaspi_segment_register(DIR_TO_CURR_KER_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK) );
+		SUCCESS_OR_DIE(gaspi_segment_alloc(DIR_TO_CURR_KER_SEG_ID(dir), seg_size, GASPI_MEM_UNINITIALIZED));
+		SUCCESS_OR_DIE(gaspi_segment_register(DIR_TO_CURR_KER_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK));
 
-		SUCCESS_OR_DIE( gaspi_segment_ptr(DIR_TO_CURR_KER_SEG_ID(dir), &pointer) );
-		current_kernel_smoothing_segments[dir] = (t_vfld*) pointer;
+		SUCCESS_OR_DIE(gaspi_segment_ptr(DIR_TO_CURR_KER_SEG_ID(dir), &pointer));
+		current_kernel_smoothing_segments[dir] = (t_vfld *)pointer;
 	}
 }
 
@@ -257,13 +260,13 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 	current->J_size = num_cells * sizeof(t_vfld);
 
 	current->J_buf = calloc(num_cells, sizeof(t_vfld));
-	assert( current->J_buf );
+	assert(current->J_buf);
 
 	current->nrow = gc[0][0] + nx[0] + gc[0][1];
 	current->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
 
 	// store nx and gc values
-	for(int i = 0; i < NUM_DIMS; i++)
+	for (int i = 0; i < NUM_DIMS; i++)
 	{
 		current->nx[i] = nx[i];
 		current->nx_local[i] = nx_local[i];
@@ -272,13 +275,13 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 	current->moving_window = moving_window;
 
 	create_current_segments(nx_local);
-	
+
 	// Make J point to local cell [0][0]
 	current->buff_offset = gc[0][0] + (gc[1][0] * current->nrow_local); //offset not in bytes
 	current->J = current->J_buf + current->buff_offset;
-	
+
 	// Set cell sizes and box limits
-	for(int i = 0; i < NUM_DIMS; i++)
+	for (int i = 0; i < NUM_DIMS; i++)
 	{
 		current->box[i] = box[i];
 		current->dx[i] = box[i] / nx[i];
@@ -286,22 +289,20 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 	}
 
 	// Clear smoothing options
-	current -> smooth = (t_smooth) {
+	current->smooth = (t_smooth){
 		.xtype = NONE,
 		.ytype = NONE,
 		.xlevel = 0,
-		.ylevel = 0
-	};
+		.ylevel = 0};
 
 	// Initialize time information
-	current -> iter = 0;
-	current -> dt = dt;
-
+	current->iter = 0;
+	current->dt = dt;
 }
 
-void curr_set_smooth(t_current* current, t_smooth* smooth)
+void curr_set_smooth(t_current *current, t_smooth *smooth)
 {
-	if ( (smooth->xtype != NONE) && (smooth->xlevel <= 0) )
+	if ((smooth->xtype != NONE) && (smooth->xlevel <= 0))
 	{
 		fprintf(stdout, "Invalid smooth level along x direction\n");
 		exit(-1);
@@ -310,9 +311,8 @@ void curr_set_smooth(t_current* current, t_smooth* smooth)
 	{
 		create_current_kernel_smoothing_segments(current->nx_local, NUM_KERNEL_X_DIRS, kernel_x_directions, current->moving_window);
 	}
-	
 
-	if ( (smooth->ytype != NONE) && (smooth->ylevel <= 0) )
+	if ((smooth->ytype != NONE) && (smooth->ylevel <= 0))
 	{
 		fprintf(stdout, "Invalid smooth level along y direction\n");
 		exit(-1);
@@ -325,21 +325,21 @@ void curr_set_smooth(t_current* current, t_smooth* smooth)
 	current->smooth = *smooth;
 }
 
-void current_zero( t_current *current )
+void current_zero(t_current *current)
 {
 	// zero field
-	memset( current->J_buf, 0, current->J_size );
+	memset(current->J_buf, 0, current->J_size);
 }
 
 // OLD IMPLEMENTATION
-void current_update( t_current *current )
+void current_update(t_current *current)
 {
-	int i,j;
+	int i, j;
 	const int nrow = current->nrow_local; // Local nrow
-	t_vfld* restrict const J = current -> J;
-	
+	t_vfld *restrict const J = current->J;
+
 	// x
-	if ( ! current -> moving_window )
+	if (!current->moving_window)
 	{
 		// 	 j = -1			j < nx + 2
 		for (j = -gc[1][0]; j < current->nx_local[1] + gc[1][1]; j++)
@@ -348,20 +348,20 @@ void current_update( t_current *current )
 			//	 i = -1 		i < 2
 			for (i = -gc[0][0]; i < gc[0][1]; i++)
 			{
-				J[ i + j*nrow ].x += J[ current->nx_local[0] + i + j*nrow ].x;
-				J[ i + j*nrow ].y += J[ current->nx_local[0] + i + j*nrow ].y;
-				J[ i + j*nrow ].z += J[ current->nx_local[0] + i + j*nrow ].z;
+				J[i + j * nrow].x += J[current->nx_local[0] + i + j * nrow].x;
+				J[i + j * nrow].y += J[current->nx_local[0] + i + j * nrow].y;
+				J[i + j * nrow].z += J[current->nx_local[0] + i + j * nrow].z;
 			}
-			
+
 			// upper - just copy the values from the lower boundary
 			//	 i = -1		    i < 2
 			for (i = -gc[0][0]; i < gc[0][1]; i++)
 			{
-				J[ current->nx_local[0] + i + j*nrow ] = J[ i + j*nrow ];
+				J[current->nx_local[0] + i + j * nrow] = J[i + j * nrow];
 			}
 		}
 	}
-	
+
 	// y
 	//	 i = -1		   i < nx_local + 2
 	for (i = -gc[0][0]; i < current->nx_local[0] + gc[0][1]; i++)
@@ -370,49 +370,49 @@ void current_update( t_current *current )
 		//	 j = -1			j < 2
 		for (j = -gc[1][0]; j < gc[1][1]; j++)
 		{
-			J[ i + j*nrow ].x += J[ i + (current->nx_local[1] + j) * nrow ].x;
-			J[ i + j*nrow ].y += J[ i + (current->nx_local[1] + j) * nrow ].y;
-			J[ i + j*nrow ].z += J[ i + (current->nx_local[1] + j) * nrow ].z;
+			J[i + j * nrow].x += J[i + (current->nx_local[1] + j) * nrow].x;
+			J[i + j * nrow].y += J[i + (current->nx_local[1] + j) * nrow].y;
+			J[i + j * nrow].z += J[i + (current->nx_local[1] + j) * nrow].z;
 		}
-		
+
 		// upper - just copy the values from the lower boundary
 		//	 j = -1			j < 2
 		for (j = -gc[1][0]; j < gc[1][1]; j++)
 		{
-			J[ i + (current->nx_local[1] + j) * nrow ] = J[ i + j * nrow ];
+			J[i + (current->nx_local[1] + j) * nrow] = J[i + j * nrow];
 		}
 	}
 
 	// Smoothing (NOT USED ON WEIBEL)
-	current_smooth( current );
+	current_smooth(current);
 
 	// print_local_current(current);
 
-	current -> iter++;
+	current->iter++;
 }
 
 // Send current to neighbour procs
-void send_current(t_current* current)
+void send_current(t_current *current)
 {
 	const int nrow = current->nrow_local; // Local nrow
-	const t_vfld* restrict const J = current -> J;
+	const t_vfld *restrict const J = current->J;
 
 	// Make sure there are no uncompleted outgoing writes
-	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT, GASPI_BLOCK) );
+	SUCCESS_OR_DIE(gaspi_wait(Q_CURRENT, GASPI_BLOCK));
 
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !use_pediodic_boundaries(current->moving_window, dir) )
+		if (!use_pediodic_boundaries(current->moving_window, dir))
 			continue;
 
 		// printf("Sending current to dir %d, proc %d\n", dir, neighbour_rank[dir]); fflush(stdout);
 
 		const int num_columns = curr_send_size[dir][0];
-		const size_t column_size_bytes = num_columns * sizeof(t_vfld); // in bytes
+		const size_t row_size_bytes = num_columns * sizeof(t_vfld); // in bytes
 
 		const int starting_column = curr_cell_to_send_starting_coord[dir][0];
-		const int starting_row = 	curr_cell_to_send_starting_coord[dir][1];
+		const int starting_row = curr_cell_to_send_starting_coord[dir][1];
 
 		const int max_row = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
@@ -420,42 +420,42 @@ void send_current(t_current* current)
 		// Copy data to segment
 		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&current_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
+			memcpy(&current_segments[dir][copy_index], &J[starting_column + row * nrow], row_size_bytes);
 			copy_index += num_columns;
 		}
-		
+
 		// Sending to opposite direction segment, if I send current values to the proc to my RIGHT,
 		// I want those values to be written to the remote LEFT current segment
 		const gaspi_segment_id_t local_segment_id = DIR_TO_CURR_SEG_ID(dir);
 		const gaspi_segment_id_t remote_segment_id = DIR_TO_CURR_SEG_ID(OPPOSITE_DIR(dir));
 
-		const gaspi_size_t size = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
+		const gaspi_size_t size = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld);			   // in bytes
 		const gaspi_offset_t remote_offset = curr_send_size[dir][0] * curr_send_size[dir][1] * sizeof(t_vfld); // in bytes
 		const gaspi_offset_t local_offset = 0;
 
 		// Send data
-		SUCCESS_OR_DIE( gaspi_write_notify(
-			local_segment_id,		// The segment id where data is located.
-			local_offset, 			// The offset where the data is located.
-			neighbour_rank[dir],	// The rank where to write and notify.
-			remote_segment_id,		// The remote segment id to write the data to.
-			remote_offset,			// The remote offset where to write to.
-			size,					// The size of the data to write.
-			NOTIF_ID_CURRENT,		// The notification id to use.
-			1,						// The notification value used.
-			Q_CURRENT,				// The queue where to post the request.
-			GASPI_BLOCK				// Timeout in milliseconds.
-		));
+		SUCCESS_OR_DIE(gaspi_write_notify(
+			local_segment_id,	 // The segment id where data is located.
+			local_offset,		 // The offset where the data is located.
+			neighbour_rank[dir], // The rank where to write and notify.
+			remote_segment_id,	 // The remote segment id to write the data to.
+			remote_offset,		 // The remote offset where to write to.
+			size,				 // The size of the data to write.
+			NOTIF_ID_CURRENT,	 // The notification id to use.
+			1,					 // The notification value used.
+			Q_CURRENT,			 // The queue where to post the request.
+			GASPI_BLOCK			 // Timeout in milliseconds.
+			));
 	}
 }
 
 // Also applies current smoothing if necessary
-void wait_save_update_current(t_current* current)
+void wait_save_update_current(t_current *current)
 {
-	// printf("BEFORE CURRENT GC ADD\n"); fflush(stdout);
+	// printf("BEFORE CURRENT GC ADD\n");
 	// print_local_current(current);
 
-	t_vfld* restrict const J = current->J;
+	t_vfld *restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
 	char received_notif[NUM_ADJ];
@@ -470,7 +470,6 @@ void wait_save_update_current(t_current* current)
 		received_notif[dir] = !expecting_notif;
 		num_expected_notifs += expecting_notif;
 	}
-	
 
 	int num_received_notif = 0;
 	// While we have not received all the notifs we need
@@ -479,23 +478,23 @@ void wait_save_update_current(t_current* current)
 		int dir = 0;
 
 		// Get a dir that has an unprocessed write
-		while( 1 )
+		while (1)
 		{
 			// If we are expecting a notif from this dir
-			if ( !received_notif[dir] )
+			if (!received_notif[dir])
 			{
 				gaspi_notification_id_t id;
 				gaspi_return_t return_value;
 
 				// Test if the notification has arrived
-				SUCCESS_TIMEOUT_OR_DIE( return_value = gaspi_notify_waitsome(
-				DIR_TO_CURR_SEG_ID(dir),	// The segment id
-				NOTIF_ID_CURRENT,			// The notification id to wait for
-				1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
-				&id,						// Output parameter with the id of a received notification
-				GASPI_TEST					// Timeout in milliseconds, check if notification has arrived, do not block
-				));
-				
+				SUCCESS_TIMEOUT_OR_DIE(return_value = gaspi_notify_waitsome(
+										   DIR_TO_CURR_SEG_ID(dir), // The segment id
+										   NOTIF_ID_CURRENT,		// The notification id to wait for
+										   1,						// The number of notification ids this wait will accept, waiting for a specific write, so 1
+										   &id,						// Output parameter with the id of a received notification
+										   GASPI_TEST				// Timeout in milliseconds, check if notification has arrived, do not block
+										   ));
+
 				// If this notification has arrived
 				if (return_value == GASPI_SUCCESS)
 				{
@@ -504,18 +503,17 @@ void wait_save_update_current(t_current* current)
 
 					// Reset notification
 					gaspi_notification_t value;
-					SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_SEG_ID(dir), id, &value) );
+					SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_SEG_ID(dir), id, &value));
 
 					break;
 				}
 			}
-
 			// Try next dir
 			dir = (dir + 1) % NUM_ADJ;
 		}
-		
+
 		// Process received write
-		
+
 		// printf("Processing write from dir %d\n", dir); fflush(stdout);
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction
@@ -525,7 +523,6 @@ void wait_save_update_current(t_current* current)
 		const int max_column = 	curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
 		const int max_row = 	curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
-
 		int seg_index = curr_send_size[dir][0] * curr_send_size[dir][1];
 
 		for (int y = starting_row; y < max_row; y++)
@@ -534,9 +531,9 @@ void wait_save_update_current(t_current* current)
 			{
 				// printf("adding to cell x:%d y:%d, value.z:%f\n", x, y, current_segments[dir][seg_index].z); fflush(stdout);
 
-				J[x + y*nrow].x += current_segments[dir][seg_index].x;
-				J[x + y*nrow].y += current_segments[dir][seg_index].y;
-				J[x + y*nrow].z += current_segments[dir][seg_index].z;
+				J[x + y * nrow].x += current_segments[dir][seg_index].x;
+				J[x + y * nrow].y += current_segments[dir][seg_index].y;
+				J[x + y * nrow].z += current_segments[dir][seg_index].z;
 
 				seg_index++;
 			}
@@ -547,29 +544,29 @@ void wait_save_update_current(t_current* current)
 	// print_local_current(current);
 
 	// Smoothing
-	current_smooth( current );
+	current_smooth(current);
 
 	// printf("CURR AFTER SMOOTHING\n");
 	// print_local_current(current);
 
-	current -> iter++;
+	current->iter++;
 }
 
-void send_current_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
+void send_current_kernel_gc(t_current *current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
-	const t_vfld* restrict const J = current->J;
+	const t_vfld *restrict const J = current->J;
 
 	// Make sure it is safe to modify the segment data
-	SUCCESS_OR_DIE( gaspi_wait(Q_CURRENT_KERNEL, GASPI_BLOCK) );
+	SUCCESS_OR_DIE(gaspi_wait(Q_CURRENT_KERNEL, GASPI_BLOCK));
 
 	for (int dir_i = 0; dir_i < num_dirs; dir_i++)
 	{
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edges
-		if ( !use_pediodic_boundaries(moving_window, dir) )
+		if (!use_pediodic_boundaries(moving_window, dir))
 			continue;
 
 		const int num_columns = curr_kernel_size[dir][0];
@@ -590,11 +587,11 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		// If smoothing pass iteration num is odd, use alternative segment zone and corresponding notification id
 		if (smoothing_pass_iter % 2 == 1)
 		{
-			copy_index += 	curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
-							curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
+			copy_index += curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
+						  curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
 
-			remote_offset += 	curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
-								curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
+			remote_offset += curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
+							 curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
 
 			notification_id = NOTIF_ID_CURRENT_KERNEL_ODD;
 		}
@@ -615,41 +612,40 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 
 		gaspi_size_t size = curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld); // in bytes
 
-
 		// printf("sending kernel gc to dir %d iteration %d\n", dir, smoothing_pass_iter);
 		// printf("local_offset = %ld, size = %ld, remote_offset = %ld\n", local_offset, size, remote_offset); fflush(stdout);
 
 		// Send data
-		SUCCESS_OR_DIE( gaspi_write_notify(
-			local_segment_id,			// The segment id where data is located.
-			local_offset, 				// The offset where the data is located.
-			neighbour_rank[dir],		// The rank where to write and notify.
-			remote_segment_id,			// The remote segment id to write the data to.
-			remote_offset,				// The remote offset where to write to.
-			size,						// The size of the data to write.
-			notification_id,			// The notification id to use.
-			1,							// The notification value used.
-			Q_CURRENT_KERNEL,			// The queue where to post the request.
-			GASPI_BLOCK					// Timeout in milliseconds.
-		));
+		SUCCESS_OR_DIE(gaspi_write_notify(
+			local_segment_id,	 // The segment id where data is located.
+			local_offset,		 // The offset where the data is located.
+			neighbour_rank[dir], // The rank where to write and notify.
+			remote_segment_id,	 // The remote segment id to write the data to.
+			remote_offset,		 // The remote offset where to write to.
+			size,				 // The size of the data to write.
+			notification_id,	 // The notification id to use.
+			1,					 // The notification value used.
+			Q_CURRENT_KERNEL,	 // The queue where to post the request.
+			GASPI_BLOCK			 // Timeout in milliseconds.
+			));
 	}
 }
 
-void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
+void wait_save_kernel_gc(t_current *current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
 
-	t_vfld* restrict const J = current -> J;
+	t_vfld *restrict const J = current->J;
 
 	for (int dir_i = 0; dir_i < num_dirs; dir_i++)
 	{
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !use_pediodic_boundaries(moving_window, dir) )
+		if (!use_pediodic_boundaries(moving_window, dir))
 			continue;
-		
+
 		const int opposite_dir = OPPOSITE_DIR(dir);
 
 		const int starting_column = curr_kernel_write_coord[dir][0];
@@ -665,24 +661,24 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		// If smoothing pass iteration number is odd, use alternative segment zone and corresponding notification id
 		if (smoothing_pass_iter % 2 == 1)
 		{
-			copy_index += 	curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] + 
-							curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
+			copy_index += curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] +
+						  curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
 
 			notification_id = NOTIF_ID_CURRENT_KERNEL_ODD;
 		}
 
 		gaspi_notification_id_t id;
-		SUCCESS_OR_DIE( gaspi_notify_waitsome(
-		DIR_TO_CURR_KER_SEG_ID(dir),	// The segment id
-		notification_id,			// The notification id to wait for
-		1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
-		&id,						// Output parameter with the id of a received notification
-		GASPI_BLOCK					// Timeout in milliseconds, wait until write is completed
-		));
+		SUCCESS_OR_DIE(gaspi_notify_waitsome(
+			DIR_TO_CURR_KER_SEG_ID(dir), // The segment id
+			notification_id,			 // The notification id to wait for
+			1,							 // The number of notification ids this wait will accept, waiting for a specific write, so 1
+			&id,						 // Output parameter with the id of a received notification
+			GASPI_BLOCK					 // Timeout in milliseconds, wait until write is completed
+			));
 
 		gaspi_notification_t value;
-		SUCCESS_OR_DIE( gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value) );
-		
+		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
+
 		// printf("Received:\n");
 		// for (int i = copy_index; i < copy_index + starting_column + starting_ * ; i++)
 		// {
@@ -697,89 +693,92 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 	}
 }
 
-void current_report( const t_current *current, const char jc )
+void current_report(const t_current *current, const char jc)
 {
 	t_vfld *f;
 	float *buf, *p;
 	int i, j;
 	char vfname[3];
-		
+
 	// Pack the information
-	buf = malloc( current->nx[0]*current->nx[1]*sizeof(float) );
+	buf = malloc(current->nx[0] * current->nx[1] * sizeof(float));
 	p = buf;
 	f = current->J;
 	vfname[0] = 'J';
-	
-	switch (jc) {
-		case 0:
-			for( j = 0; j < current->nx[1]; j++) {
-				for ( i = 0; i < current->nx[0]; i++ ) {
-					p[i] = f[i].x;
-				}
-				p += current->nx[0];
-				f += current->nrow;
+
+	switch (jc)
+	{
+	case 0:
+		for (j = 0; j < current->nx[1]; j++)
+		{
+			for (i = 0; i < current->nx[0]; i++)
+			{
+				p[i] = f[i].x;
 			}
-			vfname[1] = '1';
-			break;
-		case 1:
-			for( j = 0; j < current->nx[1]; j++) {
-				for ( i = 0; i < current->nx[0]; i++ ) {
-					p[i] = f[i].y;
-				}
-				p += current->nx[0];
-				f += current->nrow;
+			p += current->nx[0];
+			f += current->nrow;
+		}
+		vfname[1] = '1';
+		break;
+	case 1:
+		for (j = 0; j < current->nx[1]; j++)
+		{
+			for (i = 0; i < current->nx[0]; i++)
+			{
+				p[i] = f[i].y;
 			}
-			vfname[1] = '2';
-			break;
-		case 2:
-			for( j = 0; j < current->nx[1]; j++) {
-				for ( i = 0; i < current->nx[0]; i++ ) {
-					p[i] = f[i].z;
-				}
-				p += current->nx[0];
-				f += current->nrow;
+			p += current->nx[0];
+			f += current->nrow;
+		}
+		vfname[1] = '2';
+		break;
+	case 2:
+		for (j = 0; j < current->nx[1]; j++)
+		{
+			for (i = 0; i < current->nx[0]; i++)
+			{
+				p[i] = f[i].z;
 			}
-			vfname[1] = '3';
-			break;
+			p += current->nx[0];
+			f += current->nrow;
+		}
+		vfname[1] = '3';
+		break;
 	}
 	vfname[2] = 0;
-	
+
 	t_zdf_grid_axis axis[2];
-	axis[0] = (t_zdf_grid_axis) {
+	axis[0] = (t_zdf_grid_axis){
 		.min = 0.0,
 		.max = current->box[0],
 		.label = "x_1",
-		.units = "c/\\omega_p"
-	};
+		.units = "c/\\omega_p"};
 
-	axis[1] = (t_zdf_grid_axis) {
+	axis[1] = (t_zdf_grid_axis){
 		.min = 0.0,
 		.max = current->box[1],
 		.label = "x_2",
-		.units = "c/\\omega_p"
-	};
+		.units = "c/\\omega_p"};
 
 	t_zdf_grid_info info = {
 		.ndims = 2,
 		.label = vfname,
 		.units = "e \\omega_p^2 / c",
-		.axis = axis
-	};
+		.axis = axis};
 
 	info.nx[0] = current->nx[0];
 	info.nx[1] = current->nx[1];
 
 	t_zdf_iteration iter = {
 		.n = current->iter,
-		.t = current -> iter * current -> dt,
-		.time_units = "1/\\omega_p"
-	};
+		.t = current->iter * current->dt,
+		.time_units = "1/\\omega_p"};
 
-	zdf_save_grid( buf, &info, &iter, "/home/bruno/zpic-out/gaspi/CURRENT" );
-	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/gaspi/CURRENT" );  
-	
+	zdf_save_grid(buf, &info, &iter, "/home/bruno/zpic-out/gaspi/CURRENT");
+	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/gaspi/CURRENT" );
+
 	// free local data
-	free( buf );
+	free(buf);
 }
 
 /*
@@ -787,39 +786,39 @@ void current_report( const t_current *current, const char jc )
  *  Gets the value of the compensator kernel for an n pass binomial kernel
  */
 
-void get_smooth_comp( int n, t_fld* sa, t_fld* sb)
+void get_smooth_comp(int n, t_fld *sa, t_fld *sb)
 {
 	t_fld a, b, total;
 
 	a = -1;
-	b = (4.0 + 2.0*n)/n;
-	total = 2*a + b;
+	b = (4.0 + 2.0 * n) / n;
+	total = 2 * a + b;
 
 	*sa = a / total;
 	*sb = b / total;
 }
 
-inline void kernel_gc_update(t_current* current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
+inline void kernel_gc_update(t_current *current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
 {
 	send_current_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 
 	wait_save_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 }
 
-void kernel_x( t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
+void kernel_x(t_current *const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
 	int i, j;
-	t_vfld* restrict const J = current->J;
+	t_vfld *restrict const J = current->J;
 	const int nrow = current->nrow_local; // local nrow
 
-	for( j = 0; j < current->nx_local[1]; j++)
-	{	
+	for (j = 0; j < current->nx_local[1]; j++)
+	{
 		int idx = j * nrow;
 
-		t_vfld fl = J[idx-1];
-		t_vfld f0 = J[idx  ];
+		t_vfld fl = J[idx - 1];
+		t_vfld f0 = J[idx];
 
-		for( i = 0; i < current->nx_local[0]; i++)
+		for (i = 0; i < current->nx_local[0]; i++)
 		{
 			t_vfld fu = J[idx + i + 1];
 
@@ -834,7 +833,6 @@ void kernel_x( t_current* const current, const t_fld sa, const t_fld sb, const i
 			fl = f0;
 			f0 = fu;
 		}
-
 	}
 
 	// Update x boundaries
@@ -844,31 +842,30 @@ void kernel_x( t_current* const current, const t_fld sa, const t_fld sb, const i
 	// print_local_current(current);
 }
 
-void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
+void kernel_y(t_current *const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
-	t_vfld flbuf[ current->nx[0] ];
-	t_vfld* restrict const J = current->J;
+	t_vfld flbuf[current->nx[0]];
+	t_vfld *restrict const J = current->J;
 	const int nrow = current->nrow;
 
 	int i, j;
 
 	// buffer lower row
-	for( i = 0; i < current -> nx[0]; i++)
+	for (i = 0; i < current->nx[0]; i++)
 	{
 		flbuf[i] = J[i - nrow];
 	}
 
-
-	for( j = 0; j < current -> nx[1]; j++)
+	for (j = 0; j < current->nx[1]; j++)
 	{
 		int idx = j * nrow;
 
-		for( i = 0; i < current -> nx[0]; i++)
+		for (i = 0; i < current->nx[0]; i++)
 		{
 			// Get lower, central and upper values
 			t_vfld fl = flbuf[i];
-			t_vfld f0 = J[ idx + i ];
-			t_vfld fu = J[ idx + i + nrow ];
+			t_vfld f0 = J[idx + i];
+			t_vfld fu = J[idx + i + nrow];
 
 			// Store the value that will be overritten for use in the next row
 			flbuf[i] = f0;
@@ -885,14 +882,13 @@ void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const in
 	}
 
 	// Update y boundaries
-	kernel_gc_update( current, NUM_KERNEL_Y_DIRS, kernel_y_directions, smoothing_pass_iter);
+	kernel_gc_update(current, NUM_KERNEL_Y_DIRS, kernel_y_directions, smoothing_pass_iter);
 
 	// printf("AFTER Y KERNEL\n");
 	// print_local_current(current);
 }
 
-
-void current_smooth( t_current* const current )
+void current_smooth(t_current *const current)
 {
 	// filter kernel [sa, sb, sa]
 	t_fld sa, sb;
@@ -900,39 +896,40 @@ void current_smooth( t_current* const current )
 	int i;
 
 	// x-direction filtering
-	if ( current->smooth.xtype != NONE )
+	if (current->smooth.xtype != NONE)
 	{
 		// binomial filter
-		sa = 0.25; sb = 0.5;
-		for( i = 0; i < current->smooth.xlevel; i++)
+		sa = 0.25;
+		sb = 0.5;
+		for (i = 0; i < current->smooth.xlevel; i++)
 		{
-			kernel_x( current, 0.25, 0.5, i);
+			kernel_x(current, 0.25, 0.5, i);
 		}
 
 		// Compensator
-		if ( current->smooth.xtype == COMPENSATED )
+		if (current->smooth.xtype == COMPENSATED)
 		{
-			get_smooth_comp( current->smooth.xlevel, &sa, &sb );
-			kernel_x( current, sa, sb, i);
+			get_smooth_comp(current->smooth.xlevel, &sa, &sb);
+			kernel_x(current, sa, sb, i);
 		}
 	}
 
 	// y-direction filtering
-	if ( current->smooth.ytype != NONE )
+	if (current->smooth.ytype != NONE)
 	{
 		// binomial filter
-		sa = 0.25; sb = 0.5;
-		for( i = 0; i < current->smooth.xlevel; i++)
+		sa = 0.25;
+		sb = 0.5;
+		for (i = 0; i < current->smooth.xlevel; i++)
 		{
-			kernel_y( current, 0.25, 0.5, i);
+			kernel_y(current, 0.25, 0.5, i);
 		}
 
 		// Compensator
-		if ( current->smooth.ytype == COMPENSATED )
+		if (current->smooth.ytype == COMPENSATED)
 		{
-			get_smooth_comp( current->smooth.ylevel, &sa, &sb );
-			kernel_y( current, sa, sb, i);
+			get_smooth_comp(current->smooth.ylevel, &sa, &sb);
+			kernel_y(current, sa, sb, i);
 		}
 	}
 }
-

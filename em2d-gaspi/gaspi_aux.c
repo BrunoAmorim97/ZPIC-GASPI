@@ -35,7 +35,7 @@ void create_dims(int num_procs)
 
 int* get_factors(int num, int* num_factors)
 {
-	if(num  < 2)
+	if(num < 2)
 	{
 		(*num_factors) = 0;
 		return NULL;
@@ -54,9 +54,8 @@ int* get_factors(int num, int* num_factors)
 		factors[i++] = 2;
 	}
 
-	int d;
 	// occurances of uneven primes up to sqrt(num)
-	for(d = 3; (num > 1) && (d <= num_sqrt); d += 2)
+	for(int d = 3; (num > 1) && (d <= num_sqrt); d += 2)
 	{
 		while((num % d) == 0)
 		{
@@ -110,7 +109,7 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 		proc_block_high[1] = BLOCK_HIGH(proc_coords[1], dims[1], nx[1]);
 
 		proc_block_size[0] = BLOCK_SIZE(proc_coords[0], dims[0], nx[0]);
-		proc_block_size[1] =  BLOCK_SIZE(proc_coords[1], dims[1], nx[1]);
+		proc_block_size[1] = BLOCK_SIZE(proc_coords[1], dims[1], nx[1]);
 
 		// printf("proc low x:%d y:%d\n", proc_block_low[0], proc_block_low[1]);
 		// printf("proc high x:%d y:%d\n", proc_block_high[0], proc_block_high[1]);
