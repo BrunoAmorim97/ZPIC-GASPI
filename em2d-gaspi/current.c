@@ -395,6 +395,7 @@ void current_update(t_current *current)
 void send_current(t_current *current)
 {
 	const int nrow = current->nrow_local; // Local nrow
+
 	const t_vfld *restrict const J = current->J;
 
 	// Make sure there are no uncompleted outgoing writes
