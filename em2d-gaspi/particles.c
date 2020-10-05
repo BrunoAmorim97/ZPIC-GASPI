@@ -973,11 +973,8 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 	// Check if segment size is respected before sending
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		if (proc_rank == 1)
-		{
-			printf("Sending %5d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], OPPOSITE_DIR(dir));
-			printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
-		}
+		// printf("Sending %5d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], OPPOSITE_DIR(dir));
+		// printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
 
 		assert(part_seg_write_index[dir] < part_send_seg_size[dir]);
 	}
