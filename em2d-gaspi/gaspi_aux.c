@@ -35,7 +35,7 @@ void create_dims(int num_procs)
 
 int* get_factors(int num, int* num_factors)
 {
-	if(num  < 2)
+	if(num < 2)
 	{
 		(*num_factors) = 0;
 		return NULL;
@@ -54,9 +54,8 @@ int* get_factors(int num, int* num_factors)
 		factors[i++] = 2;
 	}
 
-	int d;
 	// occurances of uneven primes up to sqrt(num)
-	for(d = 3; (num > 1) && (d <= num_sqrt); d += 2)
+	for(int d = 3; (num > 1) && (d <= num_sqrt); d += 2)
 	{
 		while((num % d) == 0)
 		{
@@ -110,7 +109,7 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 		proc_block_high[1] = BLOCK_HIGH(proc_coords[1], dims[1], nx[1]);
 
 		proc_block_size[0] = BLOCK_SIZE(proc_coords[0], dims[0], nx[0]);
-		proc_block_size[1] =  BLOCK_SIZE(proc_coords[1], dims[1], nx[1]);
+		proc_block_size[1] = BLOCK_SIZE(proc_coords[1], dims[1], nx[1]);
 
 		// printf("proc low x:%d y:%d\n", proc_block_low[0], proc_block_low[1]);
 		// printf("proc high x:%d y:%d\n", proc_block_high[0], proc_block_high[1]);
@@ -179,4 +178,25 @@ inline char use_pediodic_boundaries(const char moving_window, const int dir)
 		return 0;
 	
 	return 1;
+}
+
+// returns the number of dirs that this proc will receive notifs from
+inline int get_num_incoming_notifs(const char moving_window)
+{
+	// On static window simulations
+	if ( !moving_window )
+		// will receive cell data from every dir
+		return NUM_ADJ;
+
+	// If proc is on both the right and left edges of the simulation space
+	if ( (proc_coords[0] == 0) && (proc_coords[0] == dims[0] - 1) )
+		// will only receive cell data from UP and DOWN dirs
+		return NUM_ADJ - 6;
+	
+	// If proc is either on the left or right edge of the simulation space
+	if ( (proc_coords[0] == 0) || (proc_coords[0] == dims[0] - 1) )
+		// will not receive data from the dirs on the edge of the simulation space
+		return NUM_ADJ - 3;
+	
+	return NUM_ADJ;
 }

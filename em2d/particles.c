@@ -57,9 +57,9 @@ void spec_set_u( t_species* spec, const int start, const int end )
 	int i;    
 
 	for (i = start; i <= end; i++) {
-		spec->part[i].ux = spec -> ufl[0] + spec -> uth[0] * rand_norm(); 
-		spec->part[i].uy = spec -> ufl[1] + spec -> uth[1] * rand_norm(); 
-		spec->part[i].uz = spec -> ufl[2] + spec -> uth[2] * rand_norm();
+		spec->part[i].ux = spec->ufl[0] + spec->uth[0] * rand_norm(); 
+		spec->part[i].uy = spec->ufl[1] + spec->uth[1] * rand_norm(); 
+		spec->part[i].uz = spec->ufl[2] + spec->uth[2] * rand_norm();
 	}
 
 /* 	int index = 0;
@@ -130,15 +130,15 @@ void spec_set_x( t_species* spec, const int range[][2] )
 		}
 	}
 
-	ip = spec -> np;
+	ip = spec->np;
 	
 	// Set position of particles in the specified grid range according to the density profile
-	switch ( spec -> density.type )
+	switch ( spec->density.type )
 	{
 	case STEP: // Step like density profile
 		
 		// Get edge position normalized to cell size;
-		start = spec -> density.start / spec -> dx[0] - spec -> n_move;
+		start = spec->density.start / spec->dx[0] - spec->n_move;
 
 		for (j = range[1][0]; j <= range[1][1]; j++)
 		{
@@ -204,7 +204,7 @@ void spec_set_x( t_species* spec, const int range[][2] )
 		}
 	}
 	
-	spec -> np = ip;
+	spec->np = ip;
 	
 	free(poscell);
 	
@@ -213,23 +213,23 @@ void spec_set_x( t_species* spec, const int range[][2] )
 void spec_inject_particles( t_species* spec, const int range[][2] )
 {
 	// printf("===INJECTING PARTICLES===\n"); fflush(stdout);
-	int start = spec -> np;
+	int start = spec->np;
 
 	// Get maximum number of particles to inject
 	int np_inj = ( range[0][1] - range[0][0] + 1 ) * ( range[1][1] - range[1][0] + 1 ) * 
-				 spec -> ppc[0] * spec -> ppc[1];
+				 spec->ppc[0] * spec->ppc[1];
 
 	// Check if buffer is large enough and if not reallocate
-	if ( spec -> np + np_inj > spec -> np_max ) {
-		spec -> np_max = (( spec -> np_max + np_inj )/1024 + 1) * 1024;
-		spec -> part = realloc( (void*) spec -> part, spec -> np_max * sizeof(t_part) );
+	if ( spec->np + np_inj > spec->np_max ) {
+		spec->np_max = (( spec->np_max + np_inj )/1024 + 1) * 1024;
+		spec->part = realloc( (void*) spec->part, spec->np_max * sizeof(t_part) );
 	}
 
 	// Set particle positions
 	spec_set_x( spec, range );
 	
 	// Set momentum of injected particles
-	spec_set_u( spec, start, spec -> np - 1 );
+	spec_set_u( spec, start, spec->np - 1 );
 
 }
 
@@ -241,7 +241,7 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 	int i, npc;
 	
 	// Species name
-	strncpy( spec -> name, name, MAX_SPNAME_LEN );
+	strncpy( spec->name, name, MAX_SPNAME_LEN );
 	
 	npc = 1;
 	// Store species data
@@ -254,10 +254,10 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 		spec->dx[i] = box[i] / nx[i];
 	}
 	
-	spec -> m_q = m_q;
-	spec -> q = copysign( 1.0f, m_q ) / npc;
+	spec->m_q = m_q;
+	spec->q = copysign( 1.0f, m_q ) / npc;
 
-	spec -> dt = dt;
+	spec->dt = dt;
 	
 	// Initialize particle buffer
 	spec->np_max = 0;
@@ -266,38 +266,38 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 	
 	// Initialize density profile
 	if ( density ) {
-		spec -> density = *density;
-		if ( spec -> density.n == 0. ) spec -> density.n = 1.0;
+		spec->density = *density;
+		if ( spec->density.n == 0. ) spec->density.n = 1.0;
 	} else {
 		// Default values
-		spec -> density = (t_density) { .type = UNIFORM, .n = 1.0 };
+		spec->density = (t_density) { .type = UNIFORM, .n = 1.0 };
 	}
 
 	// Initialize temperature profile
 	if ( ufl ) {
-		for(i=0; i<3; i++) spec -> ufl[i] = ufl[i];
+		for(i=0; i<3; i++) spec->ufl[i] = ufl[i];
 	} else {
-		for(i=0; i<3; i++) spec -> ufl[i] = 0;
+		for(i=0; i<3; i++) spec->ufl[i] = 0;
 	}
 
 	// Density multiplier
-	spec ->q *= fabsf( spec -> density.n );
+	spec ->q *= fabsf( spec->density.n );
 
 	if ( uth ) {
-		for(i=0; i<3; i++) spec -> uth[i] = uth[i];
+		for(i=0; i<3; i++) spec->uth[i] = uth[i];
 	} else {
-		for(i=0; i<3; i++) spec -> uth[i] = 0;
+		for(i=0; i<3; i++) spec->uth[i] = 0;
 	}
 
 	// Reset iteration number
-	spec -> iter = 0;
+	spec->iter = 0;
 
 	// Reset moving window information
-	spec -> moving_window = 0;
-	spec -> n_move = 0;
+	spec->moving_window = 0;
+	spec->n_move = 0;
 
 	// Inject initial particle distribution
-	spec -> np = 0;
+	spec->np = 0;
 	
 	const int range[][2] = {{0, nx[0]-1},
 							{0, nx[1]-1}};
@@ -309,7 +309,7 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 void spec_move_window( t_species *spec )
 {
 	if ((spec->iter * spec->dt ) > (spec->dx[0] * (spec->n_move + 1)))
-	{    
+	{
 		// shift all particles left
 		// particles leaving the box will be removed later
 		int i;
@@ -319,7 +319,7 @@ void spec_move_window( t_species *spec )
 		}
 
 		// Increase moving window counter
-		spec -> n_move++;
+		spec->n_move++;
 
 		// Inject particles in the right edge of the simulation box
 		const int range[][2] = {{spec->nx[0]-1,spec->nx[0]-1},
@@ -388,8 +388,8 @@ void dep_current_esk( int ix0, int iy0, int di, int dj,
 	}
 		
 	// jx
-	const int nrow = current -> nrow;
-	t_vfld* restrict const J = current -> J;
+	const int nrow = current->nrow;
+	t_vfld* restrict const J = current->J;
 	
 	for (j=0; j<4; j++) {
 		t_fld c;
@@ -540,8 +540,8 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 
 	// Deposit virtual particle currents
 	int k;
-	const int nrow = current -> nrow;
-	t_vfld* restrict const J = current -> J;
+	const int nrow = current->nrow;
+	t_vfld* restrict const J = current->J;
 
 	for (k = 0; k < vnp; k++)
 	{
@@ -650,16 +650,16 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 	uint64_t t0;
 	t0 = timer_ticks();
 	
-	const t_part_data tem   = 0.5 * spec->dt/spec -> m_q;
+	const t_part_data tem   = 0.5 * spec->dt/spec->m_q;
 	const t_part_data dt_dx = spec->dt / spec->dx[0]; 
 	const t_part_data dt_dy = spec->dt / spec->dx[1]; 
 
 	// Auxiliary values for current deposition
-	qnx = spec -> q *  spec->dx[0] / spec->dt;
-	qny = spec -> q *  spec->dx[1] / spec->dt;
+	qnx = spec->q *  spec->dx[0] / spec->dt;
+	qny = spec->q *  spec->dx[1] / spec->dt;
 
-	const int nx0 = spec -> nx[0];
-	const int nx1 = spec -> nx[1];
+	const int nx0 = spec->nx[0];
+	const int nx1 = spec->nx[1];
 
 	// Advance particles
 	for (i = 0; i < spec->np; i++)
@@ -676,12 +676,12 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		float dx, dy;
 
 		// Load particle momenta
-		ux = spec -> part[i].ux;
-		uy = spec -> part[i].uy;
-		uz = spec -> part[i].uz;
+		ux = spec->part[i].ux;
+		uy = spec->part[i].uy;
+		uz = spec->part[i].uz;
 
 		// interpolate fields ONLY CHANGES LOCAL VARIABLES
-		interpolate_fld( emf -> E, emf -> B, emf -> nrow, &spec -> part[i], &Ep, &Bp );
+		interpolate_fld( emf->E, emf->B, emf->nrow, &spec->part[i], &Ep, &Bp );
 		
 		// advance u using Boris scheme
 		Ep.x *= tem;
@@ -721,9 +721,9 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		uz = utz + Ep.z;
 		
 		// Store new momenta, CHANGING PARTICLE DATA
-		spec -> part[i].ux = ux;
-		spec -> part[i].uy = uy;
-		spec -> part[i].uz = uz;
+		spec->part[i].ux = ux;
+		spec->part[i].uy = uy;
+		spec->part[i].uz = uz;
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
@@ -731,8 +731,8 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		dx = dt_dx * rg * ux;
 		dy = dt_dy * rg * uy;
 		
-		x1 = spec -> part[i].x + dx; 
-		y1 = spec -> part[i].y + dy;
+		x1 = spec->part[i].x + dx; 
+		y1 = spec->part[i].y + dy;
 		
 		di = ltrim(x1);
 		dj = ltrim(y1);
@@ -743,30 +743,30 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		qvz = spec->q * uz * rg;
 		
 		// deposit current using Eskirepov method
-		// dep_current_esk( spec -> part[i].ix, spec -> part[i].iy, di, dj, 
-		// 				 spec -> part[i].x, spec -> part[i].y, x1, y1, 
+		// dep_current_esk( spec->part[i].ix, spec->part[i].iy, di, dj, 
+		// 				 spec->part[i].x, spec->part[i].y, x1, y1, 
 		// 				 qnx, qny, qvz, 
 		// 				 current );
 
 		// CHANGES GLOBAL CURRENT MATRIX (ADDITION)
-		dep_current_zamb( spec -> part[i].ix, spec -> part[i].iy, di, dj, 
-						 spec -> part[i].x, spec -> part[i].y, dx, dy, 
+		dep_current_zamb( spec->part[i].ix, spec->part[i].iy, di, dj, 
+						 spec->part[i].x, spec->part[i].y, dx, dy, 
 						 qnx, qny, qvz, 
 						 current );
 
 		// Store results
-		spec -> part[i].x = x1;
-		spec -> part[i].y = y1;
-		spec -> part[i].ix += di;
-		spec -> part[i].iy += dj;
+		spec->part[i].x = x1;
+		spec->part[i].y = y1;
+		spec->part[i].ix += di;
+		spec->part[i].iy += dj;
 	}
 
 	// Advance internal iteration number
-	spec -> iter += 1;
-	_spec_npush += spec -> np;
+	spec->iter += 1;
+	_spec_npush += spec->np;
 
 	// Check for particles leaving the box
-	if ( spec -> moving_window )
+	if ( spec->moving_window )
 	{
 
 		// Move simulation window if needed
@@ -858,8 +858,8 @@ void spec_deposit_charge( const t_species* spec, t_part_data* charge )
 	int i,j;
 	
 	// Charge array is expected to have 1 guard cell at the upper boundary
-	int nrow = spec -> nx[0] + 1;
-	t_part_data q = spec -> q;
+	int nrow = spec->nx[0] + 1;
+	t_part_data q = spec->q;
 	
 	for (i=0; i<spec->np; i++) {
 		int idx = spec->part[i].ix + nrow*spec->part[i].iy;
@@ -877,18 +877,18 @@ void spec_deposit_charge( const t_species* spec, t_part_data* charge )
 	// Correct boundary values
 
 	// x
-	if ( ! spec -> moving_window )
+	if ( ! spec->moving_window )
 	{
-		for (j = 0; j < spec -> nx[1] + 1; j++)
+		for (j = 0; j < spec->nx[1] + 1; j++)
 		{
-			charge[ 0 + j*nrow ] += charge[ spec -> nx[0] + j*nrow ];
+			charge[ 0 + j*nrow ] += charge[ spec->nx[0] + j*nrow ];
 		}
 	}
 	
 	// y - Periodic boundaries
 	for (i = 0; i < spec->nx[0]+1; i++)
 	{
-		charge[ i + 0 ] += charge[ i + spec -> nx[1] * nrow ];
+		charge[ i + 0 ] += charge[ i + spec->nx[1] * nrow ];
 	}
 
 }
@@ -918,14 +918,14 @@ void spec_rep_particles( const t_species *spec )
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
 	// Allocate buffer for positions
 	
 	t_zdf_part_info info = {
-		.name = (char *) spec -> name,
+		.name = (char *) spec->name,
 		.nquants = 5,
 		.quants = (char **) quants,
 		.units = (char **) units,
@@ -936,29 +936,29 @@ void spec_rep_particles( const t_species *spec )
 	zdf_part_file_open( &part_file, &info, &iter, "PARTICLES" );
 
 	// Add positions and generalized velocities
-	size_t size = ( spec -> np ) * sizeof( float );
+	size_t size = ( spec->np ) * sizeof( float );
 	float* data = malloc( size );
 
 	// x1
 	for( i = 0; i < spec ->np; i++ )
-		data[i] = ( spec -> n_move + spec -> part[i].ix + spec -> part[i].x ) * spec -> dx[0];
+		data[i] = ( spec->n_move + spec->part[i].ix + spec->part[i].x ) * spec->dx[0];
 	zdf_part_file_add_quant( &part_file, quants[0], data, spec ->np );
 
 	// x2
 	for( i = 0; i < spec ->np; i++ )
-		data[i] = (spec -> part[i].iy + spec -> part[i].y ) * spec -> dx[1];
+		data[i] = (spec->part[i].iy + spec->part[i].y ) * spec->dx[1];
 	zdf_part_file_add_quant( &part_file, quants[1], data, spec ->np );
 
 	// ux
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].ux;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].ux;
 	zdf_part_file_add_quant( &part_file, quants[2], data, spec ->np );
 
 	// uy
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].uy;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].uy;
 	zdf_part_file_add_quant( &part_file, quants[3], data, spec ->np );
 
 	// uz
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].uz;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].uz;
 	zdf_part_file_add_quant( &part_file, quants[4], data, spec ->np );
 
 	free( data );
@@ -974,7 +974,7 @@ void spec_rep_charge( const t_species *spec )
 	int i, j;
 	
 	// Add 1 guard cell to the upper boundary
-	size = ( spec -> nx[0] + 1 ) * ( spec -> nx[1] + 1 ) * sizeof( t_part_data );
+	size = ( spec->nx[0] + 1 ) * ( spec->nx[1] + 1 ) * sizeof( t_part_data );
 	charge = malloc( size );
 	memset( charge, 0, size );
 	
@@ -982,7 +982,7 @@ void spec_rep_charge( const t_species *spec )
 	spec_deposit_charge( spec, charge );
 	
 	// Compact the data to save the file (throw away guard cells)
-	size = ( spec -> nx[0] ) * ( spec -> nx[1] );
+	size = ( spec->nx[0] ) * ( spec->nx[1] );
 	buf = malloc( size * sizeof( float ) );
 	
 	b = buf;
@@ -1024,7 +1024,7 @@ void spec_rep_charge( const t_species *spec )
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
@@ -1042,23 +1042,23 @@ void spec_pha_axis( const t_species *spec, int i0, int np, int quant, float *axi
 	switch (quant) {
 		case X1:
 			for (i = 0; i < np; i++) 
-				axis[i] = ( spec -> part[i0+i].x + spec -> part[i0+i].ix ) * spec -> dx[0];
+				axis[i] = ( spec->part[i0+i].x + spec->part[i0+i].ix ) * spec->dx[0];
 			break;
 		case X2:
 			for (i = 0; i < np; i++) 
-				axis[i] = ( spec -> part[i0+i].y + spec -> part[i0+i].iy ) * spec -> dx[1];
+				axis[i] = ( spec->part[i0+i].y + spec->part[i0+i].iy ) * spec->dx[1];
 			break;
 		case U1:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].ux;
+				axis[i] = spec->part[i0+i].ux;
 			break;
 		case U2:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].uy;
+				axis[i] = spec->part[i0+i].uy;
 			break;
 		case U3:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].uz;
+				axis[i] = spec->part[i0+i].uz;
 			break;
 	}
 }
@@ -1193,7 +1193,7 @@ void spec_rep_pha( const t_species *spec, const int rep_type,
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
