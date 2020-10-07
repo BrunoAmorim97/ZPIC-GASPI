@@ -493,7 +493,7 @@ void wait_save_update_current(t_current *current)
 										   NOTIF_ID_CURRENT,		// The notification id to wait for
 										   1,						// The number of notification ids this wait will accept, waiting for a specific write, so 1
 										   &id,						// Output parameter with the id of a received notification
-										   GASPI_TEST				// Timeout in milliseconds, check if notification has arrived, do not block
+										   GASPI_BLOCK				// Timeout
 										   ));
 
 				// If this notification has arrived
@@ -539,6 +539,9 @@ void wait_save_update_current(t_current *current)
 				seg_index++;
 			}
 		}
+
+		// next dir
+		dir = (dir + 1) % NUM_ADJ;
 	}
 
 	// printf("AFTER CURRENT GC ADD\n");

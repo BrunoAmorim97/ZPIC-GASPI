@@ -1102,6 +1102,11 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 		spec->part[i].ux = ux;
 		spec->part[i].uy = uy;
 		spec->part[i].uz = uz;
+
+		// if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
+		// {
+		// 	continue;
+		// }
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
