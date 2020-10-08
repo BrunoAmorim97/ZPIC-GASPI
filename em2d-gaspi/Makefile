@@ -1,6 +1,6 @@
 # GCC options
 CC = mpicc
-CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation #-O3
+CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation -O3
 
 # Intel icc compiler
 #CC = icc
@@ -10,7 +10,7 @@ CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation #-O3
 # CFLAGS += -g -ggdb
 
 # gprof
-CFLAGS += -pg
+# CFLAGS += -pg
 
 GPI2_HOME = /home/bruno/GPI-2-MPI
 INCLUDE_DIR += $(GPI2_HOME)/include
