@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "success_or_die.h"
+#include "success_or_die_fast.h"
 
 #define NUM_DIMS 2
 #define ROOT 0

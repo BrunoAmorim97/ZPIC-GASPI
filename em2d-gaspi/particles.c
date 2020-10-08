@@ -824,7 +824,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 
 // get the direction from which the particle left the proc zone, based on its cell coordinates
 // If particle does no leave this proc, return -1
-inline int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
+/*inline*/ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
 {
 	const int ix = part_pointer->ix;
 	const int iy = part_pointer->iy;
@@ -869,7 +869,7 @@ inline int get_part_seg_direction(const t_part* const part_pointer, const int nx
 }
 
 // Correct particle coords to coords relative to the new proc
-inline void correct_coords(t_part* const part_pointer, const int dir)
+/*inline*/ void correct_coords(t_part* const part_pointer, const int dir)
 {
 	// Correct part x cell coord
 	// If particle leaves through the left border

@@ -170,7 +170,7 @@ double emf_time( void )
 }
 
 // size_x moving window iterations difference to normal iterations, perspective of the sender
-inline int get_moving_iter_size_x_diff(const int dir)
+/*inline*/ int get_moving_iter_size_x_diff(const int dir)
 {
 	/* 
 	int moving_size_diffs[NUM_ADJ][NUM_DIMS] = // {size_diff_x, size_diff_y}
@@ -188,7 +188,7 @@ inline int get_moving_iter_size_x_diff(const int dir)
 }
 
 // starting_x moving window iterations difference to normal iterations, perspective of the receiver
-inline int get_moving_iter_starting_write_x_diff(const int dir)
+/*inline*/ int get_moving_iter_starting_write_x_diff(const int dir)
 {
 	/*
 	int moving_starting_write_coord_diffs[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
@@ -231,7 +231,7 @@ if (moving_window)
 }*/
 
 // x_size normal iterations difference to normal iterations on moving window simulations
-inline int get_moving_window_edge_proc_size_x_diff(const int dir)
+/*inline*/ int get_moving_window_edge_proc_size_x_diff(const int dir)
 {	
 	if ( dir == DOWN || dir == UP )
 	{
@@ -251,7 +251,7 @@ inline int get_moving_window_edge_proc_size_x_diff(const int dir)
 }
 
 // starting send/write coord normal iterations difference on moving window simulations
-inline int get_moving_window_edge_proc_coord_x_diff(const int dir)
+/*inline*/ int get_moving_window_edge_proc_coord_x_diff(const int dir)
 {
 	if ( dir == DOWN || dir == UP )
 	{

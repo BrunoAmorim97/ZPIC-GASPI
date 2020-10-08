@@ -118,7 +118,7 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 }
 
 // periodic boundary enforcer. If a coord leaves its allowed range, enforce a periodic boundary
-inline int periodic_coord(int coord, int coord_max)
+/*inline*/ int periodic_coord(int coord, int coord_max)
 {
 	if(coord < 0)
 		return coord + coord_max;
@@ -163,7 +163,7 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 }
 
 // returns 1 if this proc can send/receive data to/from neighbour at direction dir, 0 otherwise
-inline char use_pediodic_boundaries(const char moving_window, const int dir)
+/*inline*/ char use_pediodic_boundaries(const char moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )
@@ -181,7 +181,7 @@ inline char use_pediodic_boundaries(const char moving_window, const int dir)
 }
 
 // returns the number of dirs that this proc will receive notifs from
-inline int get_num_incoming_notifs(const char moving_window)
+/*inline*/ int get_num_incoming_notifs(const char moving_window)
 {
 	// On static window simulations
 	if ( !moving_window )
