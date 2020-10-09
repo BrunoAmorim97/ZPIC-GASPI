@@ -90,13 +90,16 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation *sim)
 	gaspi_size_t size;
 	gaspi_pointer_t array;
 
-	// Create the particle segments, segments are created with size*2 because they are both send and receive segments
+	// Create the particle segments, segments are created with size * 2 because they are both send and receive segments,
+	// * 2 so that we have different zones depending on the iteration number, to prevent overwriting
+	// Segment will be used as follows:
+	// Segment => 	[Particle even Send zone, Particle even Receive zone, Particle odd Send zone, Particle odd Receive zone]
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		size = sizes[dir];
 		part_send_seg_size[dir] = size;
 
-		SUCCESS_OR_DIE(gaspi_segment_alloc(dir, size * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED));
+		SUCCESS_OR_DIE(gaspi_segment_alloc(dir, size * 2 * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED));
 		SUCCESS_OR_DIE(gaspi_segment_register(dir, neighbour_rank[dir], GASPI_BLOCK));
 
 		SUCCESS_OR_DIE(gaspi_segment_ptr(dir, &array));
@@ -106,19 +109,31 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation *sim)
 
 void sim_iter(t_simulation *sim)
 {
-	current_zero(&sim->current);
-
 	// Number of particles this process will send to each direction, per species
 	int num_part_to_send[sim->n_species][NUM_ADJ]; memset(num_part_to_send, 0, sim->n_species * NUM_ADJ * sizeof(int));
 
-	// First available position to write a particle to, for each particle segment
-	int part_seg_write_index[NUM_ADJ] = {0};
+	// Segment offset multiplier, 0 if iteration is even, 2 if odd
+	const int seg_offset_mult = (sim->species->iter % 2) == 0 ? 0 : 2;
+
+	// First available position to write a particle to, for each particle segment. Depends on iteration number
+	int part_seg_write_index[NUM_ADJ];
+	for (int dir = 0; dir < NUM_ADJ; dir++)
+	{
+		part_seg_write_index[dir] = seg_offset_mult * part_send_seg_size[dir];
+	}
+
+
+
+	current_zero(&sim->current);
 
 	// Advance particles and deposit current
 	for (int i = 0; i < sim->n_species; i++)
 	{
-		// advance and send particles of this species
-		spec_advance(&sim->species[i], &sim->emf, &sim->current, part_seg_write_index, num_part_to_send);
+		// advance particles of this species
+		spec_advance(&sim->species[i], &sim->emf, &sim->current);
+
+		// send species
+		send_species(&sim->species[i], part_seg_write_index, num_part_to_send);
 	}
 
 	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
@@ -129,10 +144,10 @@ void sim_iter(t_simulation *sim)
 
 	wait_save_update_current(&sim->current);
 
-	wait_save_particles(sim->species, sim->n_species);
-
 	// Advance EM fields
 	emf_advance(&sim->emf, &sim->current);
+
+	wait_save_particles(sim->species, sim->n_species);
 }
 
 void sim_set_spec_moving_window(t_simulation *sim)

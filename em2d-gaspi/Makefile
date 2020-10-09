@@ -1,6 +1,7 @@
 # GCC options
 CC = mpicc
-CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation -O3
+CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation
+CFLAGS += -O3
 
 # Intel icc compiler
 #CC = icc

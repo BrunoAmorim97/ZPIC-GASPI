@@ -193,9 +193,9 @@ void spec_set_u( t_species* spec, const int start, const int range[NUM_DIMS][NUM
 	/* 
 	for (i = start; i <= end; i++)
 	{
-		spec->part[i].ux = spec -> ufl[0] + spec -> uth[0] * rand_norm();
-		spec->part[i].uy = spec -> ufl[1] + spec -> uth[1] * rand_norm(); 
-		spec->part[i].uz = spec -> ufl[2] + spec -> uth[2] * rand_norm();
+		spec->part[i].ux = spec->ufl[0] + spec->uth[0] * rand_norm();
+		spec->part[i].uy = spec->ufl[1] + spec->uth[1] * rand_norm(); 
+		spec->part[i].uz = spec->ufl[2] + spec->uth[2] * rand_norm();
 	}
 	*/
 }
@@ -296,7 +296,7 @@ void spec_set_x( t_species* spec, const int range[NUM_DIMS][NUM_DIMS] )
 		}
 	}
 	
-	spec -> np = ip;
+	spec->np = ip;
 	
 	free(poscell);	
 }
@@ -348,8 +348,8 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
-	spec -> nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
-	spec -> nrow = gc[0][0] + nx[0] + gc[0][1];
+	spec->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
+	spec->nrow = gc[0][0] + nx[0] + gc[0][1];
 	
 	npc = 1;
 	// Store species data
@@ -367,10 +367,10 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 		spec->box_local[i] = spec->dx[i] * nx_local[i];
 	}
 	
-	spec -> m_q = m_q;
-	spec -> q = copysign( 1.0f, m_q ) / npc;
+	spec->m_q = m_q;
+	spec->q = copysign( 1.0f, m_q ) / npc;
 
-	spec -> dt = dt;
+	spec->dt = dt;
 	
 	// Initialize particle buffer
 	spec->np_max = 0;
@@ -380,50 +380,50 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 	// Initialize density profile
 	if ( density )
 	{
-		spec -> density = *density;
-		if ( spec -> density.n == 0. ) spec -> density.n = 1.0;
+		spec->density = *density;
+		if ( spec->density.n == 0. ) spec->density.n = 1.0;
 	}
 	else
 	{
 		// Default values
-		spec -> density = (t_density) { .type = UNIFORM, .n = 1.0 };
+		spec->density = (t_density) { .type = UNIFORM, .n = 1.0 };
 	}
 
 	// Initialize temperature profile
 	if ( ufl )
 	{
 		for(i = 0; i < 3; i++)
-			spec -> ufl[i] = ufl[i];
+			spec->ufl[i] = ufl[i];
 	}
 	else
 	{
 		for(i = 0; i < 3; i++)
-			spec -> ufl[i] = 0;
+			spec->ufl[i] = 0;
 	}
 
 	// Density multiplier
-	spec ->q *= fabsf( spec -> density.n );
+	spec ->q *= fabsf( spec->density.n );
 
 	if ( uth )
 	{
 		for(i = 0; i < 3; i++)
-			spec -> uth[i] = uth[i];
+			spec->uth[i] = uth[i];
 	}
 	else
 	{
 		for(i = 0; i < 3; i++)
-			spec -> uth[i] = 0;
+			spec->uth[i] = 0;
 	}
 
 	// Reset iteration number
-	spec -> iter = 0;
+	spec->iter = 0;
 
 	// Reset moving window information
-	spec -> moving_window = 0;
-	spec -> n_move = 0;
+	spec->moving_window = 0;
+	spec->n_move = 0;
 
 	// Inject initial particle distribution
-	spec -> np = 0;
+	spec->np = 0;
 	
 	const int range[NUM_DIMS][NUM_DIMS] =  {{0, nx[0]-1},
 											{0, nx[1]-1}};
@@ -634,7 +634,7 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 	// Deposit virtual particle currents
 	int k;
 	const int nrow = current->nrow_local; // Local nrow
-	t_vfld* restrict const J = current -> J;
+	t_vfld* restrict const J = current->J;
 
 	for (k = 0; k < vnp; k++)
 	{
@@ -737,14 +737,22 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 	int num_new_part[n_spec][NUM_ADJ];
 	int num_new_part_spec[n_spec]; memset(num_new_part_spec, 0, n_spec * sizeof(int));
 
+	const char moving_window = species_array->moving_window;
+
+	// Segment offset multiplier, 0 if iteration is even, 2 if odd. Iter - 1 because it was incremented before in spec_advance
+	const int seg_offset_mult = ((species_array->iter - 1) % 2) == 0 ? 0 : 2;
+
 	for (int spec_i = 0; spec_i < n_spec; spec_i++)
 	{
 		// printf("Receiving particles from species %d\n\n", spec_i); fflush(stdout);
 
 		// Index of first received particle of this species on each segment.
-		// Starts with part_send_seg_size because the receive zone starts at that index.
-		int spec_starting_index[NUM_ADJ]; memcpy(spec_starting_index, part_send_seg_size, NUM_ADJ * sizeof(int));
-
+		int spec_starting_index[NUM_ADJ];
+		for (int dir = 0; dir < NUM_ADJ; dir++)
+		{
+			spec_starting_index[dir] = part_send_seg_size[dir] + seg_offset_mult * part_send_seg_size[dir];
+		}
+		
 		for (int spec_i_2 = 0; spec_i_2 < spec_i; spec_i_2++)
 		{
 			for (int dir = 0; dir < NUM_ADJ; dir++)
@@ -755,9 +763,8 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-
 			// Check if we will receive particles from this dir
-			if ( !use_pediodic_boundaries(species_array->moving_window, dir) )
+			if ( !use_pediodic_boundaries(moving_window, dir) )
 				continue;
 
 			gaspi_notification_id_t id;
@@ -772,16 +779,19 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 			gaspi_notification_t value;
 			SUCCESS_OR_DIE( gaspi_notify_reset(dir, id, &value) );
 
+			// printf("Starting index for spec %d dir %d is %d\n", spec_i, dir, spec_starting_index[dir]);
 			// Number of particles received is saved in the ix field of the first particle of that species
 			// -1 because of the fake particle
 			const int num_part = particle_segments[dir][spec_starting_index[dir]].ix - 1;
+
+			// printf("from dir %d fake part %d %d\n", dir, particle_segments[dir][spec_starting_index[dir]]. ix,particle_segments[dir][spec_starting_index[dir]].iy);
 
 			num_new_part_spec[spec_i] += num_part;
 			num_new_part[spec_i][dir] = num_part;
 		}
 
 		// if each write to this species was just a fake particle, continue
-		if (num_new_part_spec[spec_i] == 0) continue;
+		// if (num_new_part_spec[spec_i] == 0) continue;
 
 		// printf("NEW PARTICLES!\n"); fflush(stdout);
 
@@ -792,14 +802,19 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 		int copy_index = species_array[spec_i].np;
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			// Check if we will receive particles from this dir
-			if ( !use_pediodic_boundaries(species_array->moving_window, dir) )
+			// Check if we received particles from this dir
+			if ( !use_pediodic_boundaries(moving_window, dir) )
 				continue;
 
 			const int num_part = num_new_part[spec_i][dir];
 			const int starting_index = spec_starting_index[dir] + 1;
 
 			// printf("dir: %d, num_part:%d\n", dir, num_part);
+			// for (int i = 0; i < num_part; i++)
+			// {
+			// 	t_part part = particle_segments[dir][starting_index + i];
+			// 	printf("New Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
+			// }
 
 			memcpy(&species_array[spec_i].part[copy_index], &particle_segments[dir][starting_index], num_part * sizeof(t_part));
 			copy_index += num_part;
@@ -896,7 +911,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 	}
 }
 
-void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
+void send_species(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
 {	
 	const int spec_id = spec->id;
 
@@ -912,7 +927,7 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 			continue;
 
 		// these values are set to make this particle easy to identify on debugging situations
-		static const t_part fake_part =
+		const t_part fake_part =
 		{
 			//.ix = -42,
 			.iy = -42,
@@ -973,10 +988,17 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 	// Check if segment size is respected before sending
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		// printf("Sending %5d particles to proc %d to dir %d\n", num_part_to_send[spec_id][dir]-1, neighbour_rank[dir], OPPOSITE_DIR(dir));
+		// Compute the total number of particles sent to this dir
+		unsigned int num_part_seg = 0;
+		for (int spec_i_2 = 0; spec_i_2 <= spec_id; spec_i_2++)
+		{
+			num_part_seg += num_part_to_send[spec_i_2][dir];
+		}
+
+		// printf("ON TOTAL sending %5d particles to proc %d to dir %d\n", num_part_seg, neighbour_rank[dir], OPPOSITE_DIR(dir));
 		// printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
 
-		assert(part_seg_write_index[dir] < part_send_seg_size[dir]);
+		assert(num_part_seg <= (unsigned int) part_send_seg_size[dir]);
 	}
 
 	// Make sure it is safe to change the segment data
@@ -1019,16 +1041,16 @@ void send_particles(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_
 		// 	continue;
 		// }
 		
-		// for (int i = 0; i < num_part_to_send[spec_id][dir]-1; i++)
+		// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
 		// {
-		// 	t_part part = particle_segments[dir][fake_part_index[dir] + i + 1];
+		// 	t_part part = particle_segments[dir][fake_part_index[dir] + i];
 		// 	printf("Sent particle ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
 		// }
 		// printf("\n"); fflush(stdout);
 	}
 }
 
-void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
+void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 {
 	// uint64_t t0 = timer_ticks();
 	
@@ -1145,8 +1167,6 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current, int part_seg
 	{
 		spec_move_window( spec );
 	}
-
-	send_particles(spec, part_seg_write_index, num_part_to_send);
 	
 	//_spec_time += timer_interval_seconds( t0, timer_ticks() );
 }
@@ -1163,8 +1183,8 @@ void spec_deposit_charge( const t_species* spec, t_part_data* charge )
 	int i,j;
 	
 	// Charge array is expected to have 1 guard cell at the upper boundary
-	int nrow = spec -> nx[0] + 1;
-	t_part_data q = spec -> q;
+	int nrow = spec->nx[0] + 1;
+	t_part_data q = spec->q;
 	
 	for (i=0; i<spec->np; i++) {
 		int idx = spec->part[i].ix + nrow*spec->part[i].iy;
@@ -1182,18 +1202,18 @@ void spec_deposit_charge( const t_species* spec, t_part_data* charge )
 	// Correct boundary values
 
 	// x
-	if ( ! spec -> moving_window )
+	if ( ! spec->moving_window )
 	{
-		for (j = 0; j < spec -> nx[1] + 1; j++)
+		for (j = 0; j < spec->nx[1] + 1; j++)
 		{
-			charge[ 0 + j*nrow ] += charge[ spec -> nx[0] + j*nrow ];
+			charge[ 0 + j*nrow ] += charge[ spec->nx[0] + j*nrow ];
 		}
 	}
 	
 	// y - Periodic boundaries
 	for (i = 0; i < spec->nx[0]+1; i++)
 	{
-		charge[ i + 0 ] += charge[ i + spec -> nx[1] * nrow ];
+		charge[ i + 0 ] += charge[ i + spec->nx[1] * nrow ];
 	}
 
 }
@@ -1223,14 +1243,14 @@ void spec_rep_particles( const t_species *spec )
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
 	// Allocate buffer for positions
 	
 	t_zdf_part_info info = {
-		.name = (char *) spec -> name,
+		.name = (char *) spec->name,
 		.nquants = 5,
 		.quants = (char **) quants,
 		.units = (char **) units,
@@ -1241,29 +1261,29 @@ void spec_rep_particles( const t_species *spec )
 	zdf_part_file_open( &part_file, &info, &iter, "PARTICLES" );
 
 	// Add positions and generalized velocities
-	size_t size = ( spec -> np ) * sizeof( float );
+	size_t size = ( spec->np ) * sizeof( float );
 	float* data = malloc( size );
 
 	// x1
 	for( i = 0; i < spec ->np; i++ )
-		data[i] = ( spec -> n_move + spec -> part[i].ix + spec -> part[i].x ) * spec -> dx[0];
+		data[i] = ( spec->n_move + spec->part[i].ix + spec->part[i].x ) * spec->dx[0];
 	zdf_part_file_add_quant( &part_file, quants[0], data, spec ->np );
 
 	// x2
 	for( i = 0; i < spec ->np; i++ )
-		data[i] = (spec -> part[i].iy + spec -> part[i].y ) * spec -> dx[1];
+		data[i] = (spec->part[i].iy + spec->part[i].y ) * spec->dx[1];
 	zdf_part_file_add_quant( &part_file, quants[1], data, spec ->np );
 
 	// ux
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].ux;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].ux;
 	zdf_part_file_add_quant( &part_file, quants[2], data, spec ->np );
 
 	// uy
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].uy;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].uy;
 	zdf_part_file_add_quant( &part_file, quants[3], data, spec ->np );
 
 	// uz
-	for( i = 0; i < spec ->np; i++ ) data[i] = spec -> part[i].uz;
+	for( i = 0; i < spec ->np; i++ ) data[i] = spec->part[i].uz;
 	zdf_part_file_add_quant( &part_file, quants[4], data, spec ->np );
 
 	free( data );
@@ -1279,7 +1299,7 @@ void spec_rep_charge( const t_species *spec )
 	int i, j;
 	
 	// Add 1 guard cell to the upper boundary
-	size = ( spec -> nx[0] + 1 ) * ( spec -> nx[1] + 1 ) * sizeof( t_part_data );
+	size = ( spec->nx[0] + 1 ) * ( spec->nx[1] + 1 ) * sizeof( t_part_data );
 	charge = malloc( size );
 	memset( charge, 0, size );
 	
@@ -1287,7 +1307,7 @@ void spec_rep_charge( const t_species *spec )
 	spec_deposit_charge( spec, charge );
 	
 	// Compact the data to save the file (throw away guard cells)
-	size = ( spec -> nx[0] ) * ( spec -> nx[1] );
+	size = ( spec->nx[0] ) * ( spec->nx[1] );
 	buf = malloc( size * sizeof( float ) );
 	
 	b = buf;
@@ -1329,7 +1349,7 @@ void spec_rep_charge( const t_species *spec )
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
@@ -1347,23 +1367,23 @@ void spec_pha_axis( const t_species *spec, int i0, int np, int quant, float *axi
 	switch (quant) {
 		case X1:
 			for (i = 0; i < np; i++) 
-				axis[i] = ( spec -> part[i0+i].x + spec -> part[i0+i].ix ) * spec -> dx[0];
+				axis[i] = ( spec->part[i0+i].x + spec->part[i0+i].ix ) * spec->dx[0];
 			break;
 		case X2:
 			for (i = 0; i < np; i++) 
-				axis[i] = ( spec -> part[i0+i].y + spec -> part[i0+i].iy ) * spec -> dx[1];
+				axis[i] = ( spec->part[i0+i].y + spec->part[i0+i].iy ) * spec->dx[1];
 			break;
 		case U1:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].ux;
+				axis[i] = spec->part[i0+i].ux;
 			break;
 		case U2:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].uy;
+				axis[i] = spec->part[i0+i].uy;
 			break;
 		case U3:
 			for (i = 0; i < np; i++) 
-				axis[i] = spec -> part[i0+i].uz;
+				axis[i] = spec->part[i0+i].uz;
 			break;
 	}
 }
@@ -1498,7 +1518,7 @@ void spec_rep_pha( const t_species *spec, const int rep_type,
 
 	t_zdf_iteration iter = {
 		.n = spec->iter,
-		.t = spec -> iter * spec -> dt,
+		.t = spec->iter * spec->dt,
 		.time_units = "1/\\omega_p"
 	};
 
