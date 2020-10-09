@@ -404,7 +404,7 @@ void send_current(t_current *current)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!use_pediodic_boundaries(current->moving_window, dir))
+		if (!can_send_to_dir(current->moving_window, dir))
 			continue;
 
 		// printf("Sending current to dir %d, proc %d\n", dir, neighbour_rank[dir]); fflush(stdout);
@@ -466,7 +466,7 @@ void wait_save_update_current(t_current *current)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// 1 if we are expecting a notif from dir, 0 otherwise
-		const char expecting_notif = use_pediodic_boundaries(current->moving_window, dir);
+		const char expecting_notif = can_send_to_dir(current->moving_window, dir);
 
 		received_notif[dir] = !expecting_notif;
 		num_expected_notifs += expecting_notif;
@@ -570,7 +570,7 @@ void send_current_kernel_gc(t_current *current, const int num_dirs, const int di
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edges
-		if (!use_pediodic_boundaries(moving_window, dir))
+		if (!can_send_to_dir(moving_window, dir))
 			continue;
 
 		const int num_columns = curr_kernel_size[dir][0];
@@ -647,7 +647,7 @@ void wait_save_kernel_gc(t_current *current, const int num_dirs, const int dirs[
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!use_pediodic_boundaries(moving_window, dir))
+		if (!can_send_to_dir(moving_window, dir))
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);
@@ -802,7 +802,7 @@ void get_smooth_comp(int n, t_fld *sa, t_fld *sb)
 	*sb = b / total;
 }
 
-/*inline*/ void kernel_gc_update(t_current *current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
+void kernel_gc_update(t_current *current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
 {
 	send_current_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 

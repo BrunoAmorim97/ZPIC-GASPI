@@ -126,13 +126,13 @@ void sim_iter(t_simulation *sim)
 
 	current_zero(&sim->current);
 
-	// Advance particles and deposit current
+	// Advance and send species
 	for (int i = 0; i < sim->n_species; i++)
 	{
-		// advance particles of this species
+		// Advance particles and, if they leave this proc, copy them to the particle segments
 		spec_advance(&sim->species[i], &sim->emf, &sim->current);
 
-		// send species
+		// Send particles in the particle segments
 		send_species(&sim->species[i], part_seg_write_index, num_part_to_send);
 	}
 

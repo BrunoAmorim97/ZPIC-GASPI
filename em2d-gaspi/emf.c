@@ -170,7 +170,7 @@ double emf_time( void )
 }
 
 // size_x moving window iterations difference to normal iterations, perspective of the sender
-/*inline*/ int get_moving_iter_size_x_diff(const int dir)
+int get_moving_iter_size_x_diff(const int dir)
 {
 	/* 
 	int moving_size_diffs[NUM_ADJ][NUM_DIMS] = // {size_diff_x, size_diff_y}
@@ -188,7 +188,7 @@ double emf_time( void )
 }
 
 // starting_x moving window iterations difference to normal iterations, perspective of the receiver
-/*inline*/ int get_moving_iter_starting_write_x_diff(const int dir)
+int get_moving_iter_starting_write_x_diff(const int dir)
 {
 	/*
 	int moving_starting_write_coord_diffs[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
@@ -231,7 +231,7 @@ if (moving_window)
 }*/
 
 // x_size normal iterations difference to normal iterations on moving window simulations
-/*inline*/ int get_moving_window_edge_proc_size_x_diff(const int dir)
+int get_moving_window_edge_proc_size_x_diff(const int dir)
 {	
 	if ( dir == DOWN || dir == UP )
 	{
@@ -251,7 +251,7 @@ if (moving_window)
 }
 
 // starting send/write coord normal iterations difference on moving window simulations
-/*inline*/ int get_moving_window_edge_proc_coord_x_diff(const int dir)
+int get_moving_window_edge_proc_coord_x_diff(const int dir)
 {
 	if ( dir == DOWN || dir == UP )
 	{
@@ -871,7 +871,7 @@ void send_emf_gc(t_emf* emf, const char moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !use_pediodic_boundaries(moving_window, dir) )
+		if ( !can_send_to_dir(moving_window, dir) )
 			continue;
 
 		int starting_x = emf_cell_to_send_starting_coord[dir][0];
@@ -959,7 +959,7 @@ void wait_save_emf_gc(t_emf* emf, const char moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if ( !use_pediodic_boundaries(moving_window, dir) )
+		if ( !can_send_to_dir(moving_window, dir) )
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);

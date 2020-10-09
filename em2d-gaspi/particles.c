@@ -764,7 +764,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
 			// Check if we will receive particles from this dir
-			if ( !use_pediodic_boundaries(moving_window, dir) )
+			if ( !can_send_to_dir(moving_window, dir) )
 				continue;
 
 			gaspi_notification_id_t id;
@@ -791,7 +791,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 		}
 
 		// if each write to this species was just a fake particle, continue
-		// if (num_new_part_spec[spec_i] == 0) continue;
+		if (num_new_part_spec[spec_i] == 0) continue;
 
 		// printf("NEW PARTICLES!\n"); fflush(stdout);
 
@@ -803,7 +803,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
 			// Check if we received particles from this dir
-			if ( !use_pediodic_boundaries(moving_window, dir) )
+			if ( !can_send_to_dir(moving_window, dir) )
 				continue;
 
 			const int num_part = num_new_part[spec_i][dir];
@@ -839,7 +839,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 
 // get the direction from which the particle left the proc zone, based on its cell coordinates
 // If particle does no leave this proc, return -1
-/*inline*/ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
+int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
 {
 	const int ix = part_pointer->ix;
 	const int iy = part_pointer->iy;
@@ -884,7 +884,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 }
 
 // Correct particle coords to coords relative to the new proc
-/*inline*/ void correct_coords(t_part* const part_pointer, const int dir)
+void correct_coords(t_part* const part_pointer, const int dir)
 {
 	// Correct part x cell coord
 	// If particle leaves through the left border
@@ -923,7 +923,7 @@ void send_species(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_pa
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if ( !use_pediodic_boundaries(spec->moving_window, dir) )
+		if ( !can_send_to_dir(spec->moving_window, dir) )
 			continue;
 
 		// these values are set to make this particle easy to identify on debugging situations
@@ -1010,7 +1010,7 @@ void send_species(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_pa
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if ( !use_pediodic_boundaries(spec->moving_window, dir) )
+		if ( !can_send_to_dir(spec->moving_window, dir) )
 			continue;
 
 		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
