@@ -129,7 +129,7 @@ int periodic_coord(int coord, int coord_max)
 	return coord;
 }
 
-// populate the neighbour_rank array wit the rank on that direction and save their simulation space size
+// populate the neighbour_rank array with the rank on each direction and save their simulation space size
 void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[NUM_DIMS])
 {
 	int dir = 0;

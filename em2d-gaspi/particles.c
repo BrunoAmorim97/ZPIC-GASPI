@@ -911,7 +911,7 @@ void correct_coords(t_part* const part_pointer, const int dir)
 	}
 }
 
-void send_species(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
+void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
 {	
 	const int spec_id = spec->id;
 
