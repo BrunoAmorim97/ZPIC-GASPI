@@ -1,0 +1,12 @@
+zpic
+*.o
+*.pyc
+*.ipynb
+.vscode
+*.pxd
+*.pyx
+times
+*.txt
+*.out
+.gpi2.*
+em2d-mpi-pedro/
