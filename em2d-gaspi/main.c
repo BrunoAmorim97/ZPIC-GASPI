@@ -33,9 +33,9 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
+#include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
-#include "input/weibel.c"
+// #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
@@ -187,8 +187,6 @@ int main(int argc, char * argv[])
 		// Simulation times
 		sim_timings( &sim, t0, t1 );
 	}
-
-	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
 
 	SUCCESS_OR_DIE( gaspi_proc_term(GASPI_BLOCK) );
 	MPI_Finalize();

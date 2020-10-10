@@ -90,13 +90,16 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation *sim)
 	gaspi_size_t size;
 	gaspi_pointer_t array;
 
-	// Create the particle segments, segments are created with size*2 because they are both send and receive segments
+	// Create the particle segments, segments are created with size * 2 because they are both send and receive segments,
+	// * 2 so that we have different zones depending on the iteration number, to prevent overwriting
+	// Segment will be used as follows:
+	// Segment => 	[Particle even Send zone, Particle even Receive zone, Particle odd Send zone, Particle odd Receive zone]
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		size = sizes[dir];
 		part_send_seg_size[dir] = size;
 
-		SUCCESS_OR_DIE(gaspi_segment_alloc(dir, size * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED));
+		SUCCESS_OR_DIE(gaspi_segment_alloc(dir, size * 2 * 2 * sizeof(t_part), GASPI_MEM_UNINITIALIZED));
 		SUCCESS_OR_DIE(gaspi_segment_register(dir, neighbour_rank[dir], GASPI_BLOCK));
 
 		SUCCESS_OR_DIE(gaspi_segment_ptr(dir, &array));
@@ -106,33 +109,65 @@ void create_particle_segments(const int nx_local[NUM_DIMS], t_simulation *sim)
 
 void sim_iter(t_simulation *sim)
 {
-	current_zero(&sim->current);
-
 	// Number of particles this process will send to each direction, per species
 	int num_part_to_send[sim->n_species][NUM_ADJ]; memset(num_part_to_send, 0, sim->n_species * NUM_ADJ * sizeof(int));
 
-	// First available position to write a particle to, for each particle segment
-	int part_seg_write_index[NUM_ADJ] = {0};
+	// Segment offset multiplier, 0 if iteration is even, 2 if odd
+	const int seg_offset_mult = (sim->species->iter % 2) == 0 ? 0 : 2;
 
-	// Advance particles and deposit current
-	for (int i = 0; i < sim->n_species; i++)
+	// First available position to write a particle to, for each particle segment. Depends on iteration number
+	int part_seg_write_index[NUM_ADJ];
+	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
-		// advance and send particles of this species
-		spec_advance(&sim->species[i], &sim->emf, &sim->current, part_seg_write_index, num_part_to_send);
+		part_seg_write_index[dir] = seg_offset_mult * part_send_seg_size[dir];
 	}
 
-	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
-	send_current(&sim->current);
 
-	// While we wait for current data, advance EM field using Yee algorithm 
-	yee_b(&sim->emf, sim->dt / 2.0f);
 
-	wait_save_update_current(&sim->current);
+	t_current* const restrict current = &sim->current;
+	t_emf* const restrict emf = &sim->emf;
 
+	current_zero(current);
+
+	// Advance and send species
+	for (int i = 0; i < sim->n_species; i++)
+	{
+		// Advance particles
+		spec_advance(&sim->species[i], emf, current);
+
+		// Check if each particle has left this proc, if so, copy them to the particle segments and send them
+		send_spec(&sim->species[i], part_seg_write_index, num_part_to_send);
+	}
+
+	send_current(current);
+
+	// While current data is sent, advance EM field using Yee algorithm 
+	yee_b(emf);
+
+	// Wait and update current data
+	wait_save_update_current(current);
+	current_smooth(current);
+	current->iter++;
+
+	// Advance EM fields using Yee algorithm modified for having E and B time centered
+	// yee_b(emf); // already done
+	yee_e(emf, current);
+	yee_b(emf);
+
+	// 1 if window will be moved this iteration, 0 otherwise
+	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+
+	send_emf_gc(emf, moving_window_iter);
+
+	// Move window if needed
+	if(moving_window_iter)
+		emf_move_window(emf);
+	
+	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);
 
-	// Advance EM fields
-	emf_advance(&sim->emf, &sim->current);
+	wait_save_emf_gc(emf, moving_window_iter);
+	emf->iter++;
 }
 
 void sim_set_spec_moving_window(t_simulation *sim)
