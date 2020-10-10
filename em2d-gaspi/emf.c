@@ -393,7 +393,7 @@ void emf_new(t_emf *emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 
 t_fld gauss_phase( const t_emf_laser* const laser, const t_fld z, const t_fld r )
 {
-	t_fld z0   = laser -> omega0 * ( laser->W0 * laser->W0 ) / 2;
+	t_fld z0   = laser->omega0 * ( laser->W0 * laser->W0 ) / 2;
 	t_fld rho2 = r*r;
 	t_fld curv = rho2 * z / (z0*z0 + z*z);
 	t_fld rWl2 = (z0*z0) / (z0*z0 + z*z);
@@ -455,32 +455,32 @@ void div_corr_x( t_emf *emf, t_vfld* restrict E, t_vfld* restrict B)
 void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 {
 	// Validate laser parameters
-	if ( laser -> fwhm != 0 )
+	if ( laser->fwhm != 0 )
 	{
-		if ( laser -> fwhm <= 0 )
+		if ( laser->fwhm <= 0 )
 		{
 			fprintf(stdout, "Invalid laser FWHM, must be > 0, aborting.\n" );
 			exit(-1);
 		}
 		// The fwhm parameter overrides the rise/flat/fall parameters
-		laser -> rise = laser -> fwhm;
-		laser -> fall = laser -> fwhm;
-		laser -> flat = 0.;
+		laser->rise = laser->fwhm;
+		laser->fall = laser->fwhm;
+		laser->flat = 0.;
 	}
 
-	if ( laser -> rise <= 0 )
+	if ( laser->rise <= 0 )
 	{
 		fprintf(stdout, "Invalid laser RISE, must be > 0, aborting.\n" );
 		exit(-1);
 	}
 
-	if ( laser -> flat < 0 )
+	if ( laser->flat < 0 )
 	{
 		fprintf(stdout, "Invalid laser FLAT, must be >= 0, aborting.\n" );
 		exit(-1);
 	}
 
-	if ( laser -> fall <= 0 )
+	if ( laser->fall <= 0 )
 	{
 		fprintf(stdout, "Invalid laser FALL, must be > 0, aborting.\n" );
 		exit(-1);
@@ -494,23 +494,23 @@ void emf_add_laser( t_emf* const emf,  t_emf_laser*  laser )
 	t_fld dx, dy;
 	t_fld cos_pol, sin_pol;
 	
-	t_vfld* restrict E = emf -> E;
-	t_vfld* restrict B = emf -> B;
+	t_vfld* restrict E = emf->E;
+	t_vfld* restrict B = emf->B;
 
-	nrow = emf -> nrow;
-	dx = emf -> dx[0];
-	dy = emf -> dx[1];
+	nrow = emf->nrow;
+	dx = emf->dx[0];
+	dy = emf->dx[1];
 	
 	r_center = laser->axis;
 	amp = laser->omega0 * laser->a0;
 	
-	cos_pol = cos( laser -> polarization );
-	sin_pol = sin( laser -> polarization );
+	cos_pol = cos( laser->polarization );
+	sin_pol = sin( laser->polarization );
 		
 	switch (laser->type)
 	{
 		case PLANE:
-			k = laser -> omega0;
+			k = laser->omega0;
 
 			// i represents global x coord
 			// While i is inside this procs x coord range (including guard cells)
@@ -716,7 +716,7 @@ void emf_report( const t_emf *emf, const char field, const char fc )
 
 	t_zdf_iteration iter = {
 		.n = emf->iter,
-		.t = emf -> iter * emf -> dt,
+		.t = emf->iter * emf->dt,
 		.time_units = "1/\\omega_p"
 	};
 
@@ -735,18 +735,18 @@ void emf_report( const t_emf *emf, const char field, const char fc )
  
  *********************************************************************************************/
 
-void yee_b( t_emf *emf, const float dt )
+void yee_b(t_emf *emf)
 {
-	t_vfld* const restrict B = emf -> B;
-	const t_vfld* const restrict E = emf -> E;
+	t_vfld* const restrict B = emf->B;
+	const t_vfld* const restrict E = emf->E;
 
-	const t_fld dt_dx = dt / emf->dx[0];
-	const t_fld dt_dy = dt / emf->dx[1];
+	const float dt_2 = emf->dt / 2.0f;
+	const t_fld dt_dx = dt_2 / emf->dx[0];
+	const t_fld dt_dy = dt_2 / emf->dx[1];
 	
 	// Canonical implementation
 	const int nrow = emf->nrow_local; // Local nrow
 
-	// j = -gc[1][0]; j < nx_local + gc[1][1] - 1
 	for (int j = -1; j <= emf->nx_local[1]; j++)
 	{
 		for (int i = -1; i <= emf->nx_local[0]; i++)
@@ -760,14 +760,15 @@ void yee_b( t_emf *emf, const float dt )
 }
 
 
-void yee_e( t_emf *emf, const t_current *current, const float dt )
+void yee_e( t_emf *emf, const t_current *current)
 {
+	const float dt = emf->dt;
 	t_fld dt_dx = dt / emf->dx[0];
 	t_fld dt_dy = dt / emf->dx[1];
 
-	t_vfld* const restrict E = emf -> E;
-	const t_vfld* const restrict B = emf -> B;
-	const t_vfld* const restrict J = current -> J;
+	t_vfld* const restrict E = emf->E;
+	const t_vfld* const restrict B = emf->B;
+	const t_vfld* const restrict J = current->J;
 	
 	// Canonical implementation
 	const int nrow_e = emf->nrow_local;
@@ -793,11 +794,11 @@ void emf_update_gc( t_emf *emf )
 	int i,j;
 	const int nrow = emf->nrow_local; // Local nrow
 
-	t_vfld* const restrict E = emf -> E;
-	t_vfld* const restrict B = emf -> B;
+	t_vfld* const restrict E = emf->E;
+	t_vfld* const restrict B = emf->B;
 
 	// For moving window don't update x boundaries
-	if ( ! emf -> moving_window )
+	if ( ! emf->moving_window )
 	{
 		// x
 		for (j = -gc[1][0]; j < emf->nx[1] + gc[1][1]; j++)
@@ -1066,10 +1067,10 @@ void emf_move_window( t_emf *emf )
 	}
 	
 	// Increase moving window counter
-	emf -> n_move++;
+	emf->n_move++;
 }
 
-void emf_advance( t_emf *emf, const t_current *current )
+/* void emf_advance( t_emf *emf, const t_current *current )
 {
 	// uint64_t t0 = timer_ticks();
 	const float dt = emf->dt;
@@ -1108,19 +1109,19 @@ void emf_advance( t_emf *emf, const t_current *current )
 	
 	// Update timing information
 	// _emf_time += timer_interval_seconds(t0, timer_ticks());
-}
+} */
 
 void emf_get_energy( const t_emf *emf, double energy[] )
 {
 	int i,j;
-	t_vfld* const restrict E = emf -> E;
-	t_vfld* const restrict B = emf -> B;
-	const int nrow = emf -> nrow;
+	t_vfld* const restrict E = emf->E;
+	t_vfld* const restrict B = emf->B;
+	const int nrow = emf->nrow;
 
 	for(i = 0; i < 6; i++) energy[i] = 0;
 
-	for(j = 0; i < emf -> nx[1]; j ++ ) {
-		for( i = 0; i < emf -> nx[0]; i ++ ) {
+	for(j = 0; i < emf->nx[1]; j ++ ) {
+		for( i = 0; i < emf->nx[0]; i ++ ) {
 			energy[0] += E[i + j*nrow].x * E[i + j*nrow].x;
 			energy[1] += E[i + j*nrow].y * E[i + j*nrow].y;
 			energy[2] += E[i + j*nrow].z * E[i + j*nrow].z;
@@ -1130,6 +1131,6 @@ void emf_get_energy( const t_emf *emf, double energy[] )
 		}
 	}
 
-	for( i = 0; i<6; i++) energy[i] *= 0.5 * emf -> dx[0] * emf -> dx[1];
+	for( i = 0; i<6; i++) energy[i] *= 0.5 * emf->dx[0] * emf->dx[1];
 
 }

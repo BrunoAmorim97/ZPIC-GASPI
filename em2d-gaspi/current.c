@@ -407,8 +407,6 @@ void send_current(t_current *current)
 		if (!can_send_to_dir(current->moving_window, dir))
 			continue;
 
-		// printf("Sending current to dir %d, proc %d\n", dir, neighbour_rank[dir]); fflush(stdout);
-
 		const int num_columns = curr_send_size[dir][0];
 		const size_t row_size_bytes = num_columns * sizeof(t_vfld); // in bytes
 
@@ -543,17 +541,6 @@ void wait_save_update_current(t_current *current)
 		// next dir
 		dir = (dir + 1) % NUM_ADJ;
 	}
-
-	// printf("AFTER CURRENT GC ADD\n");
-	// print_local_current(current);
-
-	// Smoothing
-	current_smooth(current);
-
-	// printf("CURR AFTER SMOOTHING\n");
-	// print_local_current(current);
-
-	current->iter++;
 }
 
 void send_current_kernel_gc(t_current *current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
@@ -896,7 +883,6 @@ void current_smooth(t_current *const current)
 {
 	// filter kernel [sa, sb, sa]
 	t_fld sa, sb;
-
 	int i;
 
 	// x-direction filtering

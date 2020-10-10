@@ -124,30 +124,50 @@ void sim_iter(t_simulation *sim)
 
 
 
-	current_zero(&sim->current);
+	t_current* const restrict current = &sim->current;
+	t_emf* const restrict emf = &sim->emf;
+
+	current_zero(current);
 
 	// Advance and send species
 	for (int i = 0; i < sim->n_species; i++)
 	{
 		// Advance particles and, if they leave this proc, copy them to the particle segments
-		spec_advance(&sim->species[i], &sim->emf, &sim->current);
+		spec_advance(&sim->species[i], emf, current);
 
 		// Send particles in the particle segments
 		send_species(&sim->species[i], part_seg_write_index, num_part_to_send);
 	}
 
-	// current_update(&sim->current); // NON GASPI IMPLEMENTATION
-	send_current(&sim->current);
+	send_current(current);
 
-	// While we wait for current data, advance EM field using Yee algorithm 
-	yee_b(&sim->emf, sim->dt / 2.0f);
+	// While current data is sent, advance EM field using Yee algorithm 
+	yee_b(emf);
 
-	wait_save_update_current(&sim->current);
+	// Wait and update current data
+	wait_save_update_current(current);
+	current_smooth(current);
+	current->iter++;
 
-	// Advance EM fields
-	emf_advance(&sim->emf, &sim->current);
+	// Advance EM fields using Yee algorithm modified for having E and B time centered
+	// yee_b(emf); // already done
+	yee_e(emf, current);
+	yee_b(emf);
 
+	// 1 if window will be moved this iteration, 0 otherwise
+	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+
+	send_emf_gc(emf, moving_window_iter);
+
+	// Move window if needed
+	if(moving_window_iter)
+		emf_move_window(emf);
+	
+	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);
+
+	wait_save_emf_gc(emf, moving_window_iter);
+	emf->iter++;
 }
 
 void sim_set_spec_moving_window(t_simulation *sim)

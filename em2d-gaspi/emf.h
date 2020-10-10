@@ -92,7 +92,8 @@ void wait_save_emf_gc(t_emf* emf, const char moving_window_iter);
 
 double emf_time();
 
-void yee_b( t_emf *emf, const float dt );
+void yee_b(t_emf *emf);
+void yee_e(t_emf *emf, const t_current *current);
 
 void print_emf_e(t_emf* emf);
 void print_emf_b(t_emf* emf);
