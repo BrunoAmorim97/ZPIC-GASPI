@@ -40,7 +40,6 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 
 int main()
 {
-
 	// Initialize simulation
 	t_simulation sim;
 	sim_init( &sim );
@@ -49,7 +48,6 @@ int main()
 	int n;
 	float t;
 
-	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
 
 	fprintf(stdout, "Starting simulation ...\n\n");
 
@@ -62,10 +60,6 @@ int main()
 
 		if ( report ( n , sim.ndump ) )
 		{
-			// print_current(&sim.current);
-			// print_emf_b(&sim.emf);
-			// print_emf_e(&sim.emf);
-
 			sim_report( &sim );
 		}
 
@@ -79,6 +73,8 @@ int main()
 
 	// Simulation times
     sim_timings( &sim, t0, t1 );
+
+	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
 
     // Cleanup data
     sim_delete( &sim );

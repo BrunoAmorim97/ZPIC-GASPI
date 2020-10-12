@@ -19,7 +19,7 @@ void sim_init( t_simulation* sim )
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc(n_species * sizeof( t_species ));
 
-	int ppc[] = {16,16};
+	int ppc[] = {1,1};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };

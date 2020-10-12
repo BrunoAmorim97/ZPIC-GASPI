@@ -8,7 +8,9 @@ CFLAGS += -O3
 #CFLAGS = -restrict -Ofast -std=c99 -pedantic
 
 # degub flags
-# CFLAGS += -g -ggdb
+# CFLAGS += -ggdb
+# CFLAGS += -g
+# CFLAGS += -finstrument-functions
 
 # gprof
 # CFLAGS += -pg

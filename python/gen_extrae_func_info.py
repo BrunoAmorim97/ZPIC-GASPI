@@ -21,8 +21,8 @@ zpic_path = "../em2d-gaspi/zpic"
 lines = []
 
 for func_name in func_names:
-	lines.append( os.popen(f"nm -a {zpic_path} | grep {func_name}").read().split("\n")[0].replace(" T ", "#") + "\n" ) 
+	lines.append( os.popen(f"nm -a {zpic_path} | grep {func_name}").read().split("\n")[0].replace(" T ", "#") + "\n" )
 
 
 with open("functions.dat", 'w') as file:
-		file.writelines(lines)
+	file.writelines(lines)
