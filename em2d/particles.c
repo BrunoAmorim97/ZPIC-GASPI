@@ -720,10 +720,15 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		uy = uty + Ep.y;
 		uz = utz + Ep.z;
 		
-		// Store new momenta, CHANGING PARTICLE DATA
+		// Store new momenta
 		spec->part[i].ux = ux;
 		spec->part[i].uy = uy;
 		spec->part[i].uz = uz;
+
+		if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
+		{
+			continue;
+		}
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
@@ -748,7 +753,6 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		// 				 qnx, qny, qvz, 
 		// 				 current );
 
-		// CHANGES GLOBAL CURRENT MATRIX (ADDITION)
 		dep_current_zamb( spec->part[i].ix, spec->part[i].iy, di, dj, 
 						 spec->part[i].x, spec->part[i].y, dx, dy, 
 						 qnx, qny, qvz, 

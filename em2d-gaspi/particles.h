@@ -97,7 +97,7 @@ void spec_move_window( t_species *spec );
 
 void spec_delete( t_species* spec );
 
-void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ]);
+void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ], const int num_spec);
 
 void spec_advance( t_species* spec, t_emf* emf, t_current* current );
 

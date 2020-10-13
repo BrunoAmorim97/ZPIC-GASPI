@@ -129,19 +129,23 @@ void sim_iter(t_simulation *sim)
 
 	current_zero(current);
 
-	// Advance and send species
+	// Advance species
 	for (int i = 0; i < sim->n_species; i++)
 	{
 		// Advance particles
 		spec_advance(&sim->species[i], emf, current);
-
-		// Check if each particle has left this proc, if so, copy them to the particle segments and send them
-		send_spec(&sim->species[i], part_seg_write_index, num_part_to_send);
 	}
 
 	send_current(current);
 
-	// While current data is sent, advance EM field using Yee algorithm 
+	// Send species
+	for (int i = 0; i < sim->n_species; i++)
+	{
+		// Check if each particle has left this proc, if so, copy them to the particle segments and send them
+		send_spec(&sim->species[i], part_seg_write_index, num_part_to_send, sim->n_species);
+	}
+
+	// Advance EM field using Yee algorithm 
 	yee_b(emf);
 
 	// Wait and update current data
@@ -194,6 +198,8 @@ void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 	sim->ndump = ndump;
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
+
+	printf("size at proc %d is %d %d\n", proc_rank, nx_local[0], nx_local[1]);
 
 	// If this check fails change number of nodes or increase simulation nx size, number of procs should not be a prime number
 	// Proc simulation regions need to have at least 2 cells on each dimention

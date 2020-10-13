@@ -19,7 +19,7 @@
 
 extern int dims[NUM_DIMS];
 extern const int gc[NUM_DIMS][NUM_DIMS];
-extern int proc_coords[NUM_DIMS];
+extern char is_on_edge[2];
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern gaspi_rank_t proc_rank;
 extern gaspi_rank_t num_procs;
@@ -42,7 +42,7 @@ const int kernel_x_directions[NUM_KERNEL_X_DIRS] = {LEFT, RIGHT};
 #define NUM_KERNEL_Y_DIRS 6
 const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = {DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP, UP_RIGHT};
 
-void print_local_current(t_current *current)
+void print_local_current(t_current* current)
 {
 	t_vfld *J = current->J;
 	int nrow = current->nrow_local;
@@ -113,7 +113,7 @@ void print_local_current(t_current *current)
 	fflush(stdout);
 }
 
-void curr_set_moving_window(t_current *curr)
+void curr_set_moving_window(t_current* curr)
 {
 	curr->moving_window = 1;
 }
@@ -203,7 +203,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	if (moving_window)
 	{
 		// If proc is on the left edge of the simulation space
-		if (proc_coords[0] == 0)
+		if (is_on_edge[0])
 		{
 			kernel_sizes[DOWN][0] += gc[0][0];
 			kernel_starting_send_coord[DOWN][0] -= gc[0][0];
@@ -215,7 +215,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 		}
 
 		// If proc is on the right edge of the simulation space
-		if (proc_coords[0] == dims[0] - 1)
+		if (is_on_edge[1])
 		{
 			kernel_sizes[DOWN][0] += gc[0][1];
 
@@ -252,7 +252,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	}
 }
 
-void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const char moving_window)
+void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const char moving_window)
 {
 	// Allocate local current array, innitialized to 0
 
@@ -289,18 +289,20 @@ void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[
 	}
 
 	// Clear smoothing options
-	current->smooth = (t_smooth){
+	current->smooth = (t_smooth)
+	{
 		.xtype = NONE,
 		.ytype = NONE,
 		.xlevel = 0,
-		.ylevel = 0};
+		.ylevel = 0
+	};
 
 	// Initialize time information
 	current->iter = 0;
 	current->dt = dt;
 }
 
-void curr_set_smooth(t_current *current, t_smooth *smooth)
+void curr_set_smooth(t_current* current, t_smooth *smooth)
 {
 	if ((smooth->xtype != NONE) && (smooth->xlevel <= 0))
 	{
@@ -325,14 +327,14 @@ void curr_set_smooth(t_current *current, t_smooth *smooth)
 	current->smooth = *smooth;
 }
 
-void current_zero(t_current *current)
+void current_zero(t_current* current)
 {
 	// zero field
 	memset(current->J_buf, 0, current->J_size);
 }
 
 // OLD IMPLEMENTATION
-void current_update(t_current *current)
+void current_update(t_current* current)
 {
 	int i, j;
 	const int nrow = current->nrow_local; // Local nrow
@@ -392,7 +394,7 @@ void current_update(t_current *current)
 }
 
 // Send current to neighbour procs
-void send_current(t_current *current)
+void send_current(t_current* current)
 {
 	const int nrow = current->nrow_local; // Local nrow
 
@@ -449,7 +451,7 @@ void send_current(t_current *current)
 }
 
 // Also applies current smoothing if necessary
-void wait_save_update_current(t_current *current)
+void wait_save_update_current(t_current* current)
 {
 	// printf("BEFORE CURRENT GC ADD\n");
 	// print_local_current(current);
@@ -543,7 +545,7 @@ void wait_save_update_current(t_current *current)
 	}
 }
 
-void send_current_kernel_gc(t_current *current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
+void send_current_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
@@ -622,7 +624,7 @@ void send_current_kernel_gc(t_current *current, const int num_dirs, const int di
 	}
 }
 
-void wait_save_kernel_gc(t_current *current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
+void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
@@ -684,7 +686,7 @@ void wait_save_kernel_gc(t_current *current, const int num_dirs, const int dirs[
 	}
 }
 
-void current_report(const t_current *current, const char jc)
+void current_report(const t_current* current, const char jc)
 {
 	t_vfld *f;
 	float *buf, *p;
@@ -777,7 +779,7 @@ void current_report(const t_current *current, const char jc)
  *  Gets the value of the compensator kernel for an n pass binomial kernel
  */
 
-void get_smooth_comp(int n, t_fld *sa, t_fld *sb)
+void get_smooth_comp(int n, t_fld* sa, t_fld* sb)
 {
 	t_fld a, b, total;
 
@@ -789,14 +791,14 @@ void get_smooth_comp(int n, t_fld *sa, t_fld *sb)
 	*sb = b / total;
 }
 
-void kernel_gc_update(t_current *current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
+void kernel_gc_update(t_current* current, const int num_kernel_directions, const int kernel_directions[], const int smoothing_pass_iter)
 {
 	send_current_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 
 	wait_save_kernel_gc(current, num_kernel_directions, kernel_directions, smoothing_pass_iter);
 }
 
-void kernel_x(t_current *const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
+void kernel_x(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
 	int i, j;
 	t_vfld *restrict const J = current->J;
@@ -833,7 +835,7 @@ void kernel_x(t_current *const current, const t_fld sa, const t_fld sb, const in
 	// print_local_current(current);
 }
 
-void kernel_y(t_current *const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
+void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
 	t_vfld flbuf[current->nx[0]];
 	t_vfld *restrict const J = current->J;
@@ -879,7 +881,7 @@ void kernel_y(t_current *const current, const t_fld sa, const t_fld sb, const in
 	// print_local_current(current);
 }
 
-void current_smooth(t_current *const current)
+void current_smooth(t_current* const current)
 {
 	// filter kernel [sa, sb, sa]
 	t_fld sa, sb;

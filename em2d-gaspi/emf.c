@@ -22,8 +22,8 @@
 static double _emf_time = 0.0;
 
 extern const int gc[NUM_DIMS][NUM_DIMS];
-extern int proc_coords[NUM_DIMS];
 extern int dims[NUM_DIMS];
+extern char is_on_edge[2];
 
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
@@ -210,7 +210,7 @@ int get_moving_iter_starting_write_x_diff(const int dir)
 if (moving_window)
 {
 	// If proc is on the left edge of the simulation space
-	if (proc_coords[0] == 0)
+	if (is_on_edge[0])
 	{
 		sizes[DOWN][0] += gc[0][0];
 		starting_send_coord[DOWN][0] -= gc[0][0];
@@ -222,7 +222,7 @@ if (moving_window)
 	}
 
 	// If proc is on the right edge of the simulation space
-	if (proc_coords[0] == dims[0] - 1)
+	if (is_on_edge[1])
 	{
 		sizes[DOWN][0] += gc[0][1];
 
@@ -236,12 +236,12 @@ int get_moving_window_edge_proc_size_x_diff(const int dir)
 	if ( dir == DOWN || dir == UP )
 	{
 		// If proc is on the left edge of the simulation space
-		if (proc_coords[0] == 0)
+		if (is_on_edge[0])
 		{
 			return gc[0][0];
 		}
 		// If proc is on the right edge of the simulation space
-		if (proc_coords[0] == dims[0] - 1)
+		if (is_on_edge[1])
 		{
 			return gc[0][1];
 		}
@@ -256,7 +256,7 @@ int get_moving_window_edge_proc_coord_x_diff(const int dir)
 	if ( dir == DOWN || dir == UP )
 	{
 		// If proc is on the left edge of the simulation space
-		if (proc_coords[0] == 0)
+		if (is_on_edge[0])
 		{
 			return -gc[0][0];
 		}
@@ -1053,7 +1053,7 @@ void emf_move_window( t_emf *emf )
 	}
 
 	// If proc is on the right edge of the simulation space
-	if (proc_coords[0] == dims[0] - 1)
+	if (is_on_edge[1])
 	{
 		// Zero 3 leftmost cells on each row
 		for (j = -gc[1][0]; j < nxl1 + gc[1][1]; j++)

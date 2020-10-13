@@ -13,14 +13,14 @@ void sim_init( t_simulation* sim ){
 
 	// Time step
 	float dt = 0.009;
-	float tmax = 36;
+	float tmax = 9;//36;
 
 	// Simulation box
 	int   nx[2]  = { 2000, 512 };
 	float box[2] = { 20.0, 25.6 };
 
 	// Diagnostic frequency
-	int ndump = 50;
+	int ndump = 0;
 
     // Initialize particles
 	const int n_species = 1;

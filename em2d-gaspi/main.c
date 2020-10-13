@@ -50,6 +50,9 @@ int dims[NUM_DIMS];
 // Process coordinates
 int proc_coords[NUM_DIMS];
 
+// index 0 for simulation space left edge, 1 for right edge
+char is_on_edge[2];
+
 // Number of guard cells for linear interpolation
 const int gc[2][2] = {{1,2},
 					  {1,2}};
@@ -129,16 +132,19 @@ int main(int argc, char * argv[])
 	SUCCESS_OR_DIE( gaspi_proc_rank(&proc_rank) );
 	SUCCESS_OR_DIE( gaspi_proc_num(&num_procs) );
 
-	printf("Hello from rank %d of %d\n", proc_rank, num_procs); fflush(stdout);
+	// printf("Hello from rank %d of %d\n", proc_rank, num_procs);
 
 	create_dims(num_procs);
 	cart_coords(proc_rank, proc_coords);
 
-	// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]); fflush(stdout);
+	is_on_edge[0] = proc_coords[0] == 0;
+	is_on_edge[1] = proc_coords[0] == dims[0] - 1;
+
+	// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
 
 	if (proc_rank == ROOT)
 	{
-		printf("Dims:[%d,%d]\n", dims[0], dims[1]); fflush(stdout);
+		printf("Dims:[%d,%d]\n", dims[0], dims[1]);
 	}
 
 	// Initialize simulation
@@ -150,21 +156,21 @@ int main(int argc, char * argv[])
 	float t;
 	uint64_t t0, t1;
 
-	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
+	// printf("%d %d\n", sim.species[0].np, sim.species[1].np);
 
 	SUCCESS_OR_DIE( gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK) );
 	t0 = timer_ticks();
 
 	if (proc_rank == ROOT)
 	{
-		printf("Starting simulation ...\n\n"); fflush(stdout);
+		printf("Starting simulation ...\n\n");
 	}
 	
 	for (n = 0, t = 0.0; t <= sim.tmax; n++, t = n * sim.dt)
 	{
 		if (proc_rank == ROOT)
 		{
-			printf("n = %i, t = %f\n", n, t); fflush(stdout);
+			printf("n = %i, t = %f\n", n, t);
 		}
 		
 		if ( report ( n , sim.ndump ) )
@@ -173,6 +179,8 @@ int main(int argc, char * argv[])
 		}
 
 		sim_iter( &sim );
+
+		// printf("proc %d has %d %d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 	}
 
 
@@ -182,7 +190,7 @@ int main(int argc, char * argv[])
 	{
 		t1 = timer_ticks();
 
-		printf("\nSimulation ended.\n\n"); fflush(stdout);
+		printf("\nSimulation ended.\n\n");
 
 		// Simulation times
 		sim_timings( &sim, t0, t1 );

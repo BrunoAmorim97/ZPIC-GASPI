@@ -28,6 +28,7 @@ static double _spec_npush = 0.0;
 extern int proc_rank;
 
 extern int proc_coords[NUM_DIMS];
+extern char is_on_edge[2];
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
 extern int dims[NUM_DIMS];
@@ -438,7 +439,7 @@ void spec_new( t_species* spec, char name[], const t_part_data m_q, const int pp
 void remove_outer_particles(t_species *spec)
 {
 	// If proc is on the left edge of the simulation space
-	if (proc_coords[0] == 0)
+	if (is_on_edge[0])
 	{
 		// Use absorbing boundaries along the left edge
 		int i = 0;
@@ -454,7 +455,7 @@ void remove_outer_particles(t_species *spec)
 	}
 
 	// If proc is on the right edge of the simulation space
-	if (proc_coords[0] == dims[0] - 1)
+	if (is_on_edge[1])
 	{
 		const int max_ix = spec->nx_local[0] - 1;
 		
@@ -491,7 +492,7 @@ void spec_move_window( t_species *spec )
 		spec->n_move++;
 
 		// if proc is on the right edge of the simulation space
-		if(proc_coords[0] == dims[0] - 1)
+		if(is_on_edge[1])
 		{
 			// Inject particles on the right edge of the simulation box
 			const int range[NUM_DIMS][NUM_DIMS] =	{{spec->nx[0]-1,spec->nx[0]-1},
@@ -732,17 +733,20 @@ int ltrim( t_part_data x )
 }
 
 // Wait for each write and save particles
-void wait_save_particles(t_species* species_array, const int n_spec)
+void wait_save_particles(t_species* species_array, const int num_spec)
 {
-	int num_new_part[n_spec][NUM_ADJ];
-	int num_new_part_spec[n_spec]; memset(num_new_part_spec, 0, n_spec * sizeof(int));
+	int num_new_part[num_spec][NUM_ADJ];
+	int num_new_part_spec[num_spec]; memset(num_new_part_spec, 0, num_spec * sizeof(int));
 
 	const char moving_window = species_array->moving_window;
 
-	// Segment offset multiplier, 0 if iteration is even, 2 if odd. Iter - 1 because it was incremented before in spec_advance
-	const int seg_offset_mult = ((species_array->iter - 1) % 2) == 0 ? 0 : 2;
+	// -1 because it was incremented before in spec_advance
+	const int iter_num = species_array->iter - 1;
 
-	for (int spec_i = 0; spec_i < n_spec; spec_i++)
+	// Segment offset multiplier, 0 if iteration is even, 2 if odd.
+	const int seg_offset_mult = (iter_num % 2) == 0 ? 0 : 2;
+
+	for (int spec_i = 0; spec_i < num_spec; spec_i++)
 	{
 		// printf("Receiving particles from species %d\n\n", spec_i); fflush(stdout);
 
@@ -761,6 +765,9 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 			}
 		}
 
+		// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
+		const gaspi_notification_id_t notif_id = (iter_num % 2) == 0 ? spec_i : num_spec + spec_i;
+
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
 			// Check if we will receive particles from this dir
@@ -770,7 +777,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 			gaspi_notification_id_t id;
 			SUCCESS_OR_DIE( gaspi_notify_waitsome(
 			dir,			// The segment id, = to direction
-			spec_i,			// The notification id to wait for, in this case its the species to wait for
+			notif_id,		// The notification id to wait for
 			1,				// The number of notification ids this wait will accept, waiting for a specific write, so 1
 			&id,			// Output parameter with the id of a received notification
 			GASPI_BLOCK		// Timeout in milliseconds, wait until write is completed
@@ -825,7 +832,7 @@ void wait_save_particles(t_species* species_array, const int n_spec)
 	}
 
 	// // Print particles
-	// for (int i = 0; i < n_spec; i++)
+	// for (int i = 0; i < num_spec; i++)
 	// {
 	// 	printf("part from species %d: %d\n", i, species_array[i].np);
 	// 	for (int j = 0; j < species_array[i].np; j++)
@@ -911,7 +918,7 @@ void correct_coords(t_part* const part_pointer, const int dir)
 	}
 }
 
-void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
+void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ], const int num_spec)
 {	
 	const int spec_id = spec->id;
 
@@ -1001,6 +1008,10 @@ void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_
 		assert(num_part_seg <= (unsigned int) part_send_seg_size[dir]);
 	}
 
+	// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
+	// iter - 1 because it was incremented in spec_advance
+	const gaspi_notification_id_t notif_id = ( (spec->iter-1) % 2) == 0 ? spec_id : num_spec + spec_id;
+
 	// Make sure it is safe to change the segment data
 	SUCCESS_OR_DIE( gaspi_wait(Q_PARTICLES, GASPI_BLOCK) );
 
@@ -1030,7 +1041,7 @@ void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_
 		new_dir, 				// The remote segment id to write the data to.
 		remote_offset,			// The remote offset where to write to.
 		size,					// The size of the data to write.
-		spec_id,				// The notification id to use.
+		notif_id,				// The notification id to use.
 		1,						// The notification value used.
 		Q_PARTICLES,			// The queue where to post the request.
 		GASPI_BLOCK				// Timeout in milliseconds.
@@ -1125,10 +1136,10 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 		spec->part[i].uy = uy;
 		spec->part[i].uz = uz;
 
-		// if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
-		// {
-		// 	continue;
-		// }
+		if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
+		{
+			continue;
+		}
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
