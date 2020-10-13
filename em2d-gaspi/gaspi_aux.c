@@ -5,6 +5,7 @@ extern int proc_block_high[NUM_DIMS];
 extern int proc_block_size[NUM_DIMS];
 
 extern int proc_coords[NUM_DIMS];
+extern char is_on_edge[2];
 extern int dims[NUM_DIMS];
 
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
@@ -170,11 +171,11 @@ char can_send_to_dir(const char moving_window, const int dir)
 		return 1;
 	
 	// if proc is on the left edge of the simulation space, dont send data to the left
-	if ( (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) && (proc_coords[0] == 0) )
+	if ( is_on_edge[0] && (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) )
 		return 0;
 	
 	// if proc is on the right edge of the simulation space, dont send data to the right
-	if ( (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) && (proc_coords[0] == dims[0] - 1) )
+	if ( is_on_edge[1] && (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) )
 		return 0;
 	
 	return 1;
@@ -189,12 +190,12 @@ int get_num_incoming_notifs(const char moving_window)
 		return NUM_ADJ;
 
 	// If proc is on both the right and left edges of the simulation space
-	if ( (proc_coords[0] == 0) && (proc_coords[0] == dims[0] - 1) )
+	if ( is_on_edge[0] && is_on_edge[1] )
 		// will only receive cell data from UP and DOWN dirs
 		return NUM_ADJ - 6;
 	
 	// If proc is either on the left or right edge of the simulation space
-	if ( (proc_coords[0] == 0) || (proc_coords[0] == dims[0] - 1) )
+	if ( is_on_edge[0] || is_on_edge[1] )
 		// will not receive data from the dirs on the edge of the simulation space
 		return NUM_ADJ - 3;
 	

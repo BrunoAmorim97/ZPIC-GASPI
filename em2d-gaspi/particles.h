@@ -23,7 +23,7 @@ typedef struct
 	t_part_data ux, uy, uz;		// velocity
 } t_part;
 
-enum density_type {UNIFORM, STEP, SLAB};
+enum density_type { UNIFORM, STEP, SLAB };
 
 typedef struct {
 
@@ -41,7 +41,7 @@ typedef struct {
 	int id;
 
 	// Particle data buffer
-	t_part *part;
+	t_part* part;
 	int np;
 	int np_max;
 
@@ -89,22 +89,22 @@ typedef struct {
 
 } t_species;
 
-void spec_new( t_species* spec, char name[], const t_part_data m_q, const int ppc[],
-			  const t_part_data ufl[], const t_part_data uth[],
-			  const int nx[], t_part_data box[], const float dt, t_density* density );
+void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc[],
+	const t_part_data ufl[], const t_part_data uth[],
+	const int nx[], t_part_data box[], const float dt, t_density* density);
 
-void spec_move_window( t_species *spec );
+void spec_move_window(t_species* spec);
 
-void spec_delete( t_species* spec );
+void spec_delete(t_species* spec);
 
-void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ]);
+void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ], const int num_spec);
 
-void spec_advance( t_species* spec, t_emf* emf, t_current* current );
+void spec_advance(t_species* spec, t_emf* emf, t_current* current);
 
 void wait_save_particles(t_species* species_array, const int n_spec);
 
-double spec_time( void );
-double spec_perf( void );
+double spec_time(void);
+double spec_perf(void);
 
 /*********************************************************************************************
 
@@ -123,13 +123,13 @@ double spec_perf( void );
 
 #define PHASESPACE(a,b) ((a) + (b)*16 + PHA)
 
-void spec_deposit_pha( const t_species *spec, const int rep_type,
-			  const int pha_nx[], const float pha_range[][2], float* buf );
+void spec_deposit_pha(const t_species* spec, const int rep_type,
+	const int pha_nx[], const float pha_range[][2], float* buf);
 
-void spec_report( const t_species *spec, const int rep_type,
-				  const int pha_nx[], const float pha_range[][2] );
+void spec_report(const t_species* spec, const int rep_type,
+	const int pha_nx[], const float pha_range[][2]);
 
-void spec_deposit_charge( const t_species* spec, float* charge );
+void spec_deposit_charge(const t_species* spec, float* charge);
 
 
 #endif

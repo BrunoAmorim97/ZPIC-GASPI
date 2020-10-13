@@ -154,7 +154,7 @@ int zdf_close_file( t_zdf_file* zdf ) {
 		perror("(*error*) Unable to close ZDF file");
 		return(-1);
 	}
-	zdf -> fp = NULL;
+	zdf->fp = NULL;
 	return(0);
 }
 
@@ -167,7 +167,7 @@ int zdf_close_file( t_zdf_file* zdf ) {
  */
 int zdf_open_file( t_zdf_file* zdf, char* filename, enum zdf_file_access_mode mode ){
 
-	zdf -> mode = mode;
+	zdf->mode = mode;
 
 	switch( mode ) {
 		case ZDF_WRITE :
@@ -240,7 +240,7 @@ int zdf_open_file( t_zdf_file* zdf, char* filename, enum zdf_file_access_mode mo
  * @return     Returns 0 on success, other value on error
  */
 int zdf_int32_write( t_zdf_file* zdf, const int32_t i ){
-	return ( fwrite( (void *) &i, sizeof(int32_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &i, sizeof(int32_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -250,7 +250,7 @@ int zdf_int32_write( t_zdf_file* zdf, const int32_t i ){
  * @return     Returns 0 on success, other value on error
  */
 int zdf_uint32_write( t_zdf_file* zdf, const uint32_t u ){
-	return ( fwrite( (void *) &u, sizeof(uint32_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &u, sizeof(uint32_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -260,7 +260,7 @@ int zdf_uint32_write( t_zdf_file* zdf, const uint32_t u ){
  * @return     Returns 0 on success, other value on error
  */
 int zdf_int64_write( t_zdf_file* zdf, const int64_t i ){
-	return ( fwrite( (void *) &i, sizeof(int64_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &i, sizeof(int64_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -270,7 +270,7 @@ int zdf_int64_write( t_zdf_file* zdf, const int64_t i ){
  * @return     Returns 0 on success, other value on error
  */
 int zdf_uint64_write( t_zdf_file* zdf, const uint64_t u ){
-	return ( fwrite( (void *) &u, sizeof(uint64_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &u, sizeof(uint64_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -280,7 +280,7 @@ int zdf_uint64_write( t_zdf_file* zdf, const uint64_t u ){
  * @return     Returns 0 on success, other value on error
  */
 int zdf_double_write( t_zdf_file* zdf, const double d ){
-	return ( fwrite( (void *) &d, sizeof(double), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &d, sizeof(double), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -291,7 +291,7 @@ int zdf_double_write( t_zdf_file* zdf, const double d ){
  * @return      Returns 0 on success, other value on error
  */
 int zdf_float_vector_write( t_zdf_file* zdf,  float const * const data, size_t len ) {
-	return( fwrite( (void *) data, sizeof(float), len, zdf -> fp ) != len );
+	return( fwrite( (void *) data, sizeof(float), len, zdf->fp ) != len );
 }
 
 /**
@@ -302,7 +302,7 @@ int zdf_float_vector_write( t_zdf_file* zdf,  float const * const data, size_t l
  * @return      Returns 0 on success, other value on error
  */
 int zdf_double_vector_write( t_zdf_file* zdf,  double const * const data, size_t len ) {
-	return( fwrite( (void *) data, sizeof(double), len, zdf -> fp ) != len );
+	return( fwrite( (void *) data, sizeof(double), len, zdf->fp ) != len );
 }
 
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -371,7 +371,7 @@ int zdf_double_vector_write( t_zdf_file* zdf,  double const * const data, size_t
  */
 int zdf_int32_write( t_zdf_file* zdf, const int32_t i ){
 	uint32_t tmp = bswap_32((uint32_t)i);
-	return ( fwrite( (void *) &tmp, sizeof(uint32_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &tmp, sizeof(uint32_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -382,7 +382,7 @@ int zdf_int32_write( t_zdf_file* zdf, const int32_t i ){
  */
 int zdf_uint32_write( t_zdf_file* zdf, const uint32_t u ){
 	uint32_t tmp = bswap_32(u);
-	return ( fwrite( (void *) &tmp, sizeof(uint32_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &tmp, sizeof(uint32_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -393,7 +393,7 @@ int zdf_uint32_write( t_zdf_file* zdf, const uint32_t u ){
  */
 int zdf_int64_write( t_zdf_file* zdf, const int64_t i ){
 	uint64_t tmp = bswap_64((uint64_t)i);
-	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -404,7 +404,7 @@ int zdf_int64_write( t_zdf_file* zdf, const int64_t i ){
  */
 int zdf_uint64_write( t_zdf_file* zdf, const uint64_t u ){
 	uint64_t tmp = bswap_64(u);
-	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -415,7 +415,7 @@ int zdf_uint64_write( t_zdf_file* zdf, const uint64_t u ){
  */
 int zdf_double_write( t_zdf_file* zdf, const double d ){
 	uint64_t tmp = bswap_64((uint64_t)d);
-	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf -> fp ) == 1 );
+	return ( fwrite( (void *) &tmp, sizeof(uint64_t), 1, zdf->fp ) == 1 );
 }
 
 /**
@@ -438,7 +438,7 @@ int zdf_float_vector_write( t_zdf_file* zdf,  float const * const data, size_t l
 		for( size_t i = 0; i < chunk_len; i++) buffer[i] = bswap_32( (uint32_t) data[offset+i]);
 		
 		// Write chunk
-		if ( fwrite( (void *) buffer, sizeof(uint32_t), chunk_len, zdf -> fp) != chunk_len ) 
+		if ( fwrite( (void *) buffer, sizeof(uint32_t), chunk_len, zdf->fp) != chunk_len ) 
 			return(0);
     }
 
@@ -464,7 +464,7 @@ int zdf_double_vector_write( t_zdf_file* zdf,  double const * const data, size_t
 		for( size_t i = 0; i < chunk_len; i++) buffer[i] = bswap_64( (uint64_t) data[offset+i]);
 		
 		// Write chunk
-		if ( fwrite( (void *) buffer, sizeof(uint64_t), chunk_len, zdf -> fp) != chunk_len ) 
+		if ( fwrite( (void *) buffer, sizeof(uint64_t), chunk_len, zdf->fp) != chunk_len ) 
 			return(0);
     }
 
@@ -487,7 +487,7 @@ int zdf_double_vector_write( t_zdf_file* zdf,  double const * const data, size_t
  */
 int zdf_bytes_write( t_zdf_file* zdf, const uint8_t *u, size_t len ){
 	
-	if ( fwrite( (void *) u, sizeof(uint8_t), len, zdf -> fp ) != len ) {
+	if ( fwrite( (void *) u, sizeof(uint8_t), len, zdf->fp ) != len ) {
 		return(0);
 	}
 
@@ -495,7 +495,7 @@ int zdf_bytes_write( t_zdf_file* zdf, const uint8_t *u, size_t len ){
 
 	if ( npad > 0 ) {
 		const uint8_t pad[BYTES_PER_ZDF_UNIT] = {0};
-		if ( fwrite( (void *) pad, sizeof(uint8_t), npad, zdf -> fp ) != npad ) {
+		if ( fwrite( (void *) pad, sizeof(uint8_t), npad, zdf->fp ) != npad ) {
 			return(0);
 		}
 	}
@@ -553,9 +553,9 @@ typedef struct {
 
 int zdf_record_write( t_zdf_file* zdf, const t_zdf_record* rec ){
 
-    if ( !zdf_uint32_write( zdf, rec -> id_version ) ) return(0);
- 	if ( !zdf_string_write( zdf, rec -> name ) ) return(0);
-	if ( !zdf_uint64_write( zdf, rec -> length ) ) return(0);
+    if ( !zdf_uint32_write( zdf, rec->id_version ) ) return(0);
+ 	if ( !zdf_string_write( zdf, rec->name ) ) return(0);
+	if ( !zdf_uint64_write( zdf, rec->length ) ) return(0);
 
  	return(1);
 }
@@ -618,7 +618,7 @@ int zdf_add_iteration( t_zdf_file* zdf, const char* name, const t_zdf_iteration*
 		.name = (char *) name,
 		.length = size_zdf_uint32 + 
 		             size_zdf_double +
-		             size_zdf_string( iter -> time_units )
+		             size_zdf_string( iter->time_units )
 	};
 
     if ( !zdf_record_write( zdf, &rec) ) return(-1);
@@ -634,18 +634,18 @@ int zdf_add_iteration( t_zdf_file* zdf, const char* name, const t_zdf_iteration*
 uint64_t size_xdr_zdf_grid_info(const t_zdf_grid_info* grid) {
 	uint64_t size;
 
-	size = size_zdf_uint32 + grid -> ndims * size_zdf_uint64 +
+	size = size_zdf_uint32 + grid->ndims * size_zdf_uint64 +
 	        size_zdf_string(grid->label) +  size_zdf_string(grid->units);
 
    	// Includes axis information
    	size += size_zdf_int32;
-    if ( grid -> axis ) {
+    if ( grid->axis ) {
 
-    	for(unsigned int i=0; i<grid -> ndims; i++) 
+    	for(unsigned int i=0; i<grid->ndims; i++) 
     		size += size_zdf_int32 + 
     	            2 * size_zdf_double + 
-    	            size_zdf_string( grid -> axis[i].label ) +
-    	            size_zdf_string( grid -> axis[i].units );
+    	            size_zdf_string( grid->axis[i].label ) +
+    	            size_zdf_string( grid->axis[i].units );
     }
 
 	return size;
@@ -661,29 +661,29 @@ int zdf_add_grid_info( t_zdf_file* zdf, const char* name, const t_zdf_grid_info*
 
     if ( !zdf_record_write( zdf, &rec) ) return(-1);
 
- 	if ( !zdf_uint32_write( zdf, grid -> ndims ) ) return(-1);
+ 	if ( !zdf_uint32_write( zdf, grid->ndims ) ) return(-1);
 
     unsigned int i;
-    for( i=0; i < grid -> ndims; i++) {
-	 	if ( !zdf_uint64_write( zdf, grid -> nx[i] ) ) return(-1);
+    for( i=0; i < grid->ndims; i++) {
+	 	if ( !zdf_uint64_write( zdf, grid->nx[i] ) ) return(-1);
     }
  	
  	if ( !zdf_string_write( zdf, grid->label ) ) return(-1);
  	if ( !zdf_string_write( zdf, grid->units ) ) return(-1);
 
-    int32_t has_axis = ( grid -> axis != NULL);
+    int32_t has_axis = ( grid->axis != NULL);
  	if ( !zdf_int32_write( zdf, has_axis ) ) return(-1);
 
  	if ( has_axis ) {
 
-	    for( i=0; i < grid -> ndims; i++) {
+	    for( i=0; i < grid->ndims; i++) {
 
-		    if ( !zdf_int32_write( zdf, grid -> axis[i].type ) ) return(-1);
-		    if ( !zdf_double_write( zdf, grid -> axis[i].min ) ) return(-1);
-		    if ( !zdf_double_write( zdf, grid -> axis[i].max ) ) return(-1);
+		    if ( !zdf_int32_write( zdf, grid->axis[i].type ) ) return(-1);
+		    if ( !zdf_double_write( zdf, grid->axis[i].min ) ) return(-1);
+		    if ( !zdf_double_write( zdf, grid->axis[i].max ) ) return(-1);
 
-		    if ( !zdf_string_write( zdf, grid -> axis[i].label ) ) return(-1);
-		    if ( !zdf_string_write( zdf, grid -> axis[i].units ) ) return(-1);
+		    if ( !zdf_string_write( zdf, grid->axis[i].label ) ) return(-1);
+		    if ( !zdf_string_write( zdf, grid->axis[i].units ) ) return(-1);
 	    }
  	}
 
@@ -696,9 +696,9 @@ uint64_t size_xdr_zdf_part_info(const t_zdf_part_info* part) {
 			size_zdf_uint32; 								// nquants
 
 	unsigned int i;
-	for( i = 0; i < part -> nquants; i++) {
-		size += size_zdf_string( part -> quants[i] ) +
-				size_zdf_string( part -> units[i] );
+	for( i = 0; i < part->nquants; i++) {
+		size += size_zdf_string( part->quants[i] ) +
+				size_zdf_string( part->units[i] );
 	}
 
 	size += size_zdf_uint64; 					// np
@@ -716,17 +716,17 @@ int zdf_add_part_info( t_zdf_file* zdf, char* name, t_zdf_part_info* part ){
 
     if ( !zdf_record_write( zdf, &rec) ) return(-1);
 	if ( !zdf_string_write( zdf, part->name ) ) return(-1);
- 	if ( !zdf_uint32_write( zdf, part -> nquants ) ) return(-1);
+ 	if ( !zdf_uint32_write( zdf, part->nquants ) ) return(-1);
 
     unsigned int i;
-    for( i=0; i < part -> nquants; i++) {
+    for( i=0; i < part->nquants; i++) {
 		if ( !zdf_string_write( zdf, part->quants[i] ) ) return(-1);
     }
-    for( i=0; i < part -> nquants; i++) {
+    for( i=0; i < part->nquants; i++) {
 		if ( !zdf_string_write( zdf, part->units[i] ) ) return(-1);
     }
  	
- 	if ( !zdf_uint64_write( zdf, part -> np ) ) return(-1);
+ 	if ( !zdf_uint64_write( zdf, part->np ) ) return(-1);
 
  	return(0);
 }
@@ -761,13 +761,13 @@ uint64_t size_zdf_dataset(const t_zdf_dataset* dataset) {
 	unsigned int i;
     uint64_t data_size;
 
-    data_size = zdf_datatype_size( dataset -> data_type );
-    for( i = 0; i < dataset -> ndims; i++ ) {
-    	data_size *= dataset -> nx[i];
+    data_size = zdf_datatype_size( dataset->data_type );
+    for( i = 0; i < dataset->ndims; i++ ) {
+    	data_size *= dataset->nx[i];
     }
 
 	return size_zdf_int32 + size_zdf_uint32 + 
-	       dataset -> ndims * size_zdf_uint64 +
+	       dataset->ndims * size_zdf_uint64 +
 	       data_size ;
 }
 
@@ -781,22 +781,22 @@ int zdf_add_dataset( t_zdf_file* zdf, char* name, t_zdf_dataset* dataset ){
 
     if ( !zdf_record_write( zdf, &rec) ) return(-1);
 
- 	if ( !zdf_int32_write( zdf, dataset -> data_type ) ) return(-1);
-	if ( !zdf_uint32_write( zdf, dataset -> ndims ) ) return(-1);
+ 	if ( !zdf_int32_write( zdf, dataset->data_type ) ) return(-1);
+	if ( !zdf_uint32_write( zdf, dataset->ndims ) ) return(-1);
 
     unsigned int i;
  	unsigned int count;
-    for( i=0, count = 1; i < dataset -> ndims; i++) {
-    	count *= dataset -> nx[i];
-	 	if ( !zdf_uint64_write( zdf, dataset -> nx[i] ) ) return(-1);
+    for( i=0, count = 1; i < dataset->ndims; i++) {
+    	count *= dataset->nx[i];
+	 	if ( !zdf_uint64_write( zdf, dataset->nx[i] ) ) return(-1);
     }
 
- 	switch ( dataset -> data_type ) {
+ 	switch ( dataset->data_type ) {
     	case zdf_float32: 
-    	    if ( !zdf_float_vector_write( zdf, (float *) dataset -> data, count ) ) return(-1);
+    	    if ( !zdf_float_vector_write( zdf, (float *) dataset->data, count ) ) return(-1);
     	    break;
     	case zdf_float64:
-    	    if ( !zdf_double_vector_write( zdf, (double *) dataset -> data, count ) ) return(-1);
+    	    if ( !zdf_double_vector_write( zdf, (double *) dataset->data, count ) ) return(-1);
     	    break;
     	default: 
     		fprintf(stderr,"(*error*) zdf_add_dataset: Unsupported datatype.");
@@ -827,15 +827,15 @@ int zdf_save_grid( const float* data, const t_zdf_grid_info *_info,
     // Set axis info
     t_zdf_grid_axis axis[zdf_max_dims];
 
-    if ( _info -> axis ) {
+    if ( _info->axis ) {
 	    // Copy axis info
 	    for( i = 0; i < _info->ndims; i ++) {
 	    	axis[i] = (t_zdf_grid_axis) 
 	    	          { .type = zdf_linear,
-	    	            .min = _info -> axis[i].min,
-	    	            .max = _info -> axis[i].max,
-	    	            .label = _info -> axis[i].label ,
-	    	            .units = _info -> axis[i].units };
+	    	            .min = _info->axis[i].min,
+	    	            .max = _info->axis[i].max,
+	    	            .label = _info->axis[i].label ,
+	    	            .units = _info->axis[i].units };
 	    	}
 
     } else {
@@ -844,7 +844,7 @@ int zdf_save_grid( const float* data, const t_zdf_grid_info *_info,
 	    	axis[i] = (t_zdf_grid_axis) 
 	    	          { .type = zdf_linear,
 	    	            .min = 0,
-	    	            .max = _info -> nx[i],
+	    	            .max = _info->nx[i],
 	    	            .label = "",
 	    	            .units = "" };
 	    	}
@@ -853,8 +853,8 @@ int zdf_save_grid( const float* data, const t_zdf_grid_info *_info,
     // Set grid info
     t_zdf_grid_info   grid_info = {
     	.ndims = _info->  ndims,
-    	.label = _info -> label,
-    	.units = _info -> units,
+    	.label = _info->label,
+    	.units = _info->units,
     	.axis  = axis
     };
     for( i = 0; i < _info->ndims; i ++) grid_info.nx[i] = _info->nx[i];
@@ -871,7 +871,7 @@ int zdf_save_grid( const float* data, const t_zdf_grid_info *_info,
 	create_path( path );
 	
 	// Build filename
-	sprintf( filename, "%s/%s-%06u.zdf", path, _info->label, _iteration -> n );
+	sprintf( filename, "%s/%s-%06u.zdf", path, _info->label, _iteration->n );
     printf("Saving filename %s\n", filename );
 	
     // Create ZDF file
@@ -909,7 +909,7 @@ int zdf_part_file_open( t_zdf_file *zdf, t_zdf_part_info *_info,
 	create_path( path );
 	
 	// Build filename
-	sprintf( filename, "%s/%s-%s-%06u.zdf", path, "particles", _info->name, _iteration -> n );
+	sprintf( filename, "%s/%s-%s-%06u.zdf", path, "particles", _info->name, _iteration->n );
     //printf("Saving filename %s\n", filename );
 	
     // Create ZDF file
