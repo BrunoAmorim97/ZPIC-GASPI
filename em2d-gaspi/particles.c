@@ -667,13 +667,13 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 		J[vp[k].ix + nrow * vp[k].iy].x += wl1 * wp1[0];
 		J[vp[k].ix + nrow * (vp[k].iy + 1)].x += wl1 * wp1[1];
 
-		J[ vp[k].ix   + nrow*vp[k].iy ].y += wl2 * wp2[0];
-		J[ vp[k].ix+1 + nrow*vp[k].iy ].y += wl2 * wp2[1];
+		J[vp[k].ix + nrow * vp[k].iy].y += wl2 * wp2[0];
+		J[vp[k].ix + 1 + nrow * vp[k].iy].y += wl2 * wp2[1];
 
-		J[ vp[k].ix   + nrow*vp[k].iy    ].z += vp[k].qvz * (S0x[0]*S0y[0]+S1x[0]*S1y[0]+(S0x[0]*S1y[0]-S1x[0]*S0y[0])/2.0f);
-		J[ vp[k].ix+1 + nrow*vp[k].iy    ].z += vp[k].qvz * (S0x[1]*S0y[0]+S1x[1]*S1y[0]+(S0x[1]*S1y[0]-S1x[1]*S0y[0])/2.0f);
-		J[ vp[k].ix   + nrow*(vp[k].iy+1)].z += vp[k].qvz * (S0x[0]*S0y[1]+S1x[0]*S1y[1]+(S0x[0]*S1y[1]-S1x[0]*S0y[1])/2.0f);
-		J[ vp[k].ix+1 + nrow*(vp[k].iy+1)].z += vp[k].qvz * (S0x[1]*S0y[1]+S1x[1]*S1y[1]+(S0x[1]*S1y[1]-S1x[1]*S0y[1])/2.0f);
+		J[vp[k].ix + nrow * vp[k].iy].z += vp[k].qvz * (S0x[0] * S0y[0] + S1x[0] * S1y[0] + (S0x[0] * S1y[0] - S1x[0] * S0y[0]) / 2.0f);
+		J[vp[k].ix + 1 + nrow * vp[k].iy].z += vp[k].qvz * (S0x[1] * S0y[0] + S1x[1] * S1y[0] + (S0x[1] * S1y[0] - S1x[1] * S0y[0]) / 2.0f);
+		J[vp[k].ix + nrow * (vp[k].iy + 1)].z += vp[k].qvz * (S0x[0] * S0y[1] + S1x[0] * S1y[1] + (S0x[0] * S1y[1] - S1x[0] * S0y[1]) / 2.0f);
+		J[vp[k].ix + 1 + nrow * (vp[k].iy + 1)].z += vp[k].qvz * (S0x[1] * S0y[1] + S1x[1] * S1y[1] + (S0x[1] * S1y[1] - S1x[1] * S0y[1]) / 2.0f);
 	}
 }
 
@@ -1375,44 +1375,25 @@ void spec_pha_axis(const t_species* spec, int i0, int np, int quant, float* axis
 {
 	int i;
 
-	switch (quant) {
+	switch (quant)
+	{
 	case X1:
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
 		for (i = 0; i < np; i++)
 			axis[i] = (spec->part[i0 + i].x + spec->part[i0 + i].ix) * spec->dx[0];
 		break;
 	case X2:
 		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
 			axis[i] = (spec->part[i0 + i].y + spec->part[i0 + i].iy) * spec->dx[1];
 		break;
 	case U1:
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
 		for (i = 0; i < np; i++)
 			axis[i] = spec->part[i0 + i].ux;
 		break;
 	case U2:
 		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
 			axis[i] = spec->part[i0 + i].uy;
 		break;
 	case U3:
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
-		for (i = 0; i < np; i++)
-			for (i = 0; i < np; i++) 
 		for (i = 0; i < np; i++)
 			axis[i] = spec->part[i0 + i].uz;
 		break;

@@ -1043,7 +1043,8 @@ void spec_pha_axis( const t_species *spec, int i0, int np, int quant, float *axi
 {
 	int i;
 	
-	switch (quant) {
+	switch (quant)
+	{
 		case X1:
 			for (i = 0; i < np; i++) 
 				axis[i] = ( spec->part[i0+i].x + spec->part[i0+i].ix ) * spec->dx[0];
