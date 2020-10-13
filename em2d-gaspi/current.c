@@ -26,8 +26,8 @@ extern gaspi_rank_t num_procs;
 
 extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
-extern t_vfld *current_segments[NUM_ADJ];
-extern t_vfld *current_kernel_smoothing_segments[NUM_ADJ];
+extern t_vfld* current_segments[NUM_ADJ];
+extern t_vfld* current_kernel_smoothing_segments[NUM_ADJ];
 
 extern int curr_send_size[NUM_ADJ][NUM_DIMS];
 extern int curr_cell_to_send_starting_coord[NUM_ADJ][NUM_DIMS];
@@ -37,14 +37,14 @@ extern int curr_kernel_send_coord[NUM_ADJ][NUM_DIMS];
 extern int curr_kernel_write_coord[NUM_ADJ][NUM_DIMS];
 
 #define NUM_KERNEL_X_DIRS 2
-const int kernel_x_directions[NUM_KERNEL_X_DIRS] = {LEFT, RIGHT};
+const int kernel_x_directions[NUM_KERNEL_X_DIRS] = { LEFT, RIGHT };
 
 #define NUM_KERNEL_Y_DIRS 6
-const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = {DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP, UP_RIGHT};
+const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = { DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP, UP_RIGHT };
 
 void print_local_current(t_current* current)
 {
-	t_vfld *J = current->J;
+	t_vfld* J = current->J;
 	int nrow = current->nrow_local;
 	printf("CURRENT X\n");
 	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
@@ -161,7 +161,7 @@ void create_current_segments(const int nx_local[NUM_DIMS])
 		SUCCESS_OR_DIE(gaspi_segment_register(DIR_TO_CURR_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK));
 
 		SUCCESS_OR_DIE(gaspi_segment_ptr(DIR_TO_CURR_SEG_ID(dir), &pointer));
-		current_segments[dir] = (t_vfld *)pointer;
+		current_segments[dir] = (t_vfld*)pointer;
 	}
 }
 
@@ -174,30 +174,30 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	// ===== Kernel smoothing GC sizes and coordinates =====
 	// size of the curr kernel smoothing data transmissions, in number of cells, perspective of the sender
 	int kernel_sizes[NUM_ADJ][NUM_DIMS] = // {size_x, size_y}
-		{
-			//LEFT					CENTER				RIGHT
-			{gc[0][1], gc[1][0]},	{nxl0, gc[1][0]},	{gc[0][0], gc[1][0]},	// DOWN !!!
-			{gc[0][1], nxl1},							{gc[0][0], nxl1}, 		// CENTER
-			{gc[0][1], gc[1][1]},	{nxl0, gc[1][1]},	{gc[0][0], gc[1][1]}	// UP !!!
-		};
+	{
+		//LEFT					CENTER				RIGHT
+		{gc[0][1], gc[1][0]},	{nxl0, gc[1][0]},	{gc[0][0], gc[1][0]},	// DOWN !!!
+		{gc[0][1], nxl1},							{gc[0][0], nxl1}, 		// CENTER
+		{gc[0][1], gc[1][1]},	{nxl0, gc[1][1]},	{gc[0][0], gc[1][1]}	// UP !!!
+	};
 
 	// top left coord of the cells this proc will send to each direction, perspective of the sender
 	int kernel_starting_send_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
-		{
-			//LEFT			CENTER			RIGHT
-			{0, nxl1 - 1},	{0, nxl1 - 1},	{nxl0 - 1, nxl1 - 1},	// DOWN !!!
-			{0, 0},							{nxl0 - 1, 0},			// CENTER
-			{0, 0},			{0, 0},			{nxl0 - 1, 0}			// UP !!!
-		};
+	{
+		//LEFT			CENTER			RIGHT
+		{0, nxl1 - 1},	{0, nxl1 - 1},	{nxl0 - 1, nxl1 - 1},	// DOWN !!!
+		{0, 0},							{nxl0 - 1, 0},			// CENTER
+		{0, 0},			{0, 0},			{nxl0 - 1, 0}			// UP !!!
+	};
 
 	// top left coord of the cells this proc will override with received cells from each direction, perspective of the receiver
 	int kernel_starting_write_coord[NUM_ADJ][NUM_DIMS] = // {coord_x, coord_y}
-		{
-			//LEFT							CENTER					RIGHT
-			{-gc[0][0], nxl1},				{0, nxl1},				{nxl0, nxl1},		// DOWN !!!
-			{-gc[0][0], 0},											{nxl0, 0},			// CENTER
-			{-gc[0][0], -gc[1][0]},			{0, -gc[1][0]},			{nxl0, -gc[1][0]}	// UP !!!
-		};
+	{
+		//LEFT							CENTER					RIGHT
+		{-gc[0][0], nxl1},				{0, nxl1},				{nxl0, nxl1},		// DOWN !!!
+		{-gc[0][0], 0},											{nxl0, 0},			// CENTER
+		{-gc[0][0], -gc[1][0]},			{0, -gc[1][0]},			{nxl0, -gc[1][0]}	// UP !!!
+	};
 
 	// On moving window simulations
 	if (moving_window)
@@ -248,7 +248,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 		SUCCESS_OR_DIE(gaspi_segment_register(DIR_TO_CURR_KER_SEG_ID(dir), neighbour_rank[dir], GASPI_BLOCK));
 
 		SUCCESS_OR_DIE(gaspi_segment_ptr(DIR_TO_CURR_KER_SEG_ID(dir), &pointer));
-		current_kernel_smoothing_segments[dir] = (t_vfld *)pointer;
+		current_kernel_smoothing_segments[dir] = (t_vfld*)pointer;
 	}
 }
 
@@ -302,7 +302,7 @@ void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[
 	current->dt = dt;
 }
 
-void curr_set_smooth(t_current* current, t_smooth *smooth)
+void curr_set_smooth(t_current* current, t_smooth* smooth)
 {
 	if ((smooth->xtype != NONE) && (smooth->xlevel <= 0))
 	{
@@ -338,7 +338,7 @@ void current_update(t_current* current)
 {
 	int i, j;
 	const int nrow = current->nrow_local; // Local nrow
-	t_vfld *restrict const J = current->J;
+	t_vfld* restrict const J = current->J;
 
 	// x
 	if (!current->moving_window)
@@ -398,7 +398,7 @@ void send_current(t_current* current)
 {
 	const int nrow = current->nrow_local; // Local nrow
 
-	const t_vfld *restrict const J = current->J;
+	const t_vfld* restrict const J = current->J;
 
 	// Make sure there are no uncompleted outgoing writes
 	SUCCESS_OR_DIE(gaspi_wait(Q_CURRENT, GASPI_BLOCK));
@@ -446,7 +446,7 @@ void send_current(t_current* current)
 			1,					 // The notification value used.
 			Q_CURRENT,			 // The queue where to post the request.
 			GASPI_BLOCK			 // Timeout in milliseconds.
-			));
+		));
 	}
 }
 
@@ -456,7 +456,7 @@ void wait_save_update_current(t_current* current)
 	// printf("BEFORE CURRENT GC ADD\n");
 	// print_local_current(current);
 
-	t_vfld *restrict const J = current->J;
+	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
 	char received_notif[NUM_ADJ];
@@ -489,12 +489,12 @@ void wait_save_update_current(t_current* current)
 
 				// Test if the notification has arrived
 				SUCCESS_TIMEOUT_OR_DIE(return_value = gaspi_notify_waitsome(
-										   DIR_TO_CURR_SEG_ID(dir), // The segment id
-										   NOTIF_ID_CURRENT,		// The notification id to wait for
-										   1,						// The number of notification ids this wait will accept, waiting for a specific write, so 1
-										   &id,						// Output parameter with the id of a received notification
-										   GASPI_BLOCK				// Timeout
-										   ));
+					DIR_TO_CURR_SEG_ID(dir), // The segment id
+					NOTIF_ID_CURRENT,		// The notification id to wait for
+					1,						// The number of notification ids this wait will accept, waiting for a specific write, so 1
+					&id,						// Output parameter with the id of a received notification
+					GASPI_BLOCK				// Timeout
+				));
 
 				// If this notification has arrived
 				if (return_value == GASPI_SUCCESS)
@@ -519,10 +519,10 @@ void wait_save_update_current(t_current* current)
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction
 		const int starting_column = curr_cell_to_send_starting_coord[dir][0];
-		const int starting_row = 	curr_cell_to_send_starting_coord[dir][1];
+		const int starting_row = curr_cell_to_send_starting_coord[dir][1];
 
-		const int max_column = 	curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
-		const int max_row = 	curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
+		const int max_column = curr_cell_to_send_starting_coord[dir][0] + curr_send_size[dir][0];
+		const int max_row = curr_cell_to_send_starting_coord[dir][1] + curr_send_size[dir][1];
 
 		int seg_index = curr_send_size[dir][0] * curr_send_size[dir][1];
 
@@ -549,7 +549,7 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 {
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
-	const t_vfld *restrict const J = current->J;
+	const t_vfld* restrict const J = current->J;
 
 	// Make sure it is safe to modify the segment data
 	SUCCESS_OR_DIE(gaspi_wait(Q_CURRENT_KERNEL, GASPI_BLOCK));
@@ -581,10 +581,10 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		if (smoothing_pass_iter % 2 == 1)
 		{
 			copy_index += curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
-						  curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
+				curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
 
 			remote_offset += curr_kernel_size[dir][0] * curr_kernel_size[dir][1] +
-							 curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
+				curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1];
 
 			notification_id = NOTIF_ID_CURRENT_KERNEL_ODD;
 		}
@@ -620,7 +620,7 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 			1,					 // The notification value used.
 			Q_CURRENT_KERNEL,	 // The queue where to post the request.
 			GASPI_BLOCK			 // Timeout in milliseconds.
-			));
+		));
 	}
 }
 
@@ -629,7 +629,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 	const int nrow = current->nrow_local; // Local nrow
 	const int moving_window = current->moving_window;
 
-	t_vfld *restrict const J = current->J;
+	t_vfld* restrict const J = current->J;
 
 	for (int dir_i = 0; dir_i < num_dirs; dir_i++)
 	{
@@ -655,7 +655,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		if (smoothing_pass_iter % 2 == 1)
 		{
 			copy_index += curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] +
-						  curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
+				curr_kernel_size[dir][0] * curr_kernel_size[dir][1];
 
 			notification_id = NOTIF_ID_CURRENT_KERNEL_ODD;
 		}
@@ -667,7 +667,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 			1,							 // The number of notification ids this wait will accept, waiting for a specific write, so 1
 			&id,						 // Output parameter with the id of a received notification
 			GASPI_BLOCK					 // Timeout in milliseconds, wait until write is completed
-			));
+		));
 
 		gaspi_notification_t value;
 		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
@@ -688,8 +688,8 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 
 void current_report(const t_current* current, const char jc)
 {
-	t_vfld *f;
-	float *buf, *p;
+	t_vfld* f;
+	float* buf, * p;
 	int i, j;
 	char vfname[3];
 
@@ -745,19 +745,19 @@ void current_report(const t_current* current, const char jc)
 		.min = 0.0,
 		.max = current->box[0],
 		.label = "x_1",
-		.units = "c/\\omega_p"};
+		.units = "c/\\omega_p" };
 
 	axis[1] = (t_zdf_grid_axis){
 		.min = 0.0,
 		.max = current->box[1],
 		.label = "x_2",
-		.units = "c/\\omega_p"};
+		.units = "c/\\omega_p" };
 
 	t_zdf_grid_info info = {
 		.ndims = 2,
 		.label = vfname,
 		.units = "e \\omega_p^2 / c",
-		.axis = axis};
+		.axis = axis };
 
 	info.nx[0] = current->nx[0];
 	info.nx[1] = current->nx[1];
@@ -765,7 +765,7 @@ void current_report(const t_current* current, const char jc)
 	t_zdf_iteration iter = {
 		.n = current->iter,
 		.t = current->iter * current->dt,
-		.time_units = "1/\\omega_p"};
+		.time_units = "1/\\omega_p" };
 
 	zdf_save_grid(buf, &info, &iter, "/home/bruno/zpic-out/gaspi/CURRENT");
 	// zdf_save_grid( buf, &info, &iter, "/home/pr1eja00/pr1eja17/zpic-out/gaspi/CURRENT" );
@@ -801,7 +801,7 @@ void kernel_gc_update(t_current* current, const int num_kernel_directions, const
 void kernel_x(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
 	int i, j;
-	t_vfld *restrict const J = current->J;
+	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // local nrow
 
 	for (j = 0; j < current->nx_local[1]; j++)
@@ -838,7 +838,7 @@ void kernel_x(t_current* const current, const t_fld sa, const t_fld sb, const in
 void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
 {
 	t_vfld flbuf[current->nx[0]];
-	t_vfld *restrict const J = current->J;
+	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow;
 
 	int i, j;

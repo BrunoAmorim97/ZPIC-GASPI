@@ -54,8 +54,8 @@ int proc_coords[NUM_DIMS];
 char is_on_edge[2];
 
 // Number of guard cells for linear interpolation
-const int gc[2][2] = {{1,2},
-					  {1,2}};
+const int gc[2][2] = {	{1,2},
+						{1,2} };
 
 // Process cell block low coords
 int proc_block_low[NUM_DIMS];
@@ -124,13 +124,13 @@ t_vfld* emf_e_report_array;
 t_vfld* emf_b_report_array;
 t_vfld* current_report_array;
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
 	MPI_Init(&argc, &argv);
-	SUCCESS_OR_DIE( gaspi_proc_init(GASPI_BLOCK) );
+	SUCCESS_OR_DIE(gaspi_proc_init(GASPI_BLOCK));
 
-	SUCCESS_OR_DIE( gaspi_proc_rank(&proc_rank) );
-	SUCCESS_OR_DIE( gaspi_proc_num(&num_procs) );
+	SUCCESS_OR_DIE(gaspi_proc_rank(&proc_rank));
+	SUCCESS_OR_DIE(gaspi_proc_num(&num_procs));
 
 	// printf("Hello from rank %d of %d\n", proc_rank, num_procs);
 
@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
 
 	// Initialize simulation
 	t_simulation sim;
-	sim_init( &sim );
+	sim_init(&sim);
 
 	// Run simulation
 	int n;
@@ -158,27 +158,27 @@ int main(int argc, char * argv[])
 
 	// printf("%d %d\n", sim.species[0].np, sim.species[1].np);
 
-	SUCCESS_OR_DIE( gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK) );
+	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	t0 = timer_ticks();
 
 	if (proc_rank == ROOT)
 	{
 		printf("Starting simulation ...\n\n");
 	}
-	
+
 	for (n = 0, t = 0.0; t <= sim.tmax; n++, t = n * sim.dt)
 	{
 		if (proc_rank == ROOT)
 		{
 			printf("n = %i, t = %f\n", n, t);
 		}
-		
-		if ( report ( n , sim.ndump ) )
+
+		if (report(n, sim.ndump))
 		{
-			gaspi_report( &sim );
+			gaspi_report(&sim);
 		}
 
-		sim_iter( &sim );
+		sim_iter(&sim);
 
 		// printf("proc %d has %d %d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 	}
@@ -193,10 +193,10 @@ int main(int argc, char * argv[])
 		printf("\nSimulation ended.\n\n");
 
 		// Simulation times
-		sim_timings( &sim, t0, t1 );
+		sim_timings(&sim, t0, t1);
 	}
 
-	SUCCESS_OR_DIE( gaspi_proc_term(GASPI_BLOCK) );
+	SUCCESS_OR_DIE(gaspi_proc_term(GASPI_BLOCK));
 	MPI_Finalize();
 
 	return 0;
