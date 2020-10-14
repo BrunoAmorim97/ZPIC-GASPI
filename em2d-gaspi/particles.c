@@ -495,11 +495,11 @@ void spec_move_window(t_species* spec)
 		if (is_on_edge[1])
 		{
 			// Inject particles on the right edge of the simulation box
-			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,spec->nx[0] - 1},
-													{			  0,spec->nx[1] - 1} };
+			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
+													{				0,	spec->nx[1] - 1} };
 
 			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
-														  {					 0, spec->nx_local[1] - 1} };
+														{						0, spec->nx_local[1] - 1} };
 
 			spec_inject_particles(spec, range, range_local);
 		}
@@ -786,7 +786,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			gaspi_notification_t value;
 			SUCCESS_OR_DIE(gaspi_notify_reset(dir, id, &value));
 
-			// printf("Starting index for spec %d dir %d is %d\n", spec_i, dir, spec_starting_index[dir]);
 			// Number of particles received is saved in the ix field of the first particle of that species
 			// -1 because of the fake particle
 			const int num_part = particle_segments[dir][spec_starting_index[dir]].ix - 1;
@@ -796,11 +795,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			num_new_part_spec[spec_i] += num_part;
 			num_new_part[spec_i][dir] = num_part;
 		}
-
-		// if each write to this species was just a fake particle, continue
-		if (num_new_part_spec[spec_i] == 0) continue;
-
-		// printf("NEW PARTICLES!\n"); fflush(stdout);
 
 		// realloc particle array if necessary
 		check_part_buffer_size(&species_array[spec_i], num_new_part_spec[spec_i]);
@@ -827,7 +821,7 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			copy_index += num_part;
 		}
 
-		// update the number of particles of this species
+		// update the number of particles
 		species_array[spec_i].np += num_new_part_spec[spec_i];
 	}
 

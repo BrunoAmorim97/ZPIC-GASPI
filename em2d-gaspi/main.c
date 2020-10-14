@@ -163,14 +163,14 @@ int main(int argc, char* argv[])
 
 	if (proc_rank == ROOT)
 	{
-		printf("Starting simulation ...\n\n");
+		printf("Starting simulation ...\n\n"); fflush(stdout);
 	}
 
 	for (n = 0, t = 0.0; t <= sim.tmax; n++, t = n * sim.dt)
 	{
 		if (proc_rank == ROOT)
 		{
-			printf("n = %i, t = %f\n", n, t);
+			printf("n = %i, t = %f\n", n, t); fflush(stdout);
 		}
 
 		if (report(n, sim.ndump))
@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
 	{
 		t1 = timer_ticks();
 
-		printf("\nSimulation ended.\n\n");
+		printf("\nSimulation ended.\n\n"); fflush(stdout);
 
 		// Simulation times
 		sim_timings(&sim, t0, t1);
