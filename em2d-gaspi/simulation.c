@@ -130,16 +130,23 @@ void sim_iter(t_simulation *sim)
 	current_zero(current);
 
 	// Advance and save species
-	for (int i = 0; i < sim->n_species; i++)
+	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
 		// Advance particles
-		spec_advance(&sim->species[i], emf, current);
+		spec_advance(&sim->species[spec_i], emf, current);
 
-		// Check if each particle has left this proc, if so, copy them to the particle segments and send them
-		send_spec(&sim->species[i], part_seg_write_index, num_part_to_send, sim->n_species);
+		// if not the last species
+		if (spec_i < sim->n_species - 1)
+		{
+			// Check if each particle has left this proc, if so, copy them to the particle segments and send them
+			send_spec(&sim->species[spec_i], part_seg_write_index, num_part_to_send, sim->n_species);
+		}
 	}
 
 	send_current(current);
+
+	// Send last species
+	send_spec(&sim->species[sim->n_species - 1], part_seg_write_index, num_part_to_send, sim->n_species);
 
 	// Advance EM field using Yee algorithm 
 	yee_b(emf);
