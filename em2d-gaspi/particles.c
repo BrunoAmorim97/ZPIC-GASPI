@@ -435,83 +435,6 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	spec_inject_particles(spec, range, range_local);
 }
 
-// Removes particles that have left the simulation space
-void remove_outer_particles(t_species* spec)
-{
-	// If proc is on the left edge of the simulation space
-	if (is_on_edge[0])
-	{
-		// Use absorbing boundaries along the left edge
-		int i = 0;
-		while (i < spec->np)
-		{
-			if (spec->part[i].ix < 0)
-			{
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
-			i++;
-		}
-	}
-
-	// If proc is on the right edge of the simulation space
-	if (is_on_edge[1])
-	{
-		const int max_ix = spec->nx_local[0] - 1;
-
-		// Use absorbing boundaries along the right edge
-		int i = 0;
-		while (i < spec->np)
-		{
-			if (spec->part[i].ix > max_ix)
-			{
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
-			i++;
-		}
-	}
-}
-
-// Also removes particles that are outside the simulation space
-void spec_move_window(t_species* spec)
-{
-	// If the window needs to be moved this iteration
-	if ((spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)))
-	{
-		// Shift all particles 1 cell to the left
-		for (int i = 0; i < spec->np; i++)
-		{
-			spec->part[i].ix--;
-		}
-
-		// Remove particles that left the simulation space
-		remove_outer_particles(spec);
-
-		// Increase moving window counter
-		spec->n_move++;
-
-		// if proc is on the right edge of the simulation space
-		if (is_on_edge[1])
-		{
-			// Inject particles on the right edge of the simulation box
-			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
-													{				0,	spec->nx[1] - 1} };
-
-			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
-														{						0, spec->nx_local[1] - 1} };
-
-			spec_inject_particles(spec, range, range_local);
-		}
-	}
-	else
-	{
-		// Remove particles that left the simulation space
-		remove_outer_particles(spec);
-	}
-
-}
-
 /*********************************************************************************************
 
  Current deposition
@@ -1144,10 +1067,84 @@ void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_
 	}
 }
 
+// Removes particles that have left the simulation space
+void remove_outer_particles(t_species* spec)
+{
+	// If proc is on the left edge of the simulation space
+	if (is_on_edge[0])
+	{
+		// Use absorbing boundaries along the left edge
+		int i = 0;
+		while (i < spec->np)
+		{
+			if (spec->part[i].ix < 0)
+			{
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+			i++;
+		}
+	}
+
+	// If proc is on the right edge of the simulation space
+	if (is_on_edge[1])
+	{
+		const int max_ix = spec->nx_local[0] - 1;
+
+		// Use absorbing boundaries along the right edge
+		int i = 0;
+		while (i < spec->np)
+		{
+			if (spec->part[i].ix > max_ix)
+			{
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+			i++;
+		}
+	}
+}
+
+// Also removes particles that are outside the simulation space
+void spec_move_window(t_species* spec)
+{
+	// If the window needs to be moved this iteration
+	if ((spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)))
+	{
+		// Shift all particles 1 cell to the left
+		for (int i = 0; i < spec->np; i++)
+		{
+			spec->part[i].ix--;
+		}
+
+		// Remove particles that left the simulation space
+		remove_outer_particles(spec);
+
+		// Increase moving window counter
+		spec->n_move++;
+
+		// if proc is on the right edge of the simulation space
+		if (is_on_edge[1])
+		{
+			// Inject particles on the right edge of the simulation box
+			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
+													{				0,	spec->nx[1] - 1} };
+
+			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
+														{						0, spec->nx_local[1] - 1} };
+
+			spec_inject_particles(spec, range, range_local);
+		}
+	}
+	else
+	{
+		// Remove particles that left the simulation space
+		remove_outer_particles(spec);
+	}
+}
+
 void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 {
-	// uint64_t t0 = timer_ticks();
-
 	const t_part_data tem = 0.5 * spec->dt / spec->m_q;
 	const t_part_data dt_dx = spec->dt / spec->dx[0];
 	const t_part_data dt_dy = spec->dt / spec->dx[1];
@@ -1156,25 +1153,19 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
+	const char moving_window_iter = (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1));
+
 	// Advance particles
-	for (int i = 0; i < spec->np; i++)
+	int i = 0;
+	while (i < spec->np)
 	{
-		t_vfld Ep, Bp;
-		t_part_data utx, uty, utz;
-		t_part_data ux, uy, uz, rg;
-		t_part_data gtem, otsq;
-
-		t_part_data x1, y1;
-
-		int di, dj;
-		float dx, dy;
-
 		// Load particle momenta
-		ux = spec->part[i].ux;
-		uy = spec->part[i].uy;
-		uz = spec->part[i].uz;
+		t_part_data ux = spec->part[i].ux;
+		t_part_data uy = spec->part[i].uy;
+		t_part_data uz = spec->part[i].uz;
 
-		// interpolate fields ONLY CHANGES LOCAL VARIABLES
+		t_vfld Ep, Bp;
+		// interpolate fields
 		interpolate_fld(emf->E, emf->B, emf->nrow_local, &spec->part[i], &Ep, &Bp);
 
 		// advance u using Boris scheme
@@ -1182,18 +1173,18 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 		Ep.y *= tem;
 		Ep.z *= tem;
 
-		utx = ux + Ep.x;
-		uty = uy + Ep.y;
-		utz = uz + Ep.z;
+		t_part_data utx = ux + Ep.x;
+		t_part_data uty = uy + Ep.y;
+		t_part_data utz = uz + Ep.z;
 
 		// Perform first half of the rotation
-		gtem = tem / sqrtf(1.0f + utx * utx + uty * uty + utz * utz);
+		t_part_data gtem = tem / sqrtf(1.0f + utx * utx + uty * uty + utz * utz);
 
 		Bp.x *= gtem;
 		Bp.y *= gtem;
 		Bp.z *= gtem;
 
-		otsq = 2.0f / (1.0f + Bp.x * Bp.x + Bp.y * Bp.y + Bp.z * Bp.z);
+		t_part_data otsq = 2.0f / (1.0f + Bp.x * Bp.x + Bp.y * Bp.y + Bp.z * Bp.z);
 
 		ux = utx + uty * Bp.z - utz * Bp.y;
 		uy = uty + utz * Bp.x - utx * Bp.z;
@@ -1219,50 +1210,76 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 		spec->part[i].uy = uy;
 		spec->part[i].uz = uz;
 
-		if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
-		{
-			continue;
-		}
-
 		// push particle
-		rg = 1.0f / sqrtf(1.0f + ux * ux + uy * uy + uz * uz);
+		t_part_data rg = 1.0f / sqrtf(1.0f + ux * ux + uy * uy + uz * uz);
 
-		dx = dt_dx * rg * ux;
-		dy = dt_dy * rg * uy;
+		float dx = dt_dx * rg * ux;
+		float dy = dt_dy * rg * uy;
 
-		x1 = spec->part[i].x + dx;
-		y1 = spec->part[i].y + dy;
+		t_part_data x1 = spec->part[i].x + dx;
+		t_part_data y1 = spec->part[i].y + dy;
 
-		di = ltrim(x1);
-		dj = ltrim(y1);
+		int di = ltrim(x1);
+		int dj = ltrim(y1);
 
 		x1 -= di;
 		y1 -= dj;
 
 		t_part_data qvz = spec->q * uz * rg;
 
-		dep_current_zamb(spec->part[i].ix, spec->part[i].iy, di, dj,
-			spec->part[i].x, spec->part[i].y, dx, dy,
-			qnx, qny, qvz, current);
+		dep_current_zamb(spec->part[i].ix, spec->part[i].iy, di, dj, spec->part[i].x, spec->part[i].y, dx, dy, qnx, qny, qvz, current);
 
 		// Store results
 		spec->part[i].x = x1;
 		spec->part[i].y = y1;
 		spec->part[i].ix += di;
 		spec->part[i].iy += dj;
+
+		if(spec->moving_window)
+		{
+			if (moving_window_iter)
+			{
+				// Shift particle 1 cell to the left
+				spec->part[i].ix--;
+			}
+
+			// If proc is on the left edge of the simulation space and particle leaves through the left edge
+			if (is_on_edge[0] && spec->part[i].ix < 0)
+			{
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+
+			// If proc is on the right edge of the simulation space and particle leaves through the right edge
+			if (is_on_edge[1] && spec->part[i].ix > spec->nx_local[0] - 1)
+			{
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+		}
+
+		i++;
 	}
 
-	// Advance internal iteration number
-	spec->iter += 1;
-	// _spec_npush += spec->np;
-
-	// Move simulation window if needed
-	if (spec->moving_window)
+	// Inject new particles, if needed
+	if (spec->moving_window && moving_window_iter)
 	{
-		spec_move_window(spec);
-	}
+		// Increase moving window counter
+		spec->n_move++;
 
-	//_spec_time += timer_interval_seconds( t0, timer_ticks() );
+		// if proc is on the right edge of the simulation space
+		if (is_on_edge[1])
+		{
+			// Inject particles on the right edge of the simulation box
+			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
+													{				0,	spec->nx[1] - 1} };
+
+			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
+														{						0, spec->nx_local[1] - 1} };
+
+			spec_inject_particles(spec, range, range_local);
+		}
+	}
 }
 
 /*********************************************************************************************
