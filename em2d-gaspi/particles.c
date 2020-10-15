@@ -732,6 +732,92 @@ int ltrim(t_part_data x)
 	return (x >= 1.0f) - (x < 0.0f);
 }
 
+// correct coords of new particles based on the direction they arrived
+void correct_particle_coords(const int dir, t_part* part_pointer, const unsigned int num_parts, const int nx_local[NUM_DIMS])
+{
+	const int max_column = nx_local[0] - 1;
+	const int max_row = nx_local[1] - 1;
+
+	switch (dir)
+	{
+	case DOWN_LEFT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = 0;
+			part_pointer[par_i].iy = max_row;
+		}
+	}
+	break;
+
+	case DOWN:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].iy = max_row;
+		}
+	}
+	break;
+
+	case DOWN_RIGHT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = max_column;
+			part_pointer[par_i].iy = max_row;
+		}
+	}
+	break;
+
+	case LEFT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = 0;
+		}
+	}
+	break;
+
+	case RIGHT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = max_column;
+		}
+	}
+	break;
+
+	case UP_LEFT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = 0;
+			part_pointer[par_i].iy = 0;
+		}
+	}
+	break;
+
+	case UP:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].iy = 0;
+		}
+	}
+	break;
+
+	case UP_RIGHT:
+	{
+		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
+		{
+			part_pointer[par_i].ix = max_column;
+			part_pointer[par_i].iy = 0;
+		}
+	}
+	break;
+	}
+}
+
 // Wait for each write and save particles
 void wait_save_particles(t_species* species_array, const int num_spec)
 {
@@ -794,6 +880,9 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 
 			num_new_part_spec[spec_i] += num_part;
 			num_new_part[spec_i][dir] = num_part;
+
+			// Correct particle coords of new particles
+			correct_particle_coords(dir, &particle_segments[dir][spec_starting_index[dir] + 1], num_part, species_array[spec_i].nx_local);
 		}
 
 		// realloc particle array if necessary
@@ -964,7 +1053,7 @@ void send_spec(t_species* spec, int part_seg_write_index[NUM_ADJ], int num_part_
 			// int old_y = spec->part[i].iy;
 
 			// Correct part coords relative to new proc
-			correct_coords(&spec->part[i], dir);
+			// correct_coords(&spec->part[i], dir);
 
 			// Copy particle to segment
 			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
