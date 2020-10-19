@@ -35,7 +35,7 @@ void sim_report( t_simulation* sim );
 void sim_iter( t_simulation* sim );
 void sim_report_energy( t_simulation* sim );
 
-void sim_new(t_simulation* sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species* species, int n_species, const char moving_window);
+void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species, const bool moving_window);
 int report( int n, int ndump );
 void gaspi_report(t_simulation* sim);
 void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 );

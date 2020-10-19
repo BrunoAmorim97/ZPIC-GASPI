@@ -5,7 +5,7 @@ extern int proc_block_high[NUM_DIMS];
 extern int proc_block_size[NUM_DIMS];
 
 extern int proc_coords[NUM_DIMS];
-extern char is_on_edge[2];
+extern bool is_on_edge[2];
 extern int dims[NUM_DIMS];
 
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
@@ -164,25 +164,25 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 }
 
 // returns 1 if this proc can send/receive data to/from neighbour at direction dir, 0 otherwise
-char can_send_to_dir(const char moving_window, const int dir)
+bool can_send_to_dir(const bool moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )
-		return 1;
+		return true;
 	
 	// if proc is on the left edge of the simulation space, dont send data to the left
 	if ( is_on_edge[0] && (dir == UP_LEFT || dir == LEFT || dir == DOWN_LEFT) )
-		return 0;
+		return false;
 	
 	// if proc is on the right edge of the simulation space, dont send data to the right
 	if ( is_on_edge[1] && (dir == UP_RIGHT || dir == RIGHT || dir == DOWN_RIGHT) )
-		return 0;
+		return false;
 	
-	return 1;
+	return true;
 }
 
 // returns the number of dirs that this proc will receive notifs from
-int get_num_incoming_notifs(const char moving_window)
+int get_num_incoming_notifs(const bool moving_window)
 {
 	// On static window simulations
 	if ( !moving_window )

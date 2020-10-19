@@ -33,13 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-#include "input/weibel-test-large.c"
+// #include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
-// #include "input/lwfa.c"
+#include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -51,7 +51,7 @@ int dims[NUM_DIMS];
 int proc_coords[NUM_DIMS];
 
 // index 0 for simulation space left edge, 1 for right edge
-char is_on_edge[2];
+bool is_on_edge[2];
 
 // Number of guard cells for linear interpolation
 const int gc[2][2] = {	{1,2},
@@ -180,7 +180,8 @@ int main(int argc, char* argv[])
 
 		sim_iter(&sim);
 
-		// printf("proc %d has %d %d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
+		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
+		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
 	}
 
 
@@ -195,6 +196,13 @@ int main(int argc, char* argv[])
 		// Simulation times
 		sim_timings(&sim, t0, t1);
 	}
+	
+	printf("Proc %2d finished with ", proc_rank);
+	for (int i = 0; i < sim.n_species; i++)
+	{
+		printf("%7d ", sim.species[i].np);
+	}
+	printf("particles\n"); fflush(stdout);
 
 	SUCCESS_OR_DIE(gaspi_proc_term(GASPI_BLOCK));
 	MPI_Finalize();

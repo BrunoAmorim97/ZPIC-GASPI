@@ -42,7 +42,7 @@ typedef struct {
 	int nrow_local;
 
 	// Moving window
-	char moving_window;
+	bool moving_window;
 
 	int buff_offset;
 	
@@ -66,7 +66,7 @@ typedef struct {
 
 void send_current(t_current* current);
 
-void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const char moving_window);
+void current_new(t_current *current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const bool moving_window);
 void current_delete( t_current *current );
 void current_zero( t_current *current );
 void current_update( t_current *current );

@@ -122,6 +122,9 @@ void sim_iter(t_simulation *sim)
 		part_seg_write_index[dir] = seg_offset_mult * part_send_seg_size[dir];
 	}
 
+	// Index of the fake particle, for each species for each particle segment
+	int fake_part_index[sim->n_species][NUM_ADJ];
+
 
 
 	t_current* const restrict current = &sim->current;
@@ -132,8 +135,11 @@ void sim_iter(t_simulation *sim)
 	// Advance species
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		// Advance particles
-		spec_advance(&sim->species[spec_i], emf, current);
+		// Add fake particles before advancing species
+		add_fake_particles(fake_part_index, part_seg_write_index, num_part_to_send, sim->species[spec_i].moving_window, spec_i);
+
+		// Advance particles, if particles leave this proc copy them to particle segments
+		spec_advance(&sim->species[spec_i], emf, current, part_seg_write_index, num_part_to_send);
 	}
 
 	send_current(current);
@@ -141,8 +147,8 @@ void sim_iter(t_simulation *sim)
 	// Send species
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		// Check if each particle has left this proc, if so, copy them to the particle segments and send them
-		send_spec(&sim->species[spec_i], part_seg_write_index, num_part_to_send, sim->n_species);
+		// Send particles on the particle segments
+		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
 	}
 
 	// Advance EM field using Yee algorithm 
@@ -159,7 +165,7 @@ void sim_iter(t_simulation *sim)
 	yee_b(emf);
 
 	// 1 if window will be moved this iteration, 0 otherwise
-	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 
 	send_emf_gc(emf, moving_window_iter);
 
@@ -180,7 +186,8 @@ void sim_set_spec_moving_window(t_simulation *sim)
 		sim->species[i].moving_window = 1;
 }
 
-void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species, const char moving_window)
+void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species,
+			 const bool moving_window)
 {
 	// Probably not necessary, just to be sure
 	assign_proc_blocks(nx);
@@ -336,7 +343,7 @@ void gaspi_report(t_simulation *sim)
 	#define NUM_REPORTING_DATA_TYPES 3
 
 	// printf("GASPI REPORT\n"); fflush(stdout);
-	static char created_segments = 0;
+	static bool created_segments = false;
 
 	t_current *current = &sim->current;
 	const int size_x = current->nx_local[0];
