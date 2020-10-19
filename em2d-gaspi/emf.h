@@ -87,8 +87,8 @@ void emf_move_window( t_emf *emf );
 
 void emf_update_gc( t_emf *emf );
 
-void send_emf_gc(t_emf* emf, const char moving_window_iter);
-void wait_save_emf_gc(t_emf* emf, const char moving_window_iter);
+void send_emf_gc(t_emf* emf, const bool moving_window_iter);
+void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter);
 
 double emf_time();
 

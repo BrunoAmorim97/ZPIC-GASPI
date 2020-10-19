@@ -23,7 +23,7 @@ static double _emf_time = 0.0;
 
 extern const int gc[NUM_DIMS][NUM_DIMS];
 extern int dims[NUM_DIMS];
-extern char is_on_edge[2];
+extern bool is_on_edge[2];
 
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
@@ -861,7 +861,7 @@ void emf_update_gc(t_emf* emf)
 	}
 }
 
-void send_emf_gc(t_emf* emf, const char moving_window_iter)
+void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
 	const int moving_window = emf->moving_window;
@@ -952,7 +952,7 @@ void send_emf_gc(t_emf* emf, const char moving_window_iter)
 }
 
 // Wait and save received EMF from each dir
-void wait_save_emf_gc(t_emf* emf, const char moving_window_iter)
+void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
 	const int moving_window = emf->moving_window;
@@ -1091,7 +1091,7 @@ void emf_move_window(t_emf* emf)
 	// print_emf_b(emf);
 
 	// 1 if window will be moved this iteration, 0 otherwise
-	const char moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * dt) > (emf->dx[0] * (emf->n_move + 1)) );
+	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * dt) > (emf->dx[0] * (emf->n_move + 1)) );
 
 	// Update guard cells with new values
 

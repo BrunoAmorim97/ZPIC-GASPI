@@ -19,7 +19,7 @@
 
 extern int dims[NUM_DIMS];
 extern const int gc[NUM_DIMS][NUM_DIMS];
-extern char is_on_edge[2];
+extern bool is_on_edge[2];
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern gaspi_rank_t proc_rank;
 extern gaspi_rank_t num_procs;
@@ -166,7 +166,7 @@ void create_current_segments(const int nx_local[NUM_DIMS])
 }
 
 // create the segments that will be used to send and receive current kernel smoothing data
-void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], const int num_dirs, const int dirs[], const char moving_window)
+void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], const int num_dirs, const int dirs[], const bool moving_window)
 {
 	const int nxl0 = nx_local[0];
 	const int nxl1 = nx_local[1];
@@ -252,7 +252,7 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	}
 }
 
-void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const char moving_window)
+void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const bool moving_window)
 {
 	// Allocate local current array, innitialized to 0
 
@@ -459,14 +459,14 @@ void wait_save_update_current(t_current* current)
 	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
-	char received_notif[NUM_ADJ];
+	bool received_notif[NUM_ADJ];
 	int num_expected_notifs = 0;
 
 	// Check each dir for expected notifs
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// 1 if we are expecting a notif from dir, 0 otherwise
-		const char expecting_notif = can_send_to_dir(current->moving_window, dir);
+		const bool expecting_notif = can_send_to_dir(current->moving_window, dir);
 
 		received_notif[dir] = !expecting_notif;
 		num_expected_notifs += expecting_notif;
@@ -672,7 +672,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		gaspi_notification_t value;
 		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
 
-		// printf("Received:\n");
+		// printf("Received kernel gc from dir %d:\n", dir);
 		// for (int i = copy_index; i < copy_index + starting_column + starting_ * ; i++)
 		// {
 		// 	printf("%f %f %f\n", current_segments[dir][copy_index].x, current_segments[dir][copy_index].y, current_segments[dir][copy_index].z);
@@ -839,7 +839,7 @@ void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const in
 {
 	t_vfld flbuf[current->nx[0]];
 	t_vfld* restrict const J = current->J;
-	const int nrow = current->nrow;
+	const int nrow = current->nrow_local; // local nrow
 
 	int i, j;
 
