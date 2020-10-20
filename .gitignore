@@ -10,3 +10,4 @@ times
 *.out
 .gpi2.*
 em2d-mpi-pedro/
+out-*
