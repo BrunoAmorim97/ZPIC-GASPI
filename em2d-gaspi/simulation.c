@@ -151,14 +151,14 @@ void sim_iter(t_simulation *sim)
 		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
 	}
 
-	// Advance EM field using Yee algorithm 
-	yee_b(emf);
-
 	// Inject new particles, if needed
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
 		inject_particles(&sim->species[spec_i]);
 	}
+
+	// Advance EM field using Yee algorithm 
+	yee_b(emf);
 
 	// Wait and update current data
 	wait_save_update_current(current);
