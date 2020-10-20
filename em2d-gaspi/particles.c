@@ -1176,9 +1176,13 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 
 		i++;
 	}
+}
 
+// inject particles to the right of the simulation space if needed
+void inject_particles(t_species* spec)
+{
 	// Inject new particles, if needed
-	if (spec->moving_window && moving_window_iter)
+	if (spec->moving_window && (spec->iter * spec->dt ) > (spec->dx[0] * (spec->n_move + 1)))
 	{
 		// Increase moving window counter
 		spec->n_move++;
@@ -1192,6 +1196,8 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 
 			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
 														{						0, spec->nx_local[1] - 1} };
+
+			// printf("Proc %d is injecting particles\n", proc_rank); fflush(stdout);
 
 			spec_inject_particles(spec, range, range_local);
 		}
