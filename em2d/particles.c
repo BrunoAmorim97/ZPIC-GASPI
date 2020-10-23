@@ -203,7 +203,7 @@ void spec_set_x( t_species* spec, const int range[][2] )
 			}
 		}
 	}
-	
+
 	spec->np = ip;
 	
 	free(poscell);

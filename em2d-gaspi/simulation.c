@@ -212,7 +212,7 @@ void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
-	printf("size at proc %d is %d %d\n", proc_rank, nx_local[0], nx_local[1]);
+	// printf("size at proc %2d is %d %d\n", proc_rank, nx_local[0], nx_local[1]);
 
 	// If this check fails change number of nodes or increase simulation nx size, number of procs should not be a prime number
 	// Proc simulation regions need to have at least 2 cells on each dimention

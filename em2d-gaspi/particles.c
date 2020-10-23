@@ -1139,7 +1139,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 			}
 
 			// If proc is on the right edge of the simulation space and particle leaves through the right edge
-			if (is_on_edge[1] && spec->part[i].ix > spec->nx_local[0] - 1)
+			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
 			{
 				spec->part[i] = spec->part[--spec->np];
 				continue;

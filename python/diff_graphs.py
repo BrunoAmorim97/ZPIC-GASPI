@@ -16,7 +16,7 @@ current_folder_gaspi = "gaspi/CURRENT/"
 emf_folder = "serial/EMF/"
 current_folder = "serial/CURRENT/"
 
-iteration = sys.argv[1].zfill(6)
+iteration = str( eval(sys.argv[1]) ).zfill(6)
 
 emf_files = ["B1-" + iteration + ".zdf", "B2-" + iteration + ".zdf", "B3-" + iteration + ".zdf"]
 current_files = ["J1-" + iteration + ".zdf", "J2-" + iteration + ".zdf", "J3-" + iteration + ".zdf"]

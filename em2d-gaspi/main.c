@@ -196,6 +196,8 @@ int main(int argc, char* argv[])
 		// Simulation times
 		sim_timings(&sim, t0, t1);
 	}
+
+	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	
 	printf("Proc %2d finished with ", proc_rank);
 	for (int i = 0; i < sim.n_species; i++)

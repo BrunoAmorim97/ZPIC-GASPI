@@ -5,7 +5,7 @@ CFLAGS += -O3
 
 # Intel icc compiler
 #CC = icc
-#CFLAGS = -restrict -Ofast -std=c99 -pedantic
+#CFLAGS = -restrict -Ofast -std=c99 -pedantic -xCORE-AVX512 -mtune=skylake -xHost
 
 # degub flags
 # CFLAGS += -g

@@ -4,7 +4,7 @@ CFLAGS = -std=c99 -pedantic -Wall -Wextra -Wno-stringop-truncation -O3
 
 # Intel icc compiler
 #CC = icc
-#CFLAGS = -restrict -Ofast -std=c99 -pedantic
+#CFLAGS = -restrict -Ofast -std=c99 -pedantic -xCORE-AVX512 -mtune=skylake -xHost
 
 # Clang options
 #CC = clang

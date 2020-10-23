@@ -79,8 +79,8 @@ plt.subplot(236)
 plt.imshow( np.absolute(np.array(emf_b_x_data_serial) - np.array(emf_b_x_data_gaspi)), interpolation = 'bilinear', origin = 'lower',
 			extent = extent_size, aspect = 'auto', cmap = 'jet')
 
-plt.colorbar().set_label('Electric Current')
-plt.title("Electric Current (x) Diff\n")
+plt.colorbar().set_label('Magnetic Field')
+plt.title("Magnetic Field (x) Diff\n")
 
 
 

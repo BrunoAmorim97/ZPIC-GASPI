@@ -450,7 +450,6 @@ void send_current(t_current* current)
 	}
 }
 
-// Also applies current smoothing if necessary
 void wait_save_update_current(t_current* current)
 {
 	// printf("BEFORE CURRENT GC ADD\n");
@@ -489,11 +488,11 @@ void wait_save_update_current(t_current* current)
 
 				// Test if the notification has arrived
 				SUCCESS_TIMEOUT_OR_DIE(return_value = gaspi_notify_waitsome(
-					DIR_TO_CURR_SEG_ID(dir), // The segment id
-					NOTIF_ID_CURRENT,		// The notification id to wait for
-					1,						// The number of notification ids this wait will accept, waiting for a specific write, so 1
+					DIR_TO_CURR_SEG_ID(dir),	// The segment id
+					NOTIF_ID_CURRENT,			// The notification id to wait for
+					1,							// The number of notification ids this wait will accept, waiting for a specific write, so 1
 					&id,						// Output parameter with the id of a received notification
-					GASPI_BLOCK				// Timeout
+					GASPI_BLOCK					// Timeout
 				));
 
 				// If this notification has arrived
@@ -514,7 +513,6 @@ void wait_save_update_current(t_current* current)
 		}
 
 		// Process received write
-
 		// printf("Processing write from dir %d\n", dir); fflush(stdout);
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction

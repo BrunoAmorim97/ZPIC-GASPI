@@ -75,7 +75,12 @@ int main()
 	// Simulation times
     sim_timings( &sim, t0, t1 );
 
-	// printf("%d %d\n", sim.species[0].np, sim.species[1].np); fflush(stdout);
+	printf("Finished with ");
+	for (int i = 0; i < sim.n_species; i++)
+	{
+		printf("%7d ", sim.species[i].np);
+	}
+	printf("particles\n"); fflush(stdout);
 
     // Cleanup data
     sim_delete( &sim );
