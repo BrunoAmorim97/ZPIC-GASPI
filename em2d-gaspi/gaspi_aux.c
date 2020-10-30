@@ -55,7 +55,7 @@ int* get_factors(int num, int* num_factors)
 		factors[i++] = 2;
 	}
 
-	// occurances of uneven primes up to sqrt(num)
+	// occurances of odd numbers up to sqrt(num)
 	for(int d = 3; (num > 1) && (d <= num_sqrt); d += 2)
 	{
 		while((num % d) == 0)
