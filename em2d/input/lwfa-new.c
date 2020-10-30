@@ -20,7 +20,7 @@ void sim_init( t_simulation* sim ){
 	float box[2] = { 30.0, 25.6 };
 
 	// Diagnostic frequency
-	int ndump = 10;
+	int ndump = 2900;
 
     // Initialize particles
 	const int n_species = 1;
@@ -37,6 +37,9 @@ void sim_init( t_simulation* sim ){
 	// Initialize Simulation data
 	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
 
+	// Set moving window (this must come after sim_new)
+	sim_set_moving_window( sim );
+	
 	// Add laser pulse (this must come after sim_new)
 	t_emf_laser laser = {
 		.type = GAUSSIAN,
@@ -51,8 +54,6 @@ void sim_init( t_simulation* sim ){
     };
 	sim_add_laser( sim, &laser );
 
-	// Set moving window (this must come after sim_new)
-	sim_set_moving_window( sim );
 
 	// Set current smoothing (this must come after sim_new)
 	t_smooth smooth = {

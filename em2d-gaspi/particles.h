@@ -108,6 +108,8 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 
 void inject_particles(t_species* spec);
 
+void spec_sort(t_species* spec);
+
 double spec_time(void);
 double spec_perf(void);
 

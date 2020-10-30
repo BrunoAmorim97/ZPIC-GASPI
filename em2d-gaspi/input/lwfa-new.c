@@ -20,7 +20,7 @@ void sim_init( t_simulation* sim ){
 	float box[2] = { 30.0, 25.6 };
 
 	// Diagnostic frequency
-	int ndump = 10;
+	int ndump = 2900;
 
     // Initialize particles
 	const int n_species = 1;
@@ -35,7 +35,7 @@ void sim_init( t_simulation* sim ){
 	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, MOVING_WINDOW );
 
 	// Add laser pulse (this must come after sim_new)
 	t_emf_laser laser = {
@@ -52,7 +52,7 @@ void sim_init( t_simulation* sim ){
 	sim_add_laser( sim, &laser );
 
 	// Set moving window (this must come after sim_new)
-	sim_set_moving_window( sim );
+	// sim_set_moving_window( sim );
 
 	// Set current smoothing (this must come after sim_new)
 	t_smooth smooth = {
@@ -66,18 +66,5 @@ void sim_init( t_simulation* sim ){
 
 
 void sim_report( t_simulation* sim ){
-
-	// All electric field components
-	emf_report( &sim->emf, EFLD, 0 );
-	emf_report( &sim->emf, EFLD, 1 );
-	emf_report( &sim->emf, EFLD, 2 );
-
-	// Charge density
-	spec_report( &sim->species[0], CHARGE, NULL, NULL );
-
-    // x1u1 phasespace
-	const int pha_nx[] = {1024,512};
-	const float pha_range[][2] = {{0.0,20.0}, {-2.0,+2.0}};
-	spec_report(&sim->species[0], PHASESPACE(X1,U1), pha_nx, pha_range);
 
 }

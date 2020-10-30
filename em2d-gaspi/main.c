@@ -33,13 +33,14 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
+#include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/larger_weibel.c"
 // #include "input/lwfa-test.c"
-#include "input/lwfa.c"
+// #include "input/lwfa.c"
+// #include "input/lwfa-new.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -175,7 +176,7 @@ int main(int argc, char* argv[])
 
 		if (report(n, sim.ndump))
 		{
-			gaspi_report(&sim);
+			// gaspi_report(&sim);
 		}
 
 		sim_iter(&sim);
@@ -183,7 +184,6 @@ int main(int argc, char* argv[])
 		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
 	}
-
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 
