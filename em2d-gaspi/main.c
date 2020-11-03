@@ -138,9 +138,6 @@ int main(int argc, char* argv[])
 	create_dims(num_procs);
 	cart_coords(proc_rank, proc_coords);
 
-	is_on_edge[0] = proc_coords[0] == 0;
-	is_on_edge[1] = proc_coords[0] == dims[0] - 1;
-
 	// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
 
 	if (proc_rank == ROOT)

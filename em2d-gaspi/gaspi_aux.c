@@ -18,10 +18,14 @@ int cart_rank(int coords[NUM_DIMS])
 	return coords[0] + (coords[1] * dims[0]);
 }
 
+// also sets is_on_edge
 void cart_coords(int rank, int coords[NUM_DIMS])
 {
 	coords[0] = rank % dims[0];
 	coords[1] = rank / dims[0];
+
+	is_on_edge[0] = coords[0] == 0;
+	is_on_edge[1] = coords[0] == dims[0] - 1;
 }
 
 void create_dims(int num_procs)
