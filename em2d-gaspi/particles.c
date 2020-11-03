@@ -810,12 +810,12 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			}
 		}
 
-		// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
+		// notif id depends in iteration num, if odd => notif id = spec_id + num_spec, if even => notif_id = spec_id
 		const gaspi_notification_id_t notif_id = (iter_num % 2) == 0 ? spec_i : num_spec + spec_i;
 
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			// Check if we will receive particles from this dir
+			// Check if we can receive particles from this dir
 			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 
@@ -851,7 +851,7 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 		int copy_index = species_array[spec_i].np;
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			// Check if we received particles from this dir
+			// Check if we can receive particles from this dir
 			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 

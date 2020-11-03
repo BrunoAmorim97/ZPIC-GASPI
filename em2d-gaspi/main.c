@@ -33,14 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-#include "input/weibel-test-large.c"
+// #include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/weibel-larger.c"
 // #include "input/lwfa-test.c"
-// #include "input/lwfa.c"
-// #include "input/lwfa-new.c"
+#include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -142,7 +141,7 @@ int main(int argc, char* argv[])
 
 	if (proc_rank == ROOT)
 	{
-		printf("Dims:[%d,%d]\n", dims[0], dims[1]);
+		printf("Dims:[%d,%d] with %d procs\n", dims[0], dims[1], num_procs);
 	}
 
 	// Initialize simulation
@@ -173,7 +172,7 @@ int main(int argc, char* argv[])
 
 		if (report(n, sim.ndump))
 		{
-			// gaspi_report(&sim);
+			gaspi_report(&sim);
 		}
 
 		sim_iter(&sim);
@@ -196,12 +195,12 @@ int main(int argc, char* argv[])
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	
-	// printf("Proc %2d finished with ", proc_rank);
-	// for (int i = 0; i < sim.n_species; i++)
-	// {
-	// 	printf("%7d ", sim.species[i].np);
-	// }
-	// printf("particles\n"); fflush(stdout);
+	printf("Proc %2d finished with ", proc_rank);
+	for (int i = 0; i < sim.n_species; i++)
+	{
+		printf("%7d ", sim.species[i].np);
+	}
+	printf("particles\n"); fflush(stdout);
 
 	SUCCESS_OR_DIE(gaspi_proc_term(GASPI_BLOCK));
 	MPI_Finalize();

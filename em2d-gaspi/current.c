@@ -228,6 +228,10 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	{
 		const int dir = dirs[dir_i];
 
+		// dont create segments if thwy will not be used
+		if (!can_talk_to_dir(moving_window, dir))
+			continue;
+
 		for (int dim = 0; dim < NUM_DIMS; dim++)
 		{
 			curr_kernel_size[dir][dim] = kernel_sizes[dir][dim];
