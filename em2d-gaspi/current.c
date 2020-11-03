@@ -406,7 +406,7 @@ void send_current(t_current* current)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(current->moving_window, dir))
+		if (!can_talk_to_dir(current->moving_window, dir))
 			continue;
 
 		const int num_columns = curr_send_size[dir][0];
@@ -465,7 +465,7 @@ void wait_save_update_current(t_current* current)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// 1 if we are expecting a notif from dir, 0 otherwise
-		const bool expecting_notif = can_send_to_dir(current->moving_window, dir);
+		const bool expecting_notif = can_talk_to_dir(current->moving_window, dir);
 
 		received_notif[dir] = !expecting_notif;
 		num_expected_notifs += expecting_notif;
@@ -557,7 +557,7 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edges
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		const int num_columns = curr_kernel_size[dir][0];
@@ -634,7 +634,7 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		const int dir = dirs[dir_i];
 
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);

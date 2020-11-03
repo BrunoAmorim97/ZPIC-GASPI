@@ -875,7 +875,7 @@ void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		int starting_x = emf_cell_to_send_starting_coord[dir][0];
@@ -963,7 +963,7 @@ void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);

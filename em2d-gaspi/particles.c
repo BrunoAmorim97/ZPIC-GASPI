@@ -816,7 +816,7 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
 			// Check if we will receive particles from this dir
-			if (!can_send_to_dir(moving_window, dir))
+			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 
 			gaspi_notification_id_t id;
@@ -852,7 +852,7 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
 			// Check if we received particles from this dir
-			if (!can_send_to_dir(moving_window, dir))
+			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 
 			const int num_part = num_new_part[spec_i][dir];
@@ -968,7 +968,7 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		// these values are set to make this particle easy to identify on debugging situations
@@ -1027,7 +1027,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if (!can_send_to_dir(spec->moving_window, dir))
+		if (!can_talk_to_dir(spec->moving_window, dir))
 			continue;
 
 		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc

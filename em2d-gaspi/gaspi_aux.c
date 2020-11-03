@@ -164,7 +164,7 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 }
 
 // returns 1 if this proc can send/receive data to/from neighbour at direction dir, 0 otherwise
-bool can_send_to_dir(const bool moving_window, const int dir)
+bool can_talk_to_dir(const bool moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )

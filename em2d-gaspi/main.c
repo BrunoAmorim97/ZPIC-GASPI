@@ -37,7 +37,7 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
-// #include "input/larger_weibel.c"
+// #include "input/weibel-larger.c"
 // #include "input/lwfa-test.c"
 // #include "input/lwfa.c"
 // #include "input/lwfa-new.c"
@@ -199,12 +199,12 @@ int main(int argc, char* argv[])
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	
-	printf("Proc %2d finished with ", proc_rank);
-	for (int i = 0; i < sim.n_species; i++)
-	{
-		printf("%7d ", sim.species[i].np);
-	}
-	printf("particles\n"); fflush(stdout);
+	// printf("Proc %2d finished with ", proc_rank);
+	// for (int i = 0; i < sim.n_species; i++)
+	// {
+	// 	printf("%7d ", sim.species[i].np);
+	// }
+	// printf("particles\n"); fflush(stdout);
 
 	SUCCESS_OR_DIE(gaspi_proc_term(GASPI_BLOCK));
 	MPI_Finalize();
