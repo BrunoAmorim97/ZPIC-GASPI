@@ -1159,27 +1159,10 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		spec->part[i].ix += di;
 		spec->part[i].iy += dj;
 
-		if(spec->moving_window)
+		if(spec->moving_window && moving_window_iter)
 		{
-			if (moving_window_iter)
-			{
-				// Shift particle 1 cell to the left
-				spec->part[i].ix--;
-			}
-
-			// If proc is on the left edge of the simulation space and particle leaves through the left edge
-			if (is_on_edge[0] && spec->part[i].ix < 0)
-			{
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
-
-			// If proc is on the right edge of the simulation space and particle leaves through the right edge
-			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
-			{
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
+			// Shift particle 1 cell to the left
+			spec->part[i].ix--;
 		}
 
 		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
@@ -1187,20 +1170,9 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		// Check if particle left the proc zone, if so, copy it to the correct send segment
 		if (dir != -1)
 		{
-			// int old_x = spec->part[i].ix;
-			// int old_y = spec->part[i].iy;
-
-			// Correct part coords relative to new proc
-			// correct_coords(&spec->part[i], dir);
-
 			// Copy particle to segment
+			// Copying a particle to a segment does not mean it will be sent!
 			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
-
-			// if (old_x != particle_segments[dir][ part_seg_write_index[dir]-1 ].ix || old_y != particle_segments[dir][part_seg_write_index[dir]-1].iy)
-			// {
-			// 	printf("old part x:%d, y:%d\n", old_x, old_y);
-			// 	printf("NEW part x:%d, y:%d\n\n", particle_segments[dir][ part_seg_write_index[dir]-1 ].ix, particle_segments[dir][ part_seg_write_index[dir]-1 ].iy);
-			// }
 
 			// Increment part send count for this segment, for this species
 			num_part_to_send[spec->id][dir]++;
