@@ -84,7 +84,7 @@ typedef struct {
 	int iter;
 
 	// Moving window
-	int moving_window;
+	bool moving_window;
 	int n_move;
 
 } t_species;

@@ -1075,7 +1075,8 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
-	const bool moving_window_iter = (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1));
+	const bool moving_window = spec->moving_window;
+	const bool moving_window_iter = ( (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) ) && moving_window;
 
 	// Advance particles
 	int i = 0;
@@ -1157,10 +1158,29 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		spec->part[i].ix += di;
 		spec->part[i].iy += dj;
 
-		if(spec->moving_window && moving_window_iter)
+		if(moving_window)
 		{
-			// Shift particle 1 cell to the left
-			spec->part[i].ix--;
+			if (moving_window_iter)
+			{
+				// Shift particle 1 cell to the left	
+				spec->part[i].ix--;
+			}
+
+			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
+			if (is_on_edge[0] && spec->part[i].ix < 0)
+			{
+				// Remove particle
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+
+			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
+			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
+			{
+				// Remove particle
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
 		}
 
 		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
@@ -1169,7 +1189,6 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		if (dir != -1)
 		{
 			// Copy particle to segment
-			// Copying a particle to a segment does not mean it will be sent!
 			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
 
 			// Increment part send count for this segment, for this species
