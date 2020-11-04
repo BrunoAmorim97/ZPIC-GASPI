@@ -1076,7 +1076,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	const bool moving_window = spec->moving_window;
-	const bool moving_window_iter = ( (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) ) && moving_window;
+	const bool moving_window_iter = (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1));
 
 	// Advance particles
 	int i = 0;
