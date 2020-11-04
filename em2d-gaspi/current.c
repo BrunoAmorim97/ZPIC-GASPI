@@ -550,7 +550,7 @@ void wait_save_update_current(t_current* current)
 void send_current_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
-	const int moving_window = current->moving_window;
+	const bool moving_window = current->moving_window;
 	const t_vfld* restrict const J = current->J;
 
 	// Make sure it is safe to modify the segment data
@@ -629,7 +629,7 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
 {
 	const int nrow = current->nrow_local; // Local nrow
-	const int moving_window = current->moving_window;
+	const bool moving_window = current->moving_window;
 
 	t_vfld* restrict const J = current->J;
 

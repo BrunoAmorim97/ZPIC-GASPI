@@ -33,13 +33,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
+#include "input/weibel-test-large.c"
 // #include "input/weibel-test.c"
 // #include "input/weibel.c"
 // #include "input/weibel-small.c"
 // #include "input/weibel-larger.c"
 // #include "input/lwfa-test.c"
-#include "input/lwfa.c"
+// #include "input/lwfa.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -110,12 +110,6 @@ int emf_cell_to_write_starting_coord[NUM_ADJ][NUM_DIMS];
 
 // Pointers to EMF segments
 t_vfld* emf_segments[NUM_ADJ];
-
-// Pointers to emf B segments
-t_vfld* emf_b_segments[NUM_ADJ];
-
-// Pointers to emf E segments
-t_vfld* emf_e_segments[NUM_ADJ];
 
 // Segments used to receive EMF and current data for reporting
 t_vfld* reporting_data;

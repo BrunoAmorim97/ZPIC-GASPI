@@ -335,7 +335,7 @@ void create_emf_segments(const int nx_local[NUM_DIMS])
 	}
 }
 
-void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const int moving_window)
+void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const bool moving_window)
 {
 	// Allocate arrays, initialized to 0
 
@@ -864,7 +864,7 @@ void emf_update_gc(t_emf* emf)
 void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
-	const int moving_window = emf->moving_window;
+	const bool moving_window = emf->moving_window;
 
 	const t_vfld* const restrict B = emf->B;
 	const t_vfld* const restrict E = emf->E;
@@ -955,7 +955,7 @@ void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
-	const int moving_window = emf->moving_window;
+	const bool moving_window = emf->moving_window;
 
 	t_vfld* const restrict B = emf->B;
 	t_vfld* const restrict E = emf->E;

@@ -378,8 +378,6 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 
 	assign_proc_blocks(nx);
 
-	int i, npc;
-
 	// Species name
 	strncpy(spec->name, name, MAX_SPNAME_LEN);
 
@@ -388,9 +386,9 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	spec->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
 	spec->nrow = gc[0][0] + nx[0] + gc[0][1];
 
-	npc = 1;
+	int npc = 1;
 	// Store species data
-	for (i = 0; i < NUM_DIMS; i++)
+	for (int i = 0; i < NUM_DIMS; i++)
 	{
 		spec->nx[i] = nx[i];
 		spec->nx_local[i] = nx_local[i];
@@ -429,12 +427,12 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	// Initialize temperature profile
 	if (ufl)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->ufl[i] = ufl[i];
 	}
 	else
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->ufl[i] = 0;
 	}
 
@@ -443,12 +441,12 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 
 	if (uth)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->uth[i] = uth[i];
 	}
 	else
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->uth[i] = 0;
 	}
 

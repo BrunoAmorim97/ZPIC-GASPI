@@ -99,12 +99,12 @@ void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
 
 void assign_proc_blocks(const int nx[NUM_DIMS])
 {
-	static char blocks_set = 0;
+	static bool blocks_set = 0;
 
-	if (blocks_set == 0)
+	if (!blocks_set)
 	{
 		//only need to assign the blocks once
-		blocks_set = 1;
+		blocks_set = true;
 
 
 		proc_block_low[0] = BLOCK_LOW(proc_coords[0], dims[0], nx[0]);

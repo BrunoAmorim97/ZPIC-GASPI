@@ -2,14 +2,6 @@
  * ZPIC - em2d
  *
  * Weibel instability
-
-Time for spec. advance = 6305.902665 s
-Time for emf   advance = 1.380458 s
-Total simulation time  = 6307.428017 s
-
-Particle advance [nsec/part] = 93.777717 
-Particle advance [Mpart/sec] = 10.663514 
-
  */
 
 #include <stdlib.h>

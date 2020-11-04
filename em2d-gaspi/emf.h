@@ -75,7 +75,7 @@ typedef struct {
 
 void emf_get_energy( const t_emf *emf, double energy[] );
 
-void emf_new( t_emf *emf, const int nx[], const int nx_local[], const t_fld box[], const float dt, const int moving_window);
+void emf_new( t_emf *emf, const int nx[], const int nx_local[], const t_fld box[], const float dt, const bool moving_window);
 void emf_delete( t_emf *emf );
 void emf_report( const t_emf *emf, const char field, const char fc );
 
