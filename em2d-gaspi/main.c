@@ -168,15 +168,6 @@ int main(int argc, char* argv[])
 
 		sim_iter(&sim);
 
-		SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
-		printf("Proc %2d finished with ", proc_rank);
-		for (int i = 0; i < sim.n_species; i++)
-		{
-			printf("%7d ", sim.species[i].np);
-		}
-		printf("particles\n"); fflush(stdout);
-		SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
-
 		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
 	}
