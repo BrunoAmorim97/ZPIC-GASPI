@@ -22,10 +22,10 @@ void sim_init( t_simulation* sim ){
 	// Diagnostic frequency
 	int ndump = 0;//50;
 
-    // Initialize particles
+	// Initialize particles
 	const int n_species = 1;
 
-	// Use 4x2 particles per cell
+	// Use 4x4 particles per cell
 	int ppc[] = {4,4};
 
 	// Density profile
@@ -48,7 +48,7 @@ void sim_init( t_simulation* sim ){
 		.focus = 20.0,
 		.axis = 12.8,
 		.polarization = M_PI_2
-    };
+	};
 	sim_add_laser( sim, &laser );
 
 	// Set moving window (this must come after sim_new)

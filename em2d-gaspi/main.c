@@ -33,13 +33,10 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-#include "input/weibel-test-large.c"
-// #include "input/weibel-test.c"
-// #include "input/weibel.c"
-// #include "input/weibel-small.c"
-// #include "input/weibel-larger.c"
-// #include "input/lwfa-test.c"
-// #include "input/lwfa.c"
+// #include "input/(simulation name)-(num cells x)*(num cells y)-(particles per cell)-(num iterations).c"
+
+// #include "input/weibel-512x512-256-500.c"
+#include "input/lwfa-2000x256-8-1450.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -170,6 +167,15 @@ int main(int argc, char* argv[])
 		}
 
 		sim_iter(&sim);
+
+		SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
+		printf("Proc %2d finished with ", proc_rank);
+		for (int i = 0; i < sim.n_species; i++)
+		{
+			printf("%7d ", sim.species[i].np);
+		}
+		printf("particles\n"); fflush(stdout);
+		SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 
 		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
