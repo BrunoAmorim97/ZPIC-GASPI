@@ -1057,8 +1057,8 @@ void emf_move_window(t_emf* emf)
 		for (int j = -gc[1][0]; j < nxl1 + gc[1][1]; j++)
 		{
 			// Zero 3 leftmost cells on each row
-			memset(&B[(nxl0 - 2) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
-			memset(&E[(nxl0 - 2) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
+			memset(&B[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
+			memset(&E[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
 		}
 	}
 
