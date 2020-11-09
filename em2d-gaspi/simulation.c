@@ -144,10 +144,9 @@ void sim_iter(t_simulation *sim)
 
 	send_current(current);
 
-	// Send species
+	// Send particles on the particle segments
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		// Send particles on the particle segments
 		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
 	}
 
@@ -361,7 +360,7 @@ void gaspi_report(t_simulation *sim)
 
 	if (!created_segments)
 	{
-		created_segments = 1;
+		created_segments = true;
 		if (proc_rank == ROOT)
 		{
 			create_root_reporting_segments(current->nx);

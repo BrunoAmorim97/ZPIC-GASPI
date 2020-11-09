@@ -18,10 +18,14 @@ int cart_rank(int coords[NUM_DIMS])
 	return coords[0] + (coords[1] * dims[0]);
 }
 
+// also sets is_on_edge
 void cart_coords(int rank, int coords[NUM_DIMS])
 {
 	coords[0] = rank % dims[0];
 	coords[1] = rank / dims[0];
+
+	is_on_edge[0] = coords[0] == 0;
+	is_on_edge[1] = coords[0] == dims[0] - 1;
 }
 
 void create_dims(int num_procs)
@@ -55,7 +59,7 @@ int* get_factors(int num, int* num_factors)
 		factors[i++] = 2;
 	}
 
-	// occurances of uneven primes up to sqrt(num)
+	// occurances of odd numbers up to sqrt(num)
 	for(int d = 3; (num > 1) && (d <= num_sqrt); d += 2)
 	{
 		while((num % d) == 0)
@@ -95,12 +99,12 @@ void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
 
 void assign_proc_blocks(const int nx[NUM_DIMS])
 {
-	static char blocks_set = 0;
+	static bool blocks_set = 0;
 
-	if (blocks_set == 0)
+	if (!blocks_set)
 	{
 		//only need to assign the blocks once
-		blocks_set = 1;
+		blocks_set = true;
 
 
 		proc_block_low[0] = BLOCK_LOW(proc_coords[0], dims[0], nx[0]);
@@ -163,8 +167,8 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 	// } fflush(stdout);
 }
 
-// returns 1 if this proc can send/receive data to/from neighbour at direction dir, 0 otherwise
-bool can_send_to_dir(const bool moving_window, const int dir)
+// returns true if this proc can send/receive data to/from neighbour at direction dir, false otherwise
+bool can_talk_to_dir(const bool moving_window, const int dir)
 {
 	// restrictions only apply to moving window simulations
 	if ( !moving_window )

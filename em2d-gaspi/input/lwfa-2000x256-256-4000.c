@@ -13,7 +13,7 @@ void sim_init( t_simulation* sim ){
 
 	// Time step
 	float dt = 0.009;
-	float tmax = 9;//36;
+	float tmax = 36;
 
 	// Simulation box
 	int   nx[2]  = { 2000, 512 };
@@ -22,11 +22,10 @@ void sim_init( t_simulation* sim ){
 	// Diagnostic frequency
 	int ndump = 0;//50;
 
-    // Initialize particles
+	// Initialize particles
 	const int n_species = 1;
 
-	// Use 4x2 particles per cell
-	int ppc[] = {4,4};
+	int ppc[] = {16,16};
 
 	// Density profile
 	t_density density = { .type = STEP, .start = 20.0 };
@@ -48,7 +47,7 @@ void sim_init( t_simulation* sim ){
 		.focus = 20.0,
 		.axis = 12.8,
 		.polarization = M_PI_2
-    };
+	};
 	sim_add_laser( sim, &laser );
 
 	// Set moving window (this must come after sim_new)

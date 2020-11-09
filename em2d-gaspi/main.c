@@ -33,13 +33,10 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/weibel-test-large.c"
-// #include "input/weibel-test.c"
-// #include "input/weibel.c"
-// #include "input/weibel-small.c"
-// #include "input/larger_weibel.c"
-// #include "input/lwfa-test.c"
-#include "input/lwfa.c"
+// #include "input/(simulation name)-(num cells x)*(num cells y)-(particles per cell)-(num iterations).c"
+
+// #include "input/weibel-512x512-256-500.c"
+#include "input/lwfa-2000x256-8-1450.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -111,12 +108,6 @@ int emf_cell_to_write_starting_coord[NUM_ADJ][NUM_DIMS];
 // Pointers to EMF segments
 t_vfld* emf_segments[NUM_ADJ];
 
-// Pointers to emf B segments
-t_vfld* emf_b_segments[NUM_ADJ];
-
-// Pointers to emf E segments
-t_vfld* emf_e_segments[NUM_ADJ];
-
 // Segments used to receive EMF and current data for reporting
 t_vfld* reporting_data;
 
@@ -137,14 +128,11 @@ int main(int argc, char* argv[])
 	create_dims(num_procs);
 	cart_coords(proc_rank, proc_coords);
 
-	is_on_edge[0] = proc_coords[0] == 0;
-	is_on_edge[1] = proc_coords[0] == dims[0] - 1;
-
 	// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
 
 	if (proc_rank == ROOT)
 	{
-		printf("Dims:[%d,%d]\n", dims[0], dims[1]);
+		printf("Dims:[%d,%d] with %d procs\n", dims[0], dims[1], num_procs);
 	}
 
 	// Initialize simulation
@@ -183,7 +171,6 @@ int main(int argc, char* argv[])
 		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
 		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
 	}
-
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 

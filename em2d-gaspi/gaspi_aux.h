@@ -107,5 +107,5 @@ void assign_proc_blocks(int const nx[NUM_DIMS]);
 void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[NUM_DIMS]);
 int periodic_coord(int coord, int coord_max);
 
-bool can_send_to_dir(const bool moving_window, const int dir);
+bool can_talk_to_dir(const bool moving_window, const int dir);
 int get_num_incoming_notifs(const bool moving_window);

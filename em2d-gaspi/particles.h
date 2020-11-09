@@ -84,7 +84,7 @@ typedef struct {
 	int iter;
 
 	// Moving window
-	int moving_window;
+	bool moving_window;
 	int n_move;
 
 } t_species;
@@ -107,6 +107,8 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 						const bool moving_window, const int spec_id);
 
 void inject_particles(t_species* spec);
+
+void spec_sort(t_species* spec);
 
 double spec_time(void);
 double spec_perf(void);

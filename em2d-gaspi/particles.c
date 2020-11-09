@@ -333,6 +333,42 @@ void spec_inject_particles(t_species* spec, const int range[NUM_DIMS][NUM_DIMS],
 	spec_set_u(spec, start, range);
 }
 
+int compare_parts(const void *pointer_1, const void *pointer_2)
+{
+	const t_part part_1 = *(const t_part *)pointer_1;
+	const t_part part_2 = *(const t_part *)pointer_2;
+
+	if (part_1.iy < part_2.iy)
+		return -1;
+
+	else if (part_1.iy > part_2.iy)
+		return 1;
+
+	else
+	{
+		if (part_1.ix < part_2.ix)
+			return -1;
+
+		else if (part_1.ix > part_2.ix)
+			return 1;
+
+		else
+			return 0;
+	}
+}
+
+// sort species every few iterations
+void spec_sort(t_species* spec)
+{
+	if (spec->iter % 50 == 0)
+	{
+		t_part* restrict const part_array = spec->part;
+		const int num_part = spec->np;
+		
+		qsort(part_array, num_part, sizeof(t_part), compare_parts);
+	}
+}
+
 void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc[],
 	const t_part_data* ufl, const t_part_data* uth,
 	const int nx[], t_part_data box[], const float dt, t_density* density)
@@ -342,8 +378,6 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 
 	assign_proc_blocks(nx);
 
-	int i, npc;
-
 	// Species name
 	strncpy(spec->name, name, MAX_SPNAME_LEN);
 
@@ -352,9 +386,9 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	spec->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
 	spec->nrow = gc[0][0] + nx[0] + gc[0][1];
 
-	npc = 1;
+	int npc = 1;
 	// Store species data
-	for (i = 0; i < NUM_DIMS; i++)
+	for (int i = 0; i < NUM_DIMS; i++)
 	{
 		spec->nx[i] = nx[i];
 		spec->nx_local[i] = nx_local[i];
@@ -393,12 +427,12 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	// Initialize temperature profile
 	if (ufl)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->ufl[i] = ufl[i];
 	}
 	else
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->ufl[i] = 0;
 	}
 
@@ -407,12 +441,12 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 
 	if (uth)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->uth[i] = uth[i];
 	}
 	else
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 			spec->uth[i] = 0;
 	}
 
@@ -774,13 +808,13 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			}
 		}
 
-		// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
+		// notif id depends in iteration num, if odd => notif id = spec_id + num_spec, if even => notif_id = spec_id
 		const gaspi_notification_id_t notif_id = (iter_num % 2) == 0 ? spec_i : num_spec + spec_i;
 
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			// Check if we will receive particles from this dir
-			if (!can_send_to_dir(moving_window, dir))
+			// Check if we can receive particles from this dir
+			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 
 			gaspi_notification_id_t id;
@@ -815,8 +849,8 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 		int copy_index = species_array[spec_i].np;
 		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			// Check if we received particles from this dir
-			if (!can_send_to_dir(moving_window, dir))
+			// Check if we can receive particles from this dir
+			if (!can_talk_to_dir(moving_window, dir))
 				continue;
 
 			const int num_part = num_new_part[spec_i][dir];
@@ -932,7 +966,7 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		// these values are set to make this particle easy to identify on debugging situations
@@ -991,7 +1025,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if (!can_send_to_dir(spec->moving_window, dir))
+		if (!can_talk_to_dir(spec->moving_window, dir))
 			continue;
 
 		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
@@ -1041,6 +1075,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
+	const bool moving_window = spec->moving_window;
 	const bool moving_window_iter = (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1));
 
 	// Advance particles
@@ -1123,24 +1158,26 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		spec->part[i].ix += di;
 		spec->part[i].iy += dj;
 
-		if(spec->moving_window)
+		if(moving_window)
 		{
 			if (moving_window_iter)
 			{
-				// Shift particle 1 cell to the left
+				// Shift particle 1 cell to the left	
 				spec->part[i].ix--;
 			}
 
-			// If proc is on the left edge of the simulation space and particle leaves through the left edge
+			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
 			if (is_on_edge[0] && spec->part[i].ix < 0)
 			{
+				// Remove particle
 				spec->part[i] = spec->part[--spec->np];
 				continue;
 			}
 
-			// If proc is on the right edge of the simulation space and particle leaves through the right edge
+			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
 			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
 			{
+				// Remove particle
 				spec->part[i] = spec->part[--spec->np];
 				continue;
 			}
@@ -1151,20 +1188,8 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		// Check if particle left the proc zone, if so, copy it to the correct send segment
 		if (dir != -1)
 		{
-			// int old_x = spec->part[i].ix;
-			// int old_y = spec->part[i].iy;
-
-			// Correct part coords relative to new proc
-			// correct_coords(&spec->part[i], dir);
-
 			// Copy particle to segment
 			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
-
-			// if (old_x != particle_segments[dir][ part_seg_write_index[dir]-1 ].ix || old_y != particle_segments[dir][part_seg_write_index[dir]-1].iy)
-			// {
-			// 	printf("old part x:%d, y:%d\n", old_x, old_y);
-			// 	printf("NEW part x:%d, y:%d\n\n", particle_segments[dir][ part_seg_write_index[dir]-1 ].ix, particle_segments[dir][ part_seg_write_index[dir]-1 ].iy);
-			// }
 
 			// Increment part send count for this segment, for this species
 			num_part_to_send[spec->id][dir]++;

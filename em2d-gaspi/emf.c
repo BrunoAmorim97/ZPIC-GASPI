@@ -335,7 +335,7 @@ void create_emf_segments(const int nx_local[NUM_DIMS])
 	}
 }
 
-void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const int moving_window)
+void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], const t_fld box[NUM_DIMS], const float dt, const bool moving_window)
 {
 	// Allocate arrays, initialized to 0
 
@@ -864,7 +864,7 @@ void emf_update_gc(t_emf* emf)
 void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
-	const int moving_window = emf->moving_window;
+	const bool moving_window = emf->moving_window;
 
 	const t_vfld* const restrict B = emf->B;
 	const t_vfld* const restrict E = emf->E;
@@ -875,7 +875,7 @@ void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		int starting_x = emf_cell_to_send_starting_coord[dir][0];
@@ -955,7 +955,7 @@ void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 {
 	const int nrow = emf->nrow_local; // Local nrow
-	const int moving_window = emf->moving_window;
+	const bool moving_window = emf->moving_window;
 
 	t_vfld* const restrict B = emf->B;
 	t_vfld* const restrict E = emf->E;
@@ -963,7 +963,7 @@ void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// For moving window simulations dont use pediodic boundaries for the left and right edge procs
-		if (!can_send_to_dir(moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		const int opposite_dir = OPPOSITE_DIR(dir);
