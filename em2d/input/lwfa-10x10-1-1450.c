@@ -9,36 +9,33 @@
 
 #include "../simulation.h"
 
-void sim_init( t_simulation* sim ){
-
+void sim_init( t_simulation* sim )
+{
 	// Time step
 	float dt = 0.014;
 	float tmax = 20.314;
+	// float tmax = 0.71;
 
 	// Simulation box
-	int   nx[2]  = { 2000, 256 };
+	int   nx[2]  = { 10, 10 };
 	float box[2] = { 40.0, 51.2 };
 
 	// Diagnostic frequency
-	int ndump = 1450;
+	int ndump = 145;
 
     // Initialize particles
 	const int n_species = 1;
 
-	// Use 4x2 particles per cell
-	int ppc[] = {4,2};
+	int ppc[] = {1,1};
 
 	// Density profile
-	t_density density = { .type = STEP, .start = 20.0 };
+	t_density density = { .type = STEP, .start = 0.1 };
 
-	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
-	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density );
+	t_species* species = (t_species *) malloc(n_species * sizeof( t_species ));
+	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, NULL);//&density );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
-	
-	// Set moving window (this must come after sim_new)
-	sim_set_moving_window( sim );
+	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species, MOVING_WINDOW);
 
 	// Add laser pulse (this must come after sim_new)
 	t_emf_laser laser = {
@@ -46,7 +43,7 @@ void sim_init( t_simulation* sim ){
 		.start = 17.0,
 		.fwhm  = 2.0,
 		.a0 = 2.0,
-		.omega0 = 10.0,
+		.omega0 = 2.0,
 		.W0 = 4.0,
 		.focus = 20.0,
 		.axis = 12.8,
@@ -60,7 +57,7 @@ void sim_init( t_simulation* sim ){
 		.xlevel = 4
 	};
 
-	sim_set_smooth( sim, &smooth );
+	// sim_set_smooth( sim, &smooth );
 }
 
 

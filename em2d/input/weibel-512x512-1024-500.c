@@ -2,14 +2,6 @@
  * ZPIC - em2d
  *
  * Weibel instability
-
-Time for spec. advance = 6305.902665 s
-Time for emf   advance = 1.380458 s
-Total simulation time  = 6307.428017 s
-
-Particle advance [nsec/part] = 93.777717 
-Particle advance [Mpart/sec] = 10.663514 
-
  */
 
 #include <stdlib.h>
@@ -26,14 +18,13 @@ void sim_init( t_simulation* sim ){
 	float box[2] = {51.2, 51.2};
 
 	// Diagnostic frequency
-	int ndump = 500;
+	int ndump = 100;
 
     // Initialize particles
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
 
-	// Use 2x2 particles per cell
-	int ppc[] = {16,16};
+	int ppc[] = {32,32};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };
@@ -45,19 +36,24 @@ void sim_init( t_simulation* sim ){
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
 
 }
 
 void sim_report( t_simulation* sim )
 {
-	// Bx, By, Bz
-	emf_report( &sim->emf, BFLD, 0 );
-	emf_report( &sim->emf, BFLD, 1 );
-	emf_report( &sim->emf, BFLD, 2 );
-	
 	// Jx, Jy, Jz
 	current_report( &sim->current, 0 );
 	current_report( &sim->current, 1 );
 	current_report( &sim->current, 2 );
+
+	// Bx, By, Bz
+	emf_report( &sim->emf, BFLD, 0 );
+	emf_report( &sim->emf, BFLD, 1 );
+	emf_report( &sim->emf, BFLD, 2 );
+
+	// Ex, Ey, Ez
+	emf_report( &sim->emf, EFLD, 0 );
+	emf_report( &sim->emf, EFLD, 1 );
+	emf_report( &sim->emf, EFLD, 2 );
 }

@@ -1,22 +1,8 @@
-/**
- * ZPIC - em2d
- *
- * Weibel instability
-
-Time for spec. advance = 6.548622 s
-Time for emf   advance = 0.083851 s
-Total simulation time  = 6.648798 s
-
-Particle advance [nsec/part] = 99.724593 
-Particle advance [Mpart/sec] = 10.027617
-
- */
-
 #include <stdlib.h>
 #include "../simulation.h"
 
-void sim_init( t_simulation* sim ){
-
+void sim_init( t_simulation* sim )
+{
 	// Time step
 	float dt = 0.07;
 	float tmax = 35.0;
@@ -26,14 +12,13 @@ void sim_init( t_simulation* sim ){
 	float box[2] = { 12.8, 12.8 };
 
 	// Diagnostic frequency
-	int ndump = 500;
+	int ndump = 500;//50;
 
-    // Initialize particles
+	// Initialize particles
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
 
-	// Use 2x2 particles per cell
-	int ppc[] = {2,2};
+	int ppc[] = {16,16};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };
@@ -45,7 +30,7 @@ void sim_init( t_simulation* sim ){
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
 
 }
 

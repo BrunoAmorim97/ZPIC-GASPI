@@ -3,22 +3,23 @@
 
 void sim_init( t_simulation* sim )
 {
+
 	// Time step
 	float dt = 0.07;
-	float tmax = 35.0;
+	float tmax = 35.00;
 
 	// Simulation box
-	int   nx[2]  = { 128, 128 };
-	float box[2] = { 12.8, 12.8 };
+	int   nx[2]  = { 9, 9 };
+	float box[2] = { 0.9, 0.9 };
 
 	// Diagnostic frequency
-	int ndump = 500;
+	int ndump = 100;
 
-    // Initialize particles
+	// Initialize particles
 	const int n_species = 2;
-	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
+	t_species* species = (t_species *) malloc(n_species * sizeof( t_species ));
 
-	int ppc[] = {16,16};
+	int ppc[] = {1,1};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };
@@ -30,8 +31,7 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
-
+	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
 }
 
 void sim_report( t_simulation* sim )
