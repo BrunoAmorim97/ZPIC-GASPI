@@ -162,10 +162,7 @@ int main(int argc, char* argv[])
 			printf("n = %i, t = %f\n", n, t); fflush(stdout);
 		}
 
-		if (report(n, sim.ndump))
-		{
-			gaspi_report(&sim);
-		}
+		if (report(n, sim.ndump)) gaspi_report(&sim);
 
 		sim_iter(&sim);
 
