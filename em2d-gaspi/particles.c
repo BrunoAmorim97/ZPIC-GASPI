@@ -971,7 +971,11 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 		// printf("ON TOTAL sending %5d particles to proc %d to dir %d\n", num_part_seg, neighbour_rank[dir], OPPOSITE_DIR(dir));
 		// printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
 
-		assert(num_part_seg <= (unsigned int)part_send_seg_size[dir]);
+		if (num_part_seg <= (unsigned int)part_send_seg_size[dir])
+		{
+			fprintf(stderr, "Segment size exceeded, dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
