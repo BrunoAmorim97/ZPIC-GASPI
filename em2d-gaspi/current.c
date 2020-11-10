@@ -289,7 +289,6 @@ void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[
 	{
 		current->box[i] = box[i];
 		current->dx[i] = box[i] / nx[i];
-		current->box_local[i] = current->dx[i] * current->nx_local[i];
 	}
 
 	// Clear smoothing options

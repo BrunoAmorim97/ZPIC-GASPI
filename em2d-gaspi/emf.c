@@ -371,7 +371,6 @@ void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 	{
 		emf->box[i] = box[i];
 		emf->dx[i] = box[i] / nx[i];
-		emf->box_local[i] = emf->dx[i] * emf->nx_local[i];
 	}
 
 	// Set time step

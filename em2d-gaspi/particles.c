@@ -333,42 +333,6 @@ void spec_inject_particles(t_species* spec, const int range[NUM_DIMS][NUM_DIMS],
 	spec_set_u(spec, start, range);
 }
 
-int compare_parts(const void *pointer_1, const void *pointer_2)
-{
-	const t_part part_1 = *(const t_part *)pointer_1;
-	const t_part part_2 = *(const t_part *)pointer_2;
-
-	if (part_1.iy < part_2.iy)
-		return -1;
-
-	else if (part_1.iy > part_2.iy)
-		return 1;
-
-	else
-	{
-		if (part_1.ix < part_2.ix)
-			return -1;
-
-		else if (part_1.ix > part_2.ix)
-			return 1;
-
-		else
-			return 0;
-	}
-}
-
-// sort species every few iterations
-void spec_sort(t_species* spec)
-{
-	if (spec->iter % 50 == 0)
-	{
-		t_part* restrict const part_array = spec->part;
-		const int num_part = spec->np;
-		
-		qsort(part_array, num_part, sizeof(t_part), compare_parts);
-	}
-}
-
 void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc[],
 	const t_part_data* ufl, const t_part_data* uth,
 	const int nx[], t_part_data box[], const float dt, t_density* density)
@@ -398,8 +362,6 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 
 		spec->box[i] = box[i];
 		spec->dx[i] = box[i] / nx[i];
-
-		spec->box_local[i] = spec->dx[i] * nx_local[i];
 	}
 
 	spec->m_q = m_q;
