@@ -171,7 +171,6 @@ void sim_iter(t_simulation *sim)
 
 	// 1 if window will be moved this iteration, 0 otherwise
 	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
-
 	send_emf_gc(emf, moving_window_iter);
 
 	// Move window if needed

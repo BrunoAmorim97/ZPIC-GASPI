@@ -28,8 +28,8 @@ typedef struct {
 	// Simulation box info
 	int nx[NUM_DIMS];
 	t_fld box[NUM_DIMS];
-	t_fld box_local[NUM_DIMS];
 	t_fld dx[NUM_DIMS];
+
 	// Number of local cells on each axis, excluding guard cells
 	int nx_local[NUM_DIMS];
 

@@ -3,12 +3,12 @@
  *
  * Weibel instability
 
-Time for spec. advance = 6305.902665 s
-Time for emf   advance = 1.380458 s
-Total simulation time  = 6307.428017 s
+Time for spec. advance = 419.327684 s
+Time for emf   advance = 1.399192 s
+Total simulation time  = 420.847216 s
 
-Particle advance [nsec/part] = 93.777717 
-Particle advance [Mpart/sec] = 10.663514 
+Particle advance [nsec/part] = 99.775959 
+Particle advance [Mpart/sec] = 10.022454
 
  */
 
@@ -22,17 +22,18 @@ void sim_init( t_simulation* sim ){
 	float tmax = 35.0;
 
 	// Simulation box
-	int nx[2] = {512, 512};
-	float box[2] = {51.2, 51.2};
+	int   nx[2]  = { 512, 512 };
+	float box[2] = { 51.2, 51.2 };
 
 	// Diagnostic frequency
-	int ndump = 100;
+	int ndump = 500;
 
     // Initialize particles
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
 
-	int ppc[] = {32,32};
+	// Use 4x4 particles per cell
+	int ppc[] = {4,4};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };

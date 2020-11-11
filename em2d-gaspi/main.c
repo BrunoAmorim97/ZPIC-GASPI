@@ -35,6 +35,7 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // Include Simulation parameters here
 // #include "input/(simulation name)-(num cells x)*(num cells y)-(particles per cell)-(num iterations).c"
 
+// #include "input/weibel-128x128-256-500.c"
 // #include "input/weibel-512x512-256-500.c"
 #include "input/lwfa-2000x256-8-1450.c"
 
@@ -161,10 +162,7 @@ int main(int argc, char* argv[])
 			printf("n = %i, t = %f\n", n, t); fflush(stdout);
 		}
 
-		if (report(n, sim.ndump))
-		{
-			gaspi_report(&sim);
-		}
+		if (report(n, sim.ndump)) gaspi_report(&sim);
 
 		sim_iter(&sim);
 

@@ -75,7 +75,6 @@ typedef struct {
 
 	t_part_data dx[NUM_DIMS];
 	t_part_data box[NUM_DIMS];
-	t_part_data box_local[NUM_DIMS];
 
 	// Time step
 	float dt;

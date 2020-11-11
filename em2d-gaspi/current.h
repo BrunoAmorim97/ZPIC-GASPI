@@ -48,7 +48,6 @@ typedef struct {
 	
 	// Box size
 	t_fld box[NUM_DIMS];
-	t_fld box_local[NUM_DIMS];
 	
 	// Cell size
 	t_fld dx[NUM_DIMS];
