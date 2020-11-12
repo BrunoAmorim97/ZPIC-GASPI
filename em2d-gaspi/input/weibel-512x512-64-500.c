@@ -32,8 +32,7 @@ void sim_init( t_simulation* sim ){
 	const int n_species = 2;
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
 
-	// Use 4x4 particles per cell
-	int ppc[] = {4,4};
+	int ppc[] = {8,8};
 
 	// Initial fluid and thermal velocities
 	t_part_data ufl[] = { 0.0, 0.0, 0.6 };

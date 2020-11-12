@@ -762,7 +762,7 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		spec->part[i].x = x1;
 		spec->part[i].y = y1;
 		spec->part[i].ix += di;
-		spec->part[i].iy += dj;
+		spec->part[i].iy += dj;		
 	}
 
 	// Advance internal iteration number

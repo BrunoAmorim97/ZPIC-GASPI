@@ -92,18 +92,15 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	const t_part_data ufl[], const t_part_data uth[],
 	const int nx[], t_part_data box[], const float dt, t_density* density);
 
-void spec_move_window(t_species* spec);
-
 void spec_delete(t_species* spec);
 
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ]);
 
-void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ]);
+void spec_advance(t_species* spec, t_emf* emf, t_current* current);
 
 void wait_save_particles(t_species* species_array, const int n_spec);
 
-void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
-						const bool moving_window, const int spec_id);
+void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ]);
 
 void inject_particles(t_species* spec);
 

@@ -31,7 +31,7 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 
 // Include Simulation parameters here
 #include "input/lwfa-2000x256-8-1450.c"
-
+// #include "input/weibel-128x128-256-500.c"
 
 
 int main()

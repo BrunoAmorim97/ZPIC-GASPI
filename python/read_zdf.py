@@ -61,7 +61,7 @@ plt.imshow( emf_b_x_data_serial, interpolation = 'bilinear', origin = 'lower',
 		  extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Magnetic Field')
-plt.title("Magnetic Field (x) serial\n")
+plt.title("Magnetic Field serial\n")
 
 # EMF GASPI
 plt.subplot(235)
@@ -72,7 +72,7 @@ plt.imshow( emf_b_x_data_gaspi, interpolation = 'bilinear', origin = 'lower',
 		  extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Magnetic Field')
-plt.title("Magnetic Field (x) GASPI\n")
+plt.title("Magnetic Field GASPI\n")
 
 # EMF diff
 plt.subplot(236)
@@ -80,7 +80,7 @@ plt.imshow( np.absolute(np.array(emf_b_x_data_serial) - np.array(emf_b_x_data_ga
 			extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Magnetic Field')
-plt.title("Magnetic Field (x) Diff\n")
+plt.title("Magnetic Field Diff\n")
 
 
 

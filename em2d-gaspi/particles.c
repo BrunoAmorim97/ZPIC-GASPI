@@ -920,10 +920,13 @@ void correct_coords(t_part* const part_pointer, const int dir)
 	}
 }
 
-// Add fake particle to the start of the particles of this species on each segment.
-void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
-						const bool moving_window, const int spec_id)
+// Check for particles leaving the proc zone and remove or copy them to the correct segment
+void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ])
 {
+	const int spec_id = spec->id;
+	const bool moving_window = spec->moving_window;
+
+	// Add fake particles to each segment
 	// This particle will be used to transmit the number of particles on this write.
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
@@ -952,11 +955,54 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 		// Increment part send count for this segment, for this species
 		num_part_to_send[spec_id][dir]++;
 	}
+
+	// Check for particles leaving the proc zone
+	int i = 0;
+	while(i < spec->np)
+	{
+		if(moving_window)
+		{
+			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
+			if (is_on_edge[0] && spec->part[i].ix < 0)
+			{
+				// Remove particle
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+
+			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
+			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
+			{
+				// Remove particle
+				spec->part[i] = spec->part[--spec->np];
+				continue;
+			}
+		}
+
+		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
+
+		// Check if particle left the proc zone, if so, copy it to the correct send segment
+		if (dir != -1)
+		{
+			// Copy particle to segment
+			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
+
+			// Increment part send count for this segment, for this species
+			num_part_to_send[spec->id][dir]++;
+
+			// Remove particle
+			spec->part[i] = spec->part[--spec->np];
+			continue;
+		}
+
+		i++;
+	}
 }
 
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])
 {
 	const int spec_id = spec->id;
+	const bool moving_window = spec->moving_window;
 
 	// Check if segment size is respected before sending
 	for (int dir = 0; dir < NUM_ADJ; dir++)
@@ -973,7 +1019,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 
 		if (num_part_seg > (unsigned int)part_send_seg_size[dir])
 		{
-			fprintf(stderr, "Segment size exceeded, dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
+			fprintf(stderr, "Particle segment size exceeded, seg at dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -991,7 +1037,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
 		// Check if we can send particles to this dir
-		if (!can_talk_to_dir(spec->moving_window, dir))
+		if (!can_talk_to_dir(moving_window, dir))
 			continue;
 
 		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
@@ -1031,7 +1077,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 	}
 }
 
-void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
+void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 {
 	const t_part_data tem = 0.5 * spec->dt / spec->m_q;
 	const t_part_data dt_dx = spec->dt / spec->dx[0];
@@ -1041,12 +1087,11 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
-	const bool moving_window = spec->moving_window;
-	const bool moving_window_iter = (++spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1));
+	spec->iter++;
+	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
 
 	// Advance particles
-	int i = 0;
-	while (i < spec->np)
+	for(int i = 0; i < spec->np; i++)
 	{
 		// Load particle momenta
 		t_part_data ux = spec->part[i].ux;
@@ -1121,51 +1166,8 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 		// Store results
 		spec->part[i].x = x1;
 		spec->part[i].y = y1;
-		spec->part[i].ix += di;
+		spec->part[i].ix += di - moving_window_iter; // Shift particle 1 cell to the left on moving window iterations, particles that leave the sim space will be removed later
 		spec->part[i].iy += dj;
-
-		if(moving_window)
-		{
-			if (moving_window_iter)
-			{
-				// Shift particle 1 cell to the left	
-				spec->part[i].ix--;
-			}
-
-			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
-			if (is_on_edge[0] && spec->part[i].ix < 0)
-			{
-				// Remove particle
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
-
-			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
-			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
-			{
-				// Remove particle
-				spec->part[i] = spec->part[--spec->np];
-				continue;
-			}
-		}
-
-		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
-
-		// Check if particle left the proc zone, if so, copy it to the correct send segment
-		if (dir != -1)
-		{
-			// Copy particle to segment
-			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
-
-			// Increment part send count for this segment, for this species
-			num_part_to_send[spec->id][dir]++;
-
-			// Remove particle
-			spec->part[i] = spec->part[--spec->np];
-			continue;
-		}
-
-		i++;
 	}
 }
 

@@ -135,24 +135,20 @@ void sim_iter(t_simulation *sim)
 	// Advance species
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		// Add fake particles before advancing species
-		add_fake_particles(fake_part_index, part_seg_write_index, num_part_to_send, sim->species[spec_i].moving_window, spec_i);
-
-		// Advance particles, if particles leave this proc copy them to particle segments
-		spec_advance(&sim->species[spec_i], emf, current, part_seg_write_index, num_part_to_send);
+		spec_advance(&sim->species[spec_i], emf, current);
 	}
 
 	send_current(current);
 
-	// Send particles on the particle segments
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
-	}
+		// Check for particles leaving this proc, copy them to particle segments if needed
+		check_leaving_particles(&sim->species[spec_i], num_part_to_send, fake_part_index, part_seg_write_index);
 
-	// Inject new particles, if needed
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
-	{
+		// Send particles on the particle segments
+		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
+
+		// Inject new particles, if needed
 		inject_particles(&sim->species[spec_i]);
 	}
 
@@ -173,9 +169,8 @@ void sim_iter(t_simulation *sim)
 	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	send_emf_gc(emf, moving_window_iter);
 
-	// Move window if needed
-	if(moving_window_iter)
-		emf_move_window(emf);
+	// Move emf window if needed
+	if(moving_window_iter) emf_move_window(emf);
 	
 	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);

@@ -30,7 +30,7 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species);
 
 }
 
