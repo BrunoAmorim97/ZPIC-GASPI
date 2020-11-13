@@ -3,21 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-# current_file = "current-weibel-small.zdf"
-
-# emf_b_x_file = "emf-x-weibel-small.zdf"
-# emf_y_file = "emf-y-weibel-small.zdf"
-
-
 iteration = str( eval(sys.argv[1]) ).zfill(6)
 print(f"Reading files for iteration {iteration}...")
 
 
-current_file_gaspi = "/home/bruno/zpic-out/gaspi/CURRENT/J1-" + iteration + ".zdf"
-emf_b_x_file_gaspi = "/home/bruno/zpic-out/gaspi/EMF/B1-" + iteration + ".zdf"
+current_file_gaspi = "/home/bruno/zpic-out/gaspi/CURRENT/J2-" + iteration + ".zdf"
+emf_b_x_file_gaspi = "/home/bruno/zpic-out/gaspi/EMF/B2-" + iteration + ".zdf"
 
-current_file_serial = "/home/bruno/zpic-out/serial/CURRENT/J1-" + iteration + ".zdf"
-emf_b_x_file_serial = "/home/bruno/zpic-out/serial/EMF/B1-" + iteration + ".zdf"
+current_file_serial = "/home/bruno/zpic-out/serial/CURRENT/J2-" + iteration + ".zdf"
+emf_b_x_file_serial = "/home/bruno/zpic-out/serial/EMF/B2-" + iteration + ".zdf"
 
 extent_size = ( 0, 40.0, 0, 51.2 )
 
@@ -31,26 +25,26 @@ extent_size = ( 0, 40.0, 0, 51.2 )
 # Current serial
 plt.subplot(231)
 plt.imshow( current_data_serial, interpolation = 'bilinear', origin = 'lower',
-			extent = extent_size, aspect = 'auto', cmap = 'Spectral')
+			extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Electric Current')
-plt.title("Electric Current (x) serial\n")
+plt.title("Electric Current serial\n")
 
 # Current GASPI
 plt.subplot(232)
 plt.imshow( current_data_gaspi, interpolation = 'bilinear', origin = 'lower',
-			extent = extent_size, aspect = 'auto', cmap = 'Spectral')
+			extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Electric Current')
-plt.title("Electric Current (x) GASPI\n")
+plt.title("Electric Current GASPI\n")
 
 # Current diff
 plt.subplot(233)
 plt.imshow( np.absolute(np.array(current_data_serial) - np.array(current_data_gaspi)), interpolation = 'bilinear', origin = 'lower',
-			extent = extent_size, aspect = 'auto', cmap = 'Spectral')
+			extent = extent_size, aspect = 'auto', cmap = 'jet')
 
 plt.colorbar().set_label('Electric Current')
-plt.title("Electric Current (x) Diff\n")
+plt.title("Electric Current Diff\n")
 
 # EMF serial
 plt.subplot(234)

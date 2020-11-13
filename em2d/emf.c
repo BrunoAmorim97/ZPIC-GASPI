@@ -667,7 +667,7 @@ void emf_move_window(t_emf *emf)
 {
 	if ((emf->iter * emf->dt) > emf->dx[0] * (emf->n_move + 1))
 	{
-		// printf("MOVING WINDOW NOW!\n"); fflush(stdout);
+		// printf("MOVING EMF WINDOW NOW!\n"); fflush(stdout);
 
 		int i, j;
 		const int nrow = emf->nrow;
