@@ -228,10 +228,6 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 	{
 		const int dir = dirs[dir_i];
 
-		// dont create segments if thwy will not be used
-		if (!can_talk_to_dir(moving_window, dir))
-			continue;
-
 		for (int dim = 0; dim < NUM_DIMS; dim++)
 		{
 			curr_kernel_size[dir][dim] = kernel_sizes[dir][dim];
@@ -239,6 +235,10 @@ void create_current_kernel_smoothing_segments(const int nx_local[NUM_DIMS], cons
 			curr_kernel_write_coord[dir][dim] = kernel_starting_write_coord[dir][dim];
 		}
 
+		// Dont create segments that will not be used
+		if (!can_talk_to_dir(moving_window, dir))
+			continue;
+		
 		// The gc zones have size*2 because they have alternating zones depending if smothing pass iteration
 		// number is even or odd, this is to avoid possible data overwrite by a faster neighbour
 		const unsigned int kernel_size_send = kernel_sizes[dir][0] * kernel_sizes[dir][1];
@@ -307,23 +307,25 @@ void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[
 
 void curr_set_smooth(t_current* current, t_smooth* smooth)
 {
-	if ((smooth->xtype != NONE) && (smooth->xlevel <= 0))
+	if (smooth->xtype != NONE)
 	{
-		fprintf(stdout, "Invalid smooth level along x direction\n");
-		exit(-1);
-	}
-	else
-	{
+		if (smooth->xlevel <= 0)
+		{
+			printf("Invalid smooth level along x direction\n");
+			exit(-1);
+		}
+		
 		create_current_kernel_smoothing_segments(current->nx_local, NUM_KERNEL_X_DIRS, kernel_x_directions, current->moving_window);
 	}
 
-	if ((smooth->ytype != NONE) && (smooth->ylevel <= 0))
+	if (smooth->ytype != NONE)
 	{
-		fprintf(stdout, "Invalid smooth level along y direction\n");
-		exit(-1);
-	}
-	else
-	{
+		if (smooth->ylevel <= 0)
+		{
+			fprintf(stdout, "Invalid smooth level along y direction\n");
+			exit(-1);
+		}
+		
 		create_current_kernel_smoothing_segments(current->nx_local, NUM_KERNEL_Y_DIRS, kernel_y_directions, current->moving_window);
 	}
 
@@ -594,10 +596,18 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		gaspi_offset_t local_offset = copy_index * sizeof(t_vfld); // in bytes
 		remote_offset *= sizeof(t_vfld);
 
+		// printf("Sending kernel gc to dir %d iter %d:\n", dir, smoothing_pass_iter);
+		// printf("local_offset = %ld, size = %ld, remote_offset = %ld\n", local_offset, curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld), remote_offset); fflush(stdout);
 		// Copy data to segment
 		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&current_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
+			memcpy(&current_kernel_smoothing_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
+
+			// for (int i = copy_index; i < copy_index + num_columns ; i++)
+			// {
+			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
+			// }
+
 			copy_index += num_columns;
 		}
 
@@ -606,21 +616,18 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 
 		gaspi_size_t size = curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld); // in bytes
 
-		// printf("sending kernel gc to dir %d iteration %d\n", dir, smoothing_pass_iter);
-		// printf("local_offset = %ld, size = %ld, remote_offset = %ld\n", local_offset, size, remote_offset); fflush(stdout);
-
 		// Send data
 		SUCCESS_OR_DIE(gaspi_write_notify(
-			local_segment_id,	 // The segment id where data is located.
-			local_offset,		 // The offset where the data is located.
-			neighbour_rank[dir], // The rank where to write and notify.
-			remote_segment_id,	 // The remote segment id to write the data to.
-			remote_offset,		 // The remote offset where to write to.
-			size,				 // The size of the data to write.
-			notification_id,	 // The notification id to use.
-			1,					 // The notification value used.
-			Q_CURRENT_KERNEL,	 // The queue where to post the request.
-			GASPI_BLOCK			 // Timeout in milliseconds.
+			local_segment_id,		// The segment id where data is located.
+			local_offset,			// The offset where the data is located.
+			neighbour_rank[dir],	// The rank where to write and notify.
+			remote_segment_id,		// The remote segment id to write the data to.
+			remote_offset,			// The remote offset where to write to.
+			size,					// The size of the data to write.
+			notification_id,		// The notification id to use.
+			1,						// The notification value used.
+			Q_CURRENT_KERNEL,		// The queue where to post the request.
+			GASPI_BLOCK				// Timeout in milliseconds.
 		));
 	}
 }
@@ -673,15 +680,16 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		gaspi_notification_t value;
 		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
 
-		// printf("Received kernel gc from dir %d:\n", dir);
-		// for (int i = copy_index; i < copy_index + starting_column + starting_ * ; i++)
-		// {
-		// 	printf("%f %f %f\n", current_segments[dir][copy_index].x, current_segments[dir][copy_index].y, current_segments[dir][copy_index].z);
-		// }
-
+		// printf("Received kernel gc from dir %d iter %d with value %d\n", dir, smoothing_pass_iter, value-1);
+		// printf("local_offset = %ld, size = %ld\n", copy_index*sizeof(t_vfld), curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] * sizeof(t_vfld)); fflush(stdout);
 		for (int row = starting_row; row < max_row; row++)
 		{
-			memcpy(&J[starting_column + row * nrow], &current_segments[dir][copy_index], num_columns * sizeof(t_vfld));
+			// for (int i = copy_index; i < copy_index + num_columns ; i++)
+			// {
+			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
+			// }
+
+			memcpy(&J[starting_column + row * nrow], &current_kernel_smoothing_segments[dir][copy_index], num_columns * sizeof(t_vfld));
 			copy_index += num_columns;
 		}
 	}

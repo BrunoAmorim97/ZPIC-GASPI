@@ -550,6 +550,7 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 		// div_corr_x requires this proc to know other procs emf values.
 		// Compute global laser emf and save it to these variables,
 		// Then save relevant data on the local emf segments
+
 		t_vfld* B_global_buff = calloc(size, sizeof(t_vfld));
 		t_vfld* E_global_buff = calloc(size, sizeof(t_vfld));
 
@@ -584,16 +585,27 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 
 		div_corr_x(emf, E_global, B_global);
 
+
+		// Update global gc values, very lazy way to do it, I know
+		t_emf global_emf = {
+			.B = B_global,
+			.E = E_global,
+			.nrow = emf->nrow,
+			.moving_window = emf->moving_window
+		};
+		emf_update_gc(&global_emf);
+
+
 		const int nrow_local = emf->nrow_local; // Local nrow
 
 		// j represents global y coord
-		for (int j = proc_block_low[1]; j <= proc_block_high[1]; j++)
+		for (int j = proc_block_low[1] - gc[1][0]; j <= proc_block_high[1] + gc[1][1]; j++)
 		{
 			// Get local y coord corresponding to global coord j
 			int y = j - proc_block_low[1];
 
-			memcpy(&B[y * nrow_local], &B_global[proc_block_low[0] + j * nrow], proc_block_size[0] * sizeof(t_vfld));
-			memcpy(&E[y * nrow_local], &E_global[proc_block_low[0] + j * nrow], proc_block_size[0] * sizeof(t_vfld));
+			memcpy(&B[-gc[0][0] + y * nrow_local], &B_global[-gc[0][0] + proc_block_low[0] + j * nrow], (gc[0][0] + proc_block_size[0]+ gc[0][1]) * sizeof(t_vfld));
+			memcpy(&E[-gc[0][0] + y * nrow_local], &E_global[-gc[0][0] + proc_block_low[0] + j * nrow], (gc[0][0] + proc_block_size[0]+ gc[0][1]) * sizeof(t_vfld));
 		}
 
 		free(B_global_buff);
@@ -608,7 +620,6 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 
 	// Update guard cells with new values
 	send_emf_gc(emf, 0);
-
 	wait_save_emf_gc(emf, 0);
 
 	// printf("AFTER EMF LAZER GC UPDATE\n");
@@ -790,11 +801,11 @@ void yee_e(t_emf* emf, const t_current* current)
 	}
 }
 
-// OLD IMPLEMENTATION
+// OLD IMPLEMENTATION, still used do not delete
 void emf_update_gc(t_emf* emf)
 {
 	int i, j;
-	const int nrow = emf->nrow_local; // Local nrow
+	const int nrow = emf->nrow; // global nrow
 
 	t_vfld* const restrict E = emf->E;
 	t_vfld* const restrict B = emf->B;
@@ -1030,7 +1041,7 @@ void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 
 void emf_move_window(t_emf* emf)
 {
-	// printf("MOVING WINDOW NOW!\n"); fflush(stdout);
+	// printf("PROC %d MOVING WINDOW NOW!\n", proc_rank); fflush(stdout);
 
 	const int nrow = emf->nrow_local; // Local nrow
 
@@ -1045,8 +1056,8 @@ void emf_move_window(t_emf* emf)
 	{
 		// Shift data left 1 cell
 		// Dont update the last column of real cells, it will be overwritten later
-		memmove(&B[-1 + j * nrow], &B[j * nrow], (nxl0 - 1) * sizeof(t_vfld));
-		memmove(&E[-1 + j * nrow], &E[j * nrow], (nxl0 - 1) * sizeof(t_vfld));
+		memmove(&B[-1 + j * nrow], &B[j * nrow], nxl0 * sizeof(t_vfld));
+		memmove(&E[-1 + j * nrow], &E[j * nrow], nxl0 * sizeof(t_vfld));
 	}
 
 	// If proc is on the right edge of the simulation space

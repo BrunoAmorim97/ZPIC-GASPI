@@ -651,10 +651,9 @@ int ltrim(t_part_data x)
 	return (x >= 1.0f) - (x < 0.0f);
 }
 
-// correct coords of new particles based on the direction they arrived
+// correct coords of new particles based on the direction they arrived from
 void correct_particle_coords(const int dir, t_part* part_pointer, const unsigned int num_parts, const int nx_local[NUM_DIMS])
 {
-	const int max_column = nx_local[0] - 1;
 	const int max_row = nx_local[1] - 1;
 
 	switch (dir)
@@ -682,7 +681,7 @@ void correct_particle_coords(const int dir, t_part* part_pointer, const unsigned
 	{
 		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
 		{
-			part_pointer[par_i].ix = max_column;
+			part_pointer[par_i].ix += nx_local[0];
 			part_pointer[par_i].iy = max_row;
 		}
 	}
@@ -701,7 +700,7 @@ void correct_particle_coords(const int dir, t_part* part_pointer, const unsigned
 	{
 		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
 		{
-			part_pointer[par_i].ix = max_column;
+			part_pointer[par_i].ix += nx_local[0];
 		}
 	}
 	break;
@@ -729,7 +728,7 @@ void correct_particle_coords(const int dir, t_part* part_pointer, const unsigned
 	{
 		for (unsigned int par_i = 0; par_i < num_parts; par_i++)
 		{
-			part_pointer[par_i].ix = max_column;
+			part_pointer[par_i].ix += nx_local[0];
 			part_pointer[par_i].iy = 0;
 		}
 	}
@@ -892,34 +891,6 @@ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[
 	return -1;
 }
 
-// Correct particle coords to coords relative to the new proc
-void correct_coords(t_part* const part_pointer, const int dir)
-{
-	// Correct part x cell coord
-	// If particle leaves through the left border
-	if (dir == LEFT || dir == UP_LEFT || dir == DOWN_LEFT)
-	{
-		part_pointer->ix = neighbour_nx[dir][0] - 1;
-	}
-	// If particle leaves through the right border
-	else if (dir == RIGHT || dir == UP_RIGHT || dir == DOWN_RIGHT)
-	{
-		part_pointer->ix = 0;
-	}
-
-	// Correct part y cell coord
-	// If particle leaves through the bottom border
-	if (dir == DOWN || dir == DOWN_LEFT || dir == DOWN_RIGHT)
-	{
-		part_pointer->iy = 0;
-	}
-	// If particle leaves through the top border
-	else if (dir == UP || dir == UP_LEFT || dir == UP_RIGHT)
-	{
-		part_pointer->iy = neighbour_nx[dir][1] - 1;
-	}
-}
-
 // Check for particles leaving the proc zone and remove or copy them to the correct segment
 void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ])
 {
@@ -1070,8 +1041,8 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 
 		// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
 		// {
-		// 	t_part part = particle_segments[dir][fake_part_index[dir] + i];
-		// 	printf("Sent particle ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
+		// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];
+		// 	printf("Sent particle to dir %d (proc %d) ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", dir, neighbour_rank[dir], part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
 		// }
 		// printf("\n"); fflush(stdout);
 	}
@@ -1088,7 +1059,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	spec->iter++;
-	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
+	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );	
 
 	// Advance particles
 	for(int i = 0; i < spec->np; i++)
