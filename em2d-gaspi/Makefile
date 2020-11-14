@@ -7,7 +7,7 @@ CFLAGS += -O3
 # CC = icc
 # CFLAGS = -restrict -Ofast -std=c99 -pedantic -xCORE-AVX512 -mtune=skylake -xHost
 
-# degub flags
+# Debug flags
 # CFLAGS += -g
 # CFLAGS += -ggdb
 # CFLAGS += -finstrument-functions
