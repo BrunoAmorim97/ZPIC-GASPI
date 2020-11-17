@@ -13,7 +13,7 @@ void sim_init( t_simulation* sim )
 	float box[2] = { 0.9, 0.9 };
 
 	// Diagnostic frequency
-	int ndump = 100;
+	int ndump = 10;
 
 	// Initialize particles
 	const int n_species = 2;
@@ -31,7 +31,7 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);
+	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species);
 }
 
 void sim_report( t_simulation* sim )
