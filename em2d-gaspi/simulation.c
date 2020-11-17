@@ -432,22 +432,22 @@ void gaspi_report(t_simulation *sim)
 	{
 		// Save original array pointers
 		t_vfld *B_real = sim->emf.B;
-		t_vfld *B_buf_real = sim->emf.B_buf;
+		t_vfld *B_buff_real = sim->emf.B_buff;
 
 		t_vfld *E_real = sim->emf.E;
-		t_vfld *E_buf_real = sim->emf.E_buf;
+		t_vfld *E_buff_real = sim->emf.E_buff;
 
 		t_vfld *J_real = sim->current.J;
-		t_vfld *J_buf_real = sim->current.J_buf;
+		t_vfld *J_buff_real = sim->current.J_buff;
 
 		// Change simulation struct emf and current array pointers to report segments
 		sim->emf.B = emf_b_report_array + global_buff_offset;
 		sim->emf.E = emf_e_report_array + global_buff_offset;
 		sim->current.J = current_report_array + global_buff_offset;
 
-		sim->emf.B_buf = emf_b_report_array;
-		sim->emf.E_buf = emf_e_report_array;
-		sim->current.J_buf = current_report_array;
+		sim->emf.B_buff = emf_b_report_array;
+		sim->emf.E_buff = emf_e_report_array;
+		sim->current.J_buff = current_report_array;
 
 		// Wait for writes
 		wait_report_writes();
@@ -457,11 +457,11 @@ void gaspi_report(t_simulation *sim)
 
 		// Switch simulation struct emf and current array pointers back
 		sim->emf.B = B_real;
-		sim->emf.B_buf = B_buf_real;
+		sim->emf.B_buff = B_buff_real;
 		sim->emf.E = E_real;
-		sim->emf.E_buf = E_buf_real;
+		sim->emf.E_buff = E_buff_real;
 		sim->current.J = J_real;
-		sim->current.J_buf = J_buf_real;
+		sim->current.J_buff = J_buff_real;
 	}
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));

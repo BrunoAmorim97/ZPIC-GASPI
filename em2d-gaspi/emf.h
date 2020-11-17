@@ -22,8 +22,8 @@ typedef struct {
 	t_vfld *E;
 	t_vfld *B;
 	
-	t_vfld *E_buf;
-	t_vfld *B_buf;
+	t_vfld *E_buff;
+	t_vfld *B_buff;
 	
 	// Simulation box info
 	int nx[NUM_DIMS];

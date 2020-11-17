@@ -263,8 +263,8 @@ void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[
 	size_t num_cells = (gc[0][0] + nx_local[0] + gc[0][1]) * (gc[1][0] + nx_local[1] + gc[1][1]);
 	current->J_size = num_cells * sizeof(t_vfld);
 
-	current->J_buf = calloc(num_cells, sizeof(t_vfld));
-	assert(current->J_buf);
+	current->J_buff = calloc(num_cells, sizeof(t_vfld));
+	assert(current->J_buff);
 
 	current->nrow = gc[0][0] + nx[0] + gc[0][1];
 	current->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
@@ -281,8 +281,7 @@ void current_new(t_current* current, const int nx[NUM_DIMS], const int nx_local[
 	create_current_segments(nx_local);
 
 	// Make J point to local cell [0][0]
-	current->buff_offset = gc[0][0] + (gc[1][0] * current->nrow_local); //offset not in bytes
-	current->J = current->J_buf + current->buff_offset;
+	current->J = current->J_buff + gc[0][0] + (gc[1][0] * current->nrow_local);
 
 	// Set cell sizes and box limits
 	for (int i = 0; i < NUM_DIMS; i++)
@@ -335,7 +334,7 @@ void curr_set_smooth(t_current* current, t_smooth* smooth)
 void current_zero(t_current* current)
 {
 	// zero field
-	memset(current->J_buf, 0, current->J_size);
+	memset(current->J_buff, 0, current->J_size);
 }
 
 // OLD IMPLEMENTATION

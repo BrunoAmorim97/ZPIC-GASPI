@@ -23,9 +23,9 @@ typedef struct {
 	
 	t_vfld *J;
 	
-	t_vfld *J_buf;
+	t_vfld *J_buff;
 
-	// J_buff size in bytes
+	// J_bufff size in bytes
 	size_t J_size;
 	
 	// Grid parameters
@@ -43,8 +43,6 @@ typedef struct {
 
 	// Moving window
 	bool moving_window;
-
-	int buff_offset;
 	
 	// Box size
 	t_fld box[NUM_DIMS];

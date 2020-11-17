@@ -341,16 +341,16 @@ void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 
 	size_t num_cells = (gc[0][0] + nx_local[0] + gc[0][1]) * (gc[1][0] + nx_local[1] + gc[1][1]);
 
-	emf->E_buf = calloc(num_cells, sizeof(t_vfld));
-	emf->B_buf = calloc(num_cells, sizeof(t_vfld));
-	assert(emf->E_buf && emf->B_buf);
+	emf->E_buff = calloc(num_cells, sizeof(t_vfld));
+	emf->B_buff = calloc(num_cells, sizeof(t_vfld));
+	assert(emf->E_buff && emf->B_buff);
 
 	emf->nrow = gc[0][0] + nx[0] + gc[0][1];
 	emf->nrow_local = gc[0][0] + nx_local[0] + gc[0][1];
 
 	// Make E and B point to local cell [0][0]
-	emf->E = emf->E_buf + gc[0][0] + (gc[1][0] * emf->nrow_local);
-	emf->B = emf->B_buf + gc[0][0] + (gc[1][0] * emf->nrow_local);
+	emf->E = emf->E_buff + gc[0][0] + (gc[1][0] * emf->nrow_local);
+	emf->B = emf->B_buff + gc[0][0] + (gc[1][0] * emf->nrow_local);
 
 
 	create_emf_segments(nx_local);
