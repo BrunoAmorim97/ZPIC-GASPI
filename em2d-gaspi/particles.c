@@ -1056,10 +1056,12 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	spec->iter++;
-	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );	
+	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
+
+	const int np = spec->np;
 
 	// Advance particles
-	for(int i = 0; i < spec->np; i++)
+	for(int i = 0; i < np; i++)
 	{
 		// Load particle momenta
 		t_part_data ux = spec->part[i].ux;

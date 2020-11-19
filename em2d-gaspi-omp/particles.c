@@ -1075,9 +1075,11 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 		.J = current->J
 	};
 
+	const int np = spec->np;
+
 	// Advance particles in parallel, add the resulting current by reduction
 	#pragma omp parallel for reduction(add_current:current_reduce_out)
-	for(int i = 0; i < spec->np; i++)
+	for(int i = 0; i < np; i++)
 	{
 		// Load particle momenta
 		t_part_data ux = spec->part[i].ux;
