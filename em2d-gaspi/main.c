@@ -39,6 +39,8 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // #include "input/weibel-9x9-1-500.c"
 // #include "input/weibel-512x512-64-500.c"
 // #include "input/weibel-512x512-256-500.c"
+// #include "input/weibel-512x512-1024-500.c"
+
 // #include "input/lwfa-2000x256-8-1450.c"
 
 gaspi_rank_t proc_rank;

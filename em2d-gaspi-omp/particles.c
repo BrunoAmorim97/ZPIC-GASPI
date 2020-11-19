@@ -939,7 +939,8 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			if (is_on_edge[0] && spec->part[i].ix < 0)
 			{
 				// Remove particle
-				spec->part[i] = spec->part[--spec->np];
+				// spec->part[i] = spec->part[--spec->np];
+				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 				continue;
 			}
 
@@ -947,7 +948,8 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
 			{
 				// Remove particle
-				spec->part[i] = spec->part[--spec->np];
+				// spec->part[i] = spec->part[--spec->np];
+				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 				continue;
 			}
 		}
@@ -955,16 +957,18 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
 
 		// Check if particle left the proc zone, if so, copy it to the correct send segment
-		if (dir != -1)
+		if (dir >= 0)
 		{
 			// Copy particle to segment
-			particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
+			// particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
+			memcpy(&particle_segments[dir][part_seg_write_index[dir]++], &spec->part[i], sizeof(t_part));
 
 			// Increment part send count for this segment, for this species
 			num_part_to_send[spec->id][dir]++;
 
 			// Remove particle
-			spec->part[i] = spec->part[--spec->np];
+			// spec->part[i] = spec->part[--spec->np];
+			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 			continue;
 		}
 

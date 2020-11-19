@@ -165,7 +165,7 @@ void sim_iter(t_simulation *sim)
 	yee_e(emf, current);
 	yee_b(emf);
 
-	// 1 if window will be moved this iteration, 0 otherwise
+	// true if window will be moved this iteration, false otherwise
 	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	send_emf_gc(emf, moving_window_iter);
 
