@@ -140,18 +140,6 @@ void sim_iter(t_simulation *sim)
 
 	send_current(current);
 
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
-	{
-		// Check for particles leaving this proc, copy them to particle segments if needed
-		check_leaving_particles(&sim->species[spec_i], num_part_to_send, fake_part_index, part_seg_write_index);
-
-		// Send particles on the particle segments
-		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
-
-		// Inject new particles, if needed
-		inject_particles(&sim->species[spec_i]);
-	}
-
 	// Advance EM field using Yee algorithm 
 	yee_b(emf);
 
@@ -172,11 +160,23 @@ void sim_iter(t_simulation *sim)
 	// Move emf window if needed
 	if(moving_window_iter) emf_move_window(emf);
 	
-	// wait for particle writes and copy them from segments to species array
-	wait_save_particles(sim->species, sim->n_species);
+	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
+	{
+		// Check for particles leaving this proc, copy them to particle segments if needed
+		check_leaving_particles(&sim->species[spec_i], num_part_to_send, fake_part_index, part_seg_write_index);
+
+		// Send particles on the particle segments
+		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
+
+		// Inject new particles, if needed
+		inject_particles(&sim->species[spec_i]);
+	}
 
 	wait_save_emf_gc(emf, moving_window_iter);
 	emf->iter++;
+
+	// wait for particle writes and copy them from segments to species array
+	wait_save_particles(sim->species, sim->n_species);
 }
 
 void sim_set_spec_moving_window(t_simulation *sim)
