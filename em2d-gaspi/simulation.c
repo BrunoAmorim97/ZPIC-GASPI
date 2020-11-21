@@ -163,7 +163,10 @@ void sim_iter(t_simulation *sim)
 	{
 		// Send particles on the particle segments
 		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
+	}
 
+	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
+	{
 		// Inject new particles, if needed
 		inject_particles(&sim->species[spec_i]);
 	}
