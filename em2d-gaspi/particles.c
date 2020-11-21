@@ -891,89 +891,6 @@ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[
 	return -1;
 }
 
-// Check for particles leaving the proc zone and remove or copy them to the correct segment
-void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ])
-{
-	const int spec_id = spec->id;
-	const bool moving_window = spec->moving_window;
-
-	// Add fake particles to each segment
-	// This particle will be used to transmit the number of particles on this write.
-	for (int dir = 0; dir < NUM_ADJ; dir++)
-	{
-		// Check if we can send particles to this dir
-		if (!can_talk_to_dir(moving_window, dir))
-			continue;
-
-		// these values are set to make this particle easy to identify on debugging situations
-		const t_part fake_part =
-		{
-			//.ix = -42,
-			.iy = -42,
-			// .x = 0.42,
-			// .y = 0.42,
-			// .ux = 0.42,
-			// .uy = 0.42,
-			// .uz = 0.42
-		};
-
-		// Save the index of the fake particle
-		fake_part_index[spec_id][dir] = part_seg_write_index[dir];
-
-		// Copy particle to the correct send segment
-		particle_segments[dir][part_seg_write_index[dir]++] = fake_part;
-
-		// Increment part send count for this segment, for this species
-		num_part_to_send[spec_id][dir]++;
-	}
-
-	// Check for particles leaving the proc zone
-	int i = 0;
-	while(i < spec->np)
-	{
-		if(moving_window)
-		{
-			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
-			if (is_on_edge[0] && spec->part[i].ix < 0)
-			{
-				// Remove particle
-				// spec->part[i] = spec->part[--spec->np];
-				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-				continue;
-			}
-
-			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
-			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
-			{
-				// Remove particle
-				// spec->part[i] = spec->part[--spec->np];
-				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-				continue;
-			}
-		}
-
-		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
-
-		// Check if particle left the proc zone, if so, copy it to the correct send segment
-		if (dir >= 0)
-		{
-			// Copy particle to segment
-			// particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
-			memcpy(&particle_segments[dir][part_seg_write_index[dir]++], &spec->part[i], sizeof(t_part));
-
-			// Increment part send count for this segment, for this species
-			num_part_to_send[spec->id][dir]++;
-
-			// Remove particle
-			// spec->part[i] = spec->part[--spec->np];
-			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-			continue;
-		}
-
-		i++;
-	}
-}
-
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])
 {
 	const int spec_id = spec->id;
@@ -1049,7 +966,7 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 	}
 }
 
-void spec_advance(t_species* spec, t_emf* emf, t_current* current)
+void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ])
 {
 	const t_part_data tem = 0.5 * spec->dt / spec->m_q;
 	const t_part_data dt_dx = spec->dt / spec->dx[0];
@@ -1060,12 +977,12 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
 	spec->iter++;
+	const bool moving_window = spec->moving_window;
 	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
 
-	const int np = spec->np;
-
+	int i = 0;
 	// Advance particles
-	for(int i = 0; i < np; i++)
+	while (i < spec->np)
 	{
 		// Load particle momenta
 		t_part_data ux = spec->part[i].ux;
@@ -1140,8 +1057,79 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 		// Store results
 		spec->part[i].x = x1;
 		spec->part[i].y = y1;
-		spec->part[i].ix += di - moving_window_iter; // Shift particle 1 cell to the left on moving window iterations, particles that leave the sim space will be removed later
+		spec->part[i].ix += di - moving_window_iter; // Shift particle 1 cell to the left on moving window iterations
 		spec->part[i].iy += dj;
+
+		// Check if particle left the proc zone
+		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
+
+		if(moving_window)
+		{
+			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
+			if (is_on_edge[0] && (dir == LEFT || dir == DOWN_LEFT || dir == UP_LEFT))
+			{
+				// Remove particle
+				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+				continue;
+			}
+
+			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
+			if (is_on_edge[1] && (dir == RIGHT || dir == DOWN_RIGHT || dir == UP_RIGHT))
+			{
+				// Remove particle
+				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+				continue;
+			}
+		}
+
+		if (dir >= 0)
+		{
+			// Copy particle to segment
+			memcpy(&particle_segments[dir][part_seg_write_index[dir]++], &spec->part[i], sizeof(t_part));
+
+			// Increment part send count for this segment, for this species
+			num_part_to_send[spec->id][dir]++;
+
+			// Remove particle
+			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+			continue;
+		}
+
+		i++;
+	}
+}
+
+// Add fake particle to the start of the particles of this species on each segment.
+void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
+						const bool moving_window, const int spec_id)
+{
+	// This particle will be used to transmit the number of particles on this write.
+	for (int dir = 0; dir < NUM_ADJ; dir++)
+	{
+		// Check if we can send particles to this dir
+		if (!can_talk_to_dir(moving_window, dir))
+			continue;
+
+		// these values are set to make this particle easy to identify on debugging situations
+		const t_part fake_part =
+		{
+			//.ix = -42,
+			.iy = -42,
+			// .x = 0.42,
+			// .y = 0.42,
+			// .ux = 0.42,
+			// .uy = 0.42,
+			// .uz = 0.42
+		};
+
+		// Save the index of the fake particle
+		fake_part_index[spec_id][dir] = part_seg_write_index[dir];
+
+		// Copy particle to the correct send segment
+		particle_segments[dir][part_seg_write_index[dir]++] = fake_part;
+
+		// Increment part send count for this segment, for this species
+		num_part_to_send[spec_id][dir]++;
 	}
 }
 

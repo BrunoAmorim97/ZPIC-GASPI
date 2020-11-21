@@ -135,7 +135,9 @@ void sim_iter(t_simulation *sim)
 	// Advance species
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		spec_advance(&sim->species[spec_i], emf, current);
+		add_fake_particles(fake_part_index, part_seg_write_index, num_part_to_send, sim->species[spec_i].moving_window, spec_i);
+
+		spec_advance(&sim->species[spec_i], emf, current, part_seg_write_index, num_part_to_send);
 	}
 
 	send_current(current);
@@ -162,9 +164,6 @@ void sim_iter(t_simulation *sim)
 	
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
-		// Check for particles leaving this proc, copy them to particle segments if needed
-		check_leaving_particles(&sim->species[spec_i], num_part_to_send, fake_part_index, part_seg_write_index);
-
 		// Send particles on the particle segments
 		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
 
