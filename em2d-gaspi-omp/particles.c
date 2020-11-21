@@ -930,13 +930,26 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 	}
 
 	// Check for particles leaving the proc zone
+	int8_t* part_dirs = malloc(spec->np * sizeof(int8_t));
+	const int np = spec->np;
+
+	#pragma omp parallel for
+	for (int i = 0; i < np; i++)
+	{
+		part_dirs[i] = get_part_seg_direction(&spec->part[i], spec->nx_local);
+	}
+	
+
 	int i = 0;
+	int part_dir_i = 0;
 	while(i < spec->np)
 	{
+		const int8_t part_dir = part_dirs[part_dir_i];
+
 		if(moving_window)
 		{
 			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
-			if (is_on_edge[0] && spec->part[i].ix < 0)
+			if (is_on_edge[0] && (part_dir == LEFT || part_dir == UP_LEFT || part_dir == DOWN_LEFT))
 			{
 				// Remove particle
 				// spec->part[i] = spec->part[--spec->np];
@@ -945,7 +958,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			}
 
 			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
-			if (is_on_edge[1] && spec->part[i].ix >= spec->nx_local[0])
+			if (is_on_edge[1] && (part_dir == RIGHT || part_dir == UP_RIGHT || part_dir == DOWN_RIGHT))
 			{
 				// Remove particle
 				// spec->part[i] = spec->part[--spec->np];
@@ -954,26 +967,28 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			}
 		}
 
-		const int dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
-
 		// Check if particle left the proc zone, if so, copy it to the correct send segment
-		if (dir >= 0)
+		if (part_dir >= 0)
 		{
 			// Copy particle to segment
 			// particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
-			memcpy(&particle_segments[dir][part_seg_write_index[dir]++], &spec->part[i], sizeof(t_part));
+			memcpy(&particle_segments[part_dir][part_seg_write_index[part_dir]++], &spec->part[i], sizeof(t_part));
 
 			// Increment part send count for this segment, for this species
-			num_part_to_send[spec->id][dir]++;
+			num_part_to_send[spec->id][part_dir]++;
 
 			// Remove particle
 			// spec->part[i] = spec->part[--spec->np];
 			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 			continue;
 		}
 
+		part_dir_i++;
 		i++;
 	}
+
+	free(part_dirs);
 }
 
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])
