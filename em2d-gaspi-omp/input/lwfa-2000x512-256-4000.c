@@ -36,6 +36,9 @@ void sim_init( t_simulation* sim ){
 	// Initialize Simulation data
 	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, MOVING_WINDOW);
 
+	// Set moving window (this must come after sim_new)
+	// sim_set_moving_window( sim );
+
 	// Add laser pulse (this must come after sim_new)
 	t_emf_laser laser = {
 		.type = GAUSSIAN,
@@ -49,9 +52,6 @@ void sim_init( t_simulation* sim ){
 		.polarization = M_PI_2
 	};
 	sim_add_laser( sim, &laser );
-
-	// Set moving window (this must come after sim_new)
-	// sim_set_moving_window( sim );
 
 	// Set current smoothing (this must come after sim_new)
 	t_smooth smooth = {

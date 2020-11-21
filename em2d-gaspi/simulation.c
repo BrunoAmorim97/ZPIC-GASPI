@@ -165,7 +165,7 @@ void sim_iter(t_simulation *sim)
 	// Inject new particles, if needed
 	inject_particles(sim->species, sim->n_species);
 
-	// Move emf window if needed
+	// Move emf window, if needed
 	if(moving_window_iter) emf_move_window(emf);
 	
 	wait_save_emf_gc(emf, moving_window_iter);
