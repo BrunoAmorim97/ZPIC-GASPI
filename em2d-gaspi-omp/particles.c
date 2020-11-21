@@ -938,7 +938,6 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 	{
 		part_dirs[i] = get_part_seg_direction(&spec->part[i], spec->nx_local);
 	}
-	
 
 	int i = 0;
 	int part_dir_i = 0;
@@ -980,7 +979,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			// Remove particle
 			// spec->part[i] = spec->part[--spec->np];
 			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
+			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
 			continue;
 		}
 
