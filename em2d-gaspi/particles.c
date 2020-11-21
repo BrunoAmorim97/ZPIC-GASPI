@@ -891,78 +891,80 @@ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[
 	return -1;
 }
 
-void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])
+void send_spec(t_species* spec_array, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])
 {
-	const int spec_id = spec->id;
-	const bool moving_window = spec->moving_window;
-
-	// Check if segment size is respected before sending
-	for (int dir = 0; dir < NUM_ADJ; dir++)
+	for (int spec_id = 0; spec_id < num_spec; spec_id++)
 	{
-		// Compute the total number of particles sent to this dir
-		unsigned int num_part_seg = 0;
-		for (int spec_i_2 = 0; spec_i_2 <= spec_id; spec_i_2++)
+		const bool moving_window = spec_array[spec_id].moving_window;
+
+		// Check if segment size is respected before sending
+		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			num_part_seg += num_part_to_send[spec_i_2][dir];
+			// Compute the total number of particles sent to this dir
+			unsigned int num_part_seg = 0;
+			for (int spec_i_2 = 0; spec_i_2 <= spec_id; spec_i_2++)
+			{
+				num_part_seg += num_part_to_send[spec_i_2][dir];
+			}
+
+			if (num_part_seg > (unsigned int)part_send_seg_size[dir])
+			{
+				fprintf(stderr, "Particle segment size exceeded, seg at dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
+				exit(EXIT_FAILURE);
+			}
 		}
 
-		if (num_part_seg > (unsigned int)part_send_seg_size[dir])
+		// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
+		// iter - 1 because it was incremented in spec_advance
+		const gaspi_notification_id_t notif_id = ((spec_array[spec_id].iter - 1) % 2) == 0 ? spec_id : num_spec + spec_id;
+
+		// Make sure it is safe to change the segment data
+		SUCCESS_OR_DIE(gaspi_wait(Q_PARTICLES, GASPI_BLOCK));
+
+		// printf("Sending particles from species %d\n", spec_id); fflush(stdout);
+
+		// Send particles on each segment
+		for (int dir = 0; dir < NUM_ADJ; dir++)
 		{
-			fprintf(stderr, "Particle segment size exceeded, seg at dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
-			exit(EXIT_FAILURE);
+			// Check if we can send particles to this dir
+			if (!can_talk_to_dir(moving_window, dir))
+				continue;
+
+			// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
+			int new_dir = OPPOSITE_DIR(dir);
+
+			gaspi_offset_t local_offset = fake_part_index[spec_id][dir] * sizeof(t_part); // in bytes
+			gaspi_offset_t remote_offset = (fake_part_index[spec_id][dir] + part_send_seg_size[dir]) * sizeof(t_part); // in bytes
+			gaspi_size_t size = num_part_to_send[spec_id][dir] * sizeof(t_part); // in bytes
+
+			// Save the number of particles sent (including fake part) to the ix field of the fake particle, for this species, for this dir
+			particle_segments[dir][fake_part_index[spec_id][dir]].ix = num_part_to_send[spec_id][dir];
+
+			SUCCESS_OR_DIE(gaspi_write_notify(
+				dir,					// The segment id where data is located.
+				local_offset,			// The offset where the data is located.
+				neighbour_rank[dir],	// The rank where to write and notify.
+				new_dir, 				// The remote segment id to write the data to.
+				remote_offset,			// The remote offset where to write to.
+				size,					// The size of the data to write.
+				notif_id,				// The notification id to use.
+				1,						// The notification value used.
+				Q_PARTICLES,			// The queue where to post the request.
+				GASPI_BLOCK				// Timeout in milliseconds.
+			));
+
+			// if (num_part_to_send[spec_id][dir] == 1)
+			// {
+			// 	continue;
+			// }
+
+			// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
+			// {
+			// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];
+			// 	printf("Sent particle to dir %d (proc %d) ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", dir, neighbour_rank[dir], part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
+			// }
+			// printf("\n"); fflush(stdout);
 		}
-	}
-
-	// notif id depends in iteration num, if odd notif id = spec_id + num_spec, if even notif_id = spec_id
-	// iter - 1 because it was incremented in spec_advance
-	const gaspi_notification_id_t notif_id = ((spec->iter - 1) % 2) == 0 ? spec_id : num_spec + spec_id;
-
-	// Make sure it is safe to change the segment data
-	SUCCESS_OR_DIE(gaspi_wait(Q_PARTICLES, GASPI_BLOCK));
-
-	// printf("Sending particles from species %d\n", spec_id); fflush(stdout);
-
-	// Send particles on each segment
-	for (int dir = 0; dir < NUM_ADJ; dir++)
-	{
-		// Check if we can send particles to this dir
-		if (!can_talk_to_dir(moving_window, dir))
-			continue;
-
-		// if a particle leaves a proc zone by moving right, it will be written to the PAR_LEFT segment of the receiving proc
-		int new_dir = OPPOSITE_DIR(dir);
-
-		gaspi_offset_t local_offset = fake_part_index[spec_id][dir] * sizeof(t_part); // in bytes
-		gaspi_offset_t remote_offset = (fake_part_index[spec_id][dir] + part_send_seg_size[dir]) * sizeof(t_part); // in bytes
-		gaspi_size_t size = num_part_to_send[spec_id][dir] * sizeof(t_part); // in bytes
-
-		// Save the number of particles sent (including fake part) to the ix field of the fake particle, for this species, for this dir
-		particle_segments[dir][fake_part_index[spec_id][dir]].ix = num_part_to_send[spec_id][dir];
-
-		SUCCESS_OR_DIE(gaspi_write_notify(
-			dir,					// The segment id where data is located.
-			local_offset,			// The offset where the data is located.
-			neighbour_rank[dir],	// The rank where to write and notify.
-			new_dir, 				// The remote segment id to write the data to.
-			remote_offset,			// The remote offset where to write to.
-			size,					// The size of the data to write.
-			notif_id,				// The notification id to use.
-			1,						// The notification value used.
-			Q_PARTICLES,			// The queue where to post the request.
-			GASPI_BLOCK				// Timeout in milliseconds.
-		));
-
-		// if (num_part_to_send[spec_id][dir] == 1)
-		// {
-		// 	continue;
-		// }
-
-		// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
-		// {
-		// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];
-		// 	printf("Sent particle to dir %d (proc %d) ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", dir, neighbour_rank[dir], part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
-		// }
-		// printf("\n"); fflush(stdout);
 	}
 }
 
@@ -1134,27 +1136,32 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 }
 
 // inject particles to the right of the simulation space if needed
-void inject_particles(t_species* spec)
+void inject_particles(t_species* spec_array, const int num_spec)
 {
-	// Inject new particles, if needed
-	if (spec->moving_window && (spec->iter * spec->dt ) > (spec->dx[0] * (spec->n_move + 1)))
+	for (int spec_id = 0; spec_id < num_spec; spec_id++)
 	{
-		// Increase moving window counter
-		spec->n_move++;
+		t_species* spec = &spec_array[spec_id];
 
-		// if proc is on the right edge of the simulation space
-		if (is_on_edge[1])
+		// Inject new particles, if needed
+		if (spec->moving_window && (spec->iter * spec->dt ) > (spec->dx[0] * (spec->n_move + 1)))
 		{
-			// Inject particles on the right edge of the simulation box
-			const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
-													{				0,	spec->nx[1] - 1} };
+			// Increase moving window counter
+			spec->n_move++;
 
-			const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
-														{						0, spec->nx_local[1] - 1} };
+			// if proc is on the right edge of the simulation space
+			if (is_on_edge[1])
+			{
+				// Inject particles on the right edge of the simulation box
+				const int range[NUM_DIMS][NUM_DIMS] = { {spec->nx[0] - 1,	spec->nx[0] - 1},
+														{				0,	spec->nx[1] - 1} };
 
-			// printf("Proc %d is injecting particles\n", proc_rank); fflush(stdout);
+				const int range_local[NUM_DIMS][NUM_DIMS] = { {spec->nx_local[0] - 1, spec->nx_local[0] - 1},
+															{						0, spec->nx_local[1] - 1} };
 
-			spec_inject_particles(spec, range, range_local);
+				// printf("Proc %d is injecting particles\n", proc_rank); fflush(stdout);
+
+				spec_inject_particles(spec, range, range_local);
+			}
 		}
 	}
 }

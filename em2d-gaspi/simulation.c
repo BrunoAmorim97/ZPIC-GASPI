@@ -159,17 +159,11 @@ void sim_iter(t_simulation *sim)
 	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	send_emf_gc(emf, moving_window_iter);
 
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
-	{
-		// Send particles on the particle segments
-		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
-	}
+	// Send particles on the particle segments
+	send_spec(sim->species, sim->n_species, num_part_to_send, fake_part_index);
 
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
-	{
-		// Inject new particles, if needed
-		inject_particles(&sim->species[spec_i]);
-	}
+	// Inject new particles, if needed
+	inject_particles(sim->species, sim->n_species);
 
 	// Move emf window if needed
 	if(moving_window_iter) emf_move_window(emf);

@@ -100,7 +100,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current, int part_seg_
 
 void wait_save_particles(t_species* species_array, const int n_spec);
 
-void inject_particles(t_species* spec);
+void inject_particles(t_species* spec_array, const int num_spec);
 
 void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
 						const bool moving_window, const int spec_id);
