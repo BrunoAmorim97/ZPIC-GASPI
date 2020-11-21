@@ -930,7 +930,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 	}
 
 	// Check for particles leaving the proc zone
-	int8_t* part_dirs = malloc(spec->np * sizeof(int8_t));
+	int_fast8_t* part_dirs = malloc(spec->np * sizeof(int_fast8_t));
 	const int np = spec->np;
 
 	#pragma omp parallel for
@@ -944,7 +944,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 	int part_dir_i = 0;
 	while(i < spec->np)
 	{
-		const int8_t part_dir = part_dirs[part_dir_i];
+		const int_fast8_t part_dir = part_dirs[part_dir_i];
 
 		if(moving_window)
 		{
