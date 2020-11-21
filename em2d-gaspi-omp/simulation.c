@@ -157,9 +157,6 @@ void sim_iter(t_simulation *sim)
 	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	send_emf_gc(emf, moving_window_iter);
 
-	// Move emf window if needed
-	if(moving_window_iter) emf_move_window(emf);
-	
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
 	{
 		// Check for particles leaving this proc, copy them to particle segments if needed
@@ -172,6 +169,9 @@ void sim_iter(t_simulation *sim)
 		inject_particles(&sim->species[spec_i]);
 	}
 
+	// Move emf window if needed
+	if(moving_window_iter) emf_move_window(emf);
+	
 	wait_save_emf_gc(emf, moving_window_iter);
 	emf->iter++;
 
