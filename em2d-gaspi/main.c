@@ -33,7 +33,7 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/(simulation name)-(num cells x)*(num cells y)-(particles per cell)-(num iterations).c"
+// #include "input/(simulation name)-(num cells x)x(num cells y)-(particles per cell)-(num iterations).c"
 
 #include "input/weibel-128x128-256-500.c"
 // #include "input/weibel-9x9-1-500.c"

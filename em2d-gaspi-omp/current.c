@@ -138,7 +138,7 @@ t_current_reduce reset_thread_current()
 	return current_reduce_priv;
 }
 
-void add_thread_current(t_current_reduce current_in, t_current_reduce current_out)
+void add_thread_current(t_current_reduce current_out, t_current_reduce current_in)
 {
 	// printf("add_thread_current\n"); fflush(stdout);
 	const unsigned int num_cells = current_in.J_buff_num_cells;
