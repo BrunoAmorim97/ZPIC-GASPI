@@ -1,15 +1,20 @@
 # Laptop options
+NANOS6_HOME = /home/bruno/program-files/nanos6
+INCLUDE_DIR += $(NANOS6_HOME)/include
+LIBRARY_DIR += $(NANOS6_HOME)/lib64
+
 CC=gcc
 MCC=mcc
 MPICC=mpicc
 MPI_WRAPPERS=I_MPI_CC=$(MCC) MPICH_CC=$(MCC) OMPI_CC=$(MCC)
 
-CFLAGS = --ompss-2 -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation
+CFLAGS = -Wall -Wextra -std=c99 -Wpedantic -Wno-stringop-truncation
 CFLAGS += -O3
 
 # Intel icc compiler
 # CC = icc
-# CFLAGS = -restrict -Ofast -std=c99 -pedantic -xCORE-AVX512 -mtune=skylake -xHost
+# MCC = imcc --ompss-2
+# CFLAGS += --Wn,-restrict,-Ofast,-std=c99,-pedantic,-xCORE-AVX512,-mtune=skylake,-xHost
 
 # Debug flags
 # CFLAGS += -g
@@ -19,13 +24,10 @@ CFLAGS += -O3
 # gprof
 # CFLAGS += -pg
 
-GPI2_HOME = /home/bruno/GPI-2-MPI
+GPI2_HOME = ../GPI-2
 INCLUDE_DIR += $(GPI2_HOME)/include
 LIBRARY_DIR += $(GPI2_HOME)/lib64
 
-NANOS6_HOME = /home/bruno/program-files/nanos6
-INCLUDE_DIR += $(NANOS6_HOME)/include
-LIBRARY_DIR += $(NANOS6_HOME)/lib64
 
 # LIB += GPI2-dbg
 LIB += GPI2
@@ -45,7 +47,7 @@ TARGET = zpic
 all : clean zpic
 
 zpic :
-	$(MPI_WRAPPERS) $(MPICC) $(CFLAGS) $(SOURCE) $(LDFLAGS) -o $@ $(addprefix -l, $(LIB))
+	$(MCC) $(CFLAGS) $(SOURCE) $(LDFLAGS) -o $@ $(addprefix -l, $(LIB))
 
 clean:
 	rm -f .gpi2.*

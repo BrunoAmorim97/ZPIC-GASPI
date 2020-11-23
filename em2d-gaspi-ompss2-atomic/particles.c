@@ -917,11 +917,11 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		{
 			//.ix = -42,
 			.iy = -42,
-			.x = -0.42,
-			.y = -0.42,
-			.ux = -0.42,
-			.uy = -0.42,
-			.uz = -0.42
+			// .x = 0.42,
+			// .y = 0.42,
+			// .ux = 0.42,
+			// .uy = 0.42,
+			// .uz = 0.42
 		};
 
 		// Save the index of the fake particle
@@ -934,22 +934,11 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		num_part_to_send[spec_id][dir]++;
 	}
 
-
 	// Check for particles leaving the proc zone
-	int8_t* part_dirs = malloc(spec->np * sizeof(int8_t));
-
-	const int np = spec->np;
-	#pragma omp parallel for
-	for (int i = 0; i < np; i++)
-	{
-		part_dirs[i] = get_part_seg_direction(&spec->part[i], spec->nx_local);
-	}
-
 	int i = 0;
-	int part_dir_i = 0;
 	while(i < spec->np)
 	{
-		const int8_t part_dir = part_dirs[part_dir_i];
+		const int_fast8_t part_dir = get_part_seg_direction(&spec->part[i], spec->nx_local);
 
 		if(moving_window)
 		{
@@ -959,7 +948,6 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 				// Remove particle
 				// spec->part[i] = spec->part[--spec->np];
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 				continue;
 			}
 
@@ -969,7 +957,6 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 				// Remove particle
 				// spec->part[i] = spec->part[--spec->np];
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 				continue;
 			}
 		}
@@ -987,15 +974,11 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			// Remove particle
 			// spec->part[i] = spec->part[--spec->np];
 			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 			continue;
 		}
 
-		part_dir_i++;
 		i++;
 	}
-
-	free(part_dirs);
 }
 
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])

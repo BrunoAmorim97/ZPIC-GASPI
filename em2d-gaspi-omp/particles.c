@@ -952,8 +952,8 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			if (is_on_edge[0] && (part_dir == LEFT || part_dir == UP_LEFT || part_dir == DOWN_LEFT))
 			{
 				// Remove particle
-				// spec->part[i] = spec->part[--spec->np];
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+				// Reorder part_dir array to match particle array order
 				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 				continue;
 			}
@@ -962,8 +962,8 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			if (is_on_edge[1] && (part_dir == RIGHT || part_dir == UP_RIGHT || part_dir == DOWN_RIGHT))
 			{
 				// Remove particle
-				// spec->part[i] = spec->part[--spec->np];
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+				// Reorder part_dir array to match particle array order
 				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 				continue;
 			}
@@ -973,15 +973,14 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		if (part_dir >= 0)
 		{
 			// Copy particle to segment
-			// particle_segments[dir][part_seg_write_index[dir]++] = spec->part[i];
 			memcpy(&particle_segments[part_dir][part_seg_write_index[part_dir]++], &spec->part[i], sizeof(t_part));
 
 			// Increment part send count for this segment, for this species
 			num_part_to_send[spec->id][part_dir]++;
 
 			// Remove particle
-			// spec->part[i] = spec->part[--spec->np];
 			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+			// Reorder part_dir array to match particle array order
 			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
 			continue;
 		}
