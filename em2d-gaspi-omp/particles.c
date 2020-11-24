@@ -929,11 +929,22 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		num_part_to_send[spec_id][dir]++;
 	}
 
+	static int part_dirs_size = 0;
+	static int_fast8_t* part_dirs = NULL;
+	const int np = spec->np;
+
+	// Keep track of the number of dirs the part_dirs array can hold, alloc more space if needed
+	if (part_dirs_size < np)
+	{
+		// Round up to KB
+		part_dirs_size = ((np / 1024) + 1) * 1024;
+		
+		// Not using realloc since we do not need to copy the old values
+		free(part_dirs);
+		part_dirs = malloc(part_dirs_size * sizeof(int_fast8_t));
+	}
 
 	// Check for particles leaving the proc zone
-	int8_t* part_dirs = malloc(spec->np * sizeof(int8_t));
-
-	const int np = spec->np;
 	#pragma omp parallel for
 	for (int i = 0; i < np; i++)
 	{
@@ -944,7 +955,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 	int part_dir_i = 0;
 	while(i < spec->np)
 	{
-		const int8_t part_dir = part_dirs[part_dir_i];
+		const int_fast8_t part_dir = part_dirs[part_dir_i];
 
 		if(moving_window)
 		{
@@ -954,7 +965,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 				// Remove particle
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 				// Reorder part_dir array to match particle array order
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
+				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
 				continue;
 			}
 
@@ -964,7 +975,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 				// Remove particle
 				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 				// Reorder part_dir array to match particle array order
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
+				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
 				continue;
 			}
 		}
@@ -981,15 +992,13 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 			// Remove particle
 			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
 			// Reorder part_dir array to match particle array order
-			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int8_t));
+			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
 			continue;
 		}
 
 		part_dir_i++;
 		i++;
 	}
-
-	free(part_dirs);
 }
 
 void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ])

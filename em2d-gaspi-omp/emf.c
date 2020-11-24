@@ -765,7 +765,7 @@ void yee_b(t_emf* emf)
 		for (int i = -1; i <= emf->nx_local[0]; i++)
 		{
 			B[i + j * nrow].x += (-dt_dy * (E[i + (j + 1) * nrow].z - E[i + j * nrow].z));
-			B[i + j * nrow].y += (dt_dx * (E[(i + 1) + j * nrow].z - E[i + j * nrow].z));
+			B[i + j * nrow].y += ( dt_dx * (E[(i + 1) + j * nrow].z - E[i + j * nrow].z));
 			B[i + j * nrow].z += (-dt_dx * (E[(i + 1) + j * nrow].y - E[i + j * nrow].y) +
 				dt_dy * (E[i + (j + 1) * nrow].x - E[i + j * nrow].x));
 		}
