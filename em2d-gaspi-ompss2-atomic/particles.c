@@ -1146,7 +1146,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 
 		t_part_data qvz = spec->q * uz * rg;
 
-		dep_current_zamb(spec->part[i].ix, spec->part[i].iy, di, dj, spec->part[i].x, spec->part[i].y, dx, dy, qnx, qny, qvz, current->nrow, current->J);
+		dep_current_zamb(spec->part[i].ix, spec->part[i].iy, di, dj, spec->part[i].x, spec->part[i].y, dx, dy, qnx, qny, qvz, current->nrow_local, current->J);
 
 		// Store results
 		spec->part[i].x = x1;
