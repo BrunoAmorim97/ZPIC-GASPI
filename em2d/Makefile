@@ -6,12 +6,7 @@ CFLAGS = -std=c99 -pedantic -Wall -Wextra -Wno-stringop-truncation -O3
 #CC = icc
 #CFLAGS = -restrict -Ofast -std=c99 -pedantic -xCORE-AVX512 -mtune=skylake -xHost
 
-# Clang options
-#CC = clang
-#CFLAGS = -Ofast
-
 LDFLAGS = -lm
-
 
 SOURCE = current.c emf.c particles.c random.c timer.c main.c simulation.c zdf.c
 

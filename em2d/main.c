@@ -30,7 +30,7 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/lwfa-2000x512-8-1450.c"
+// #include "input/lwfa-2000x512-36-4000.c"
 // #include "input/weibel-9x9-1-500.c"
 #include "input/weibel-128x128-256-500.c"
 
@@ -41,7 +41,7 @@ int main()
 	t_simulation sim;
 	sim_init( &sim );
 
-    // Run simulation
+	// Run simulation
 	int n;
 	float t;
 
@@ -60,7 +60,7 @@ int main()
 			sim_report( &sim );
 		}
 
-        sim_iter( &sim );
+		sim_iter( &sim );
 	}
 
 	t1 = timer_ticks();
@@ -69,7 +69,7 @@ int main()
 	// sim_report( &sim );
 
 	// Simulation times
-    sim_timings( &sim, t0, t1 );
+	sim_timings( &sim, t0, t1 );
 
 	printf("Finished with ");
 	for (int i = 0; i < sim.n_species; i++)
@@ -78,8 +78,8 @@ int main()
 	}
 	printf("particles\n"); fflush(stdout);
 
-    // Cleanup data
-    sim_delete( &sim );
+	// Cleanup data
+	sim_delete( &sim );
 
 	return 0;
 }
