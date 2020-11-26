@@ -95,6 +95,14 @@ void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
 		else
 			dims[1] *= factors[i];	
 	}
+
+	// Prioritize divisions on the y axis
+	if (dims[0] > dims[1])
+	{
+		int aux = dims[0];
+		dims[0] = dims[1];
+		dims[1] = aux;
+	}
 }
 
 void assign_proc_blocks(const int nx[NUM_DIMS])
