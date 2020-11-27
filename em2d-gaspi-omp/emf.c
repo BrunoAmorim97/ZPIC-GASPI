@@ -591,10 +591,11 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 			.B = B_global,
 			.E = E_global,
 			.nrow = emf->nrow,
-			.moving_window = emf->moving_window
+			.moving_window = emf->moving_window,
+			.nx[0] = emf->nx[0],
+			.nx[1] = emf->nx[1]
 		};
 		emf_update_gc(&global_emf);
-
 
 		const int nrow_local = emf->nrow_local; // Local nrow
 
@@ -617,10 +618,6 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 	default:
 		break;
 	}
-
-	// Update guard cells with new values
-	send_emf_gc(emf, 0);
-	wait_save_emf_gc(emf, 0);
 
 	// printf("AFTER EMF LAZER GC UPDATE\n");
 	// print_emf_e(emf);
