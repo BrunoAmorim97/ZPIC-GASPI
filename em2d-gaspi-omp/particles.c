@@ -46,6 +46,8 @@ extern t_part* particle_segments[NUM_ADJ];
 extern t_current_reduce current_reduce_priv;
 #pragma omp threadprivate(current_reduce_priv)
 
+extern t_current_reduce current_reduce_out;
+
 /**
  * Returns the total time spent pushing particles (includes boundaries and moving window)
  * @return  Total time in seconds
@@ -939,7 +941,7 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		// Round up to KB
 		part_dirs_size = ((np / 1024) + 1) * 1024;
 		
-		// Not using realloc since we do not need to copy the old values
+		// Not using realloc since we do not need to keep the old data
 		free(part_dirs);
 		part_dirs = malloc(part_dirs_size * sizeof(int_fast8_t));
 	}
@@ -1093,21 +1095,15 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
+	#pragma omp single nowait
 	spec->iter++;
+
 	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
-
-	t_current_reduce current_reduce_out = {
-		.J_buff = current->J_buff,
-		.J_buff_size = current->J_buff_size,
-		.J_buff_num_cells = current->J_buff_size / sizeof(t_vfld),
-
-		.J = current->J
-	};
 
 	const int np = spec->np;
 
 	// Advance particles in parallel, add the resulting current by reduction
-	#pragma omp parallel for reduction(add_current:current_reduce_out)
+	#pragma omp for schedule(guided, 1024) reduction(add_current:current_reduce_out) nowait
 	for(int i = 0; i < np; i++)
 	{
 		// Load particle momenta

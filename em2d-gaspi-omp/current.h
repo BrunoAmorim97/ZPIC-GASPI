@@ -83,6 +83,7 @@ void curr_set_smooth(t_current* current, t_smooth* smooth);
 
 void wait_save_update_current(t_current* current);
 
+void set_current_reduce_out(t_current* current);
 void alloc_private_current_reduce(t_current* current);
 t_current_reduce reset_thread_current();
 void add_thread_current(t_current_reduce current_in, t_current_reduce current_out);

@@ -169,7 +169,6 @@ void sim_iter(t_simulation *sim)
 	if(moving_window_iter) emf_move_window(emf);
 	
 	wait_save_emf_gc(emf, moving_window_iter);
-	emf->iter++;
 
 	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);

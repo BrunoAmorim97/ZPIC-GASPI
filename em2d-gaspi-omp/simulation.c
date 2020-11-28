@@ -131,11 +131,14 @@ void sim_iter(t_simulation *sim)
 	t_emf* const restrict emf = &sim->emf;
 
 	current_zero(current);
-
+	
 	// Advance species
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
+	#pragma omp parallel
 	{
-		spec_advance(&sim->species[spec_i], emf, current);
+		for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
+		{
+			spec_advance(&sim->species[spec_i], emf, current);
+		}
 	}
 
 	send_current(current);
@@ -176,7 +179,6 @@ void sim_iter(t_simulation *sim)
 	if(moving_window_iter) emf_move_window(emf);
 	
 	wait_save_emf_gc(emf, moving_window_iter);
-	emf->iter++;
 
 	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);

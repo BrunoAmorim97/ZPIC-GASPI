@@ -29,10 +29,10 @@ void sim_init( t_simulation* sim )
 	int ppc[] = {1,1};
 
 	// Density profile
-	t_density density = { .type = STEP, .start = 0.1 };
+	t_density density = { .type = STEP, .start = 20.0 };
 
 	t_species* species = (t_species *) malloc(n_species * sizeof( t_species ));
-	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, NULL);//&density );
+	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density );
 
 	// Initialize Simulation data
 	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species, MOVING_WINDOW);
@@ -57,7 +57,7 @@ void sim_init( t_simulation* sim )
 		.xlevel = 4
 	};
 
-	// sim_set_smooth( sim, &smooth );
+	sim_set_smooth( sim, &smooth );
 }
 
 

@@ -35,13 +35,15 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // Include Simulation parameters here
 // #include "input/(simulation name)-(num cells x)x(num cells y)-(particles per cell)-(num iterations).c"
 
-#include "input/weibel-128x128-256-500.c"
+// #include "input/weibel-128x128-256-500.c"
 // #include "input/weibel-9x9-1-500.c"
 // #include "input/weibel-512x512-64-500.c"
 // #include "input/weibel-512x512-256-500.c"
 // #include "input/weibel-512x512-1024-500.c"
 
-// #include "input/lwfa-2000x512-8-4000.c"
+#include "input/lwfa-10x10-1-1450.c"
+// #include "input/lwfa-2000x256-8-1450.c"
+// #include "input/lwfa-2000x512-16-4000.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;

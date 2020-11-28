@@ -123,6 +123,9 @@ t_vfld* current_report_array;
 t_current_reduce current_reduce_priv;
 #pragma omp threadprivate(current_reduce_priv)
 
+// Output struct for the current reduce
+t_current_reduce current_reduce_out;
+
 int main(int argc, char* argv[])
 {
 	if(argc >= 2)
@@ -150,8 +153,11 @@ int main(int argc, char* argv[])
 	t_simulation sim;
 	sim_init(&sim);
 
+	// Initialize current reduce structs
 	#pragma omp parallel
 	alloc_private_current_reduce(&sim.current);
+
+	set_current_reduce_out(&sim.current);
 
 	// Run simulation
 	int n;

@@ -45,6 +45,8 @@ const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = { DOWN_LEFT, DOWN, DOWN_RIGHT
 extern t_current_reduce current_reduce_priv;
 #pragma omp threadprivate(current_reduce_priv)
 
+extern t_current_reduce current_reduce_out;
+
 void print_local_current(t_current* current)
 {
 	t_vfld* J = current->J;
@@ -117,7 +119,7 @@ void print_local_current(t_current* current)
 }
 
 
-
+// Called by every thread to alloc its private current buffer
 void alloc_private_current_reduce(t_current* current)
 {
 	// printf("alloc_private_current_reduce\n"); fflush(stdout);
@@ -127,6 +129,18 @@ void alloc_private_current_reduce(t_current* current)
 
 	// Make J point to cell [0][0]
 	current_reduce_priv.J = current_reduce_priv.J_buff + gc[0][0] + (gc[1][0] * current->nrow_local);
+}
+
+// Called once to set the output struct for the current reduce
+void set_current_reduce_out(t_current* current)
+{
+	// printf("set_current_reduce_out\n"); fflush(stdout);
+	current_reduce_out.J_buff = current->J_buff;
+	current_reduce_out.J_buff_size = current->J_buff_size;
+	current_reduce_out.J_buff_num_cells = current->J_buff_size / sizeof(t_vfld);
+
+	// Make J point to cell [0][0]
+	current_reduce_out.J = current->J;
 }
 
 t_current_reduce reset_thread_current()
