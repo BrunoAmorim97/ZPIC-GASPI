@@ -1035,6 +1035,7 @@ void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 			copy_index += size_x;
 		}
 	}
+	emf->iter++;
 }
 
 void emf_move_window(t_emf* emf)
