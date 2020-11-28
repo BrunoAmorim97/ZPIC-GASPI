@@ -7,7 +7,7 @@
 #define NUM_DIMS 2
 #define ROOT 0
 
-#define MAX_PPC_MULTIPLIER 3
+#define MAX_PPC_MULTIPLIER 4
 
 #define BLOCK_LOW(id, p, n) ((id) * (n) / (p))
 #define BLOCK_HIGH(id, p, n) (BLOCK_LOW((id) + 1, p, n) - 1)
