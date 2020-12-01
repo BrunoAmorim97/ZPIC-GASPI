@@ -9,6 +9,8 @@
 #include "current.h"
 #include "emf.h"
 
+#include <omp.h>
+
 extern int proc_coords[NUM_DIMS];
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
@@ -56,7 +58,7 @@ void sim_timings(t_simulation *sim, uint64_t t0, uint64_t t1)
 
 	// fprintf(stdout, "Time for spec. advance = %f s\n", spec_time());
 	// fprintf(stdout, "Time for emf   advance = %f s\n", emf_time());
-	fprintf(stdout, "Total simulation time on %d procs = %f s\n", num_procs, timer_interval_seconds(t0, t1));
+	fprintf(stdout, "Total simulation time on %d procs (each with %d threads) = %f s\n", num_procs, omp_get_max_threads(), timer_interval_seconds(t0, t1));
 	fprintf(stdout, "\n");
 
 	/* 	if (spec_time() > 0)
@@ -139,34 +141,40 @@ void sim_iter(t_simulation *sim)
 		{
 			spec_advance(&sim->species[spec_i], emf, current);
 		}
-	}
+		#pragma omp barrier
 
-	send_current(current);
+		#pragma omp single nowait
+		{
+			send_current(current);
 
-	// Advance EM field using Yee algorithm 
-	yee_b(emf);
+			// Advance EM field using Yee algorithm 
+			yee_b(emf);
 
-	// Wait and update current data
-	wait_save_update_current(current);
-	current_smooth(current);
-	current->iter++;
+			// Wait and update current data
+			wait_save_update_current(current);
+			current_smooth(current);
+			current->iter++;
 
-	// Advance EM fields using Yee algorithm modified for having E and B time centered
-	// yee_b(emf); // already done
-	yee_e(emf, current);
-	yee_b(emf);
+			// Advance EM fields using Yee algorithm modified for having E and B time centered
+			// yee_b(emf); // already done
+			yee_e(emf, current);
+			yee_b(emf);
 
-	// true if window will be moved this iteration, false otherwise
-	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
-	send_emf_gc(emf, moving_window_iter);
+			send_emf_gc(emf);
+		}
 
-	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
-	{
-		// Check for particles leaving this proc, copy them to particle segments if needed
-		check_leaving_particles(&sim->species[spec_i], num_part_to_send, fake_part_index, part_seg_write_index);
+		for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
+		{
+			#pragma omp master
+			add_fake_particles(fake_part_index, part_seg_write_index, num_part_to_send, sim->species[spec_i].moving_window, spec_i);
 
-		// Send particles on the particle segments
-		send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
+			// Check for particles leaving this proc, copy them to particle segments if needed
+			check_leaving_particles(&sim->species[spec_i], num_part_to_send, part_seg_write_index);
+
+			// Send particles on the particle segments
+			#pragma omp master
+			send_spec(&sim->species[spec_i], sim->n_species, num_part_to_send, fake_part_index);
+		}
 	}
 
 	for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
@@ -175,10 +183,10 @@ void sim_iter(t_simulation *sim)
 		inject_particles(&sim->species[spec_i]);
 	}
 
-	// Move emf window if needed
-	if(moving_window_iter) emf_move_window(emf);
-	
-	wait_save_emf_gc(emf, moving_window_iter);
+	// Move emf window, if needed
+	emf_move_window(emf);
+
+	wait_save_emf_gc(emf);
 
 	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);
@@ -187,7 +195,7 @@ void sim_iter(t_simulation *sim)
 void sim_set_spec_moving_window(t_simulation *sim)
 {
 	for (int i = 0; i < sim->n_species; i++)
-		sim->species[i].moving_window = 1;
+		sim->species[i].moving_window = true;
 }
 
 void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species,

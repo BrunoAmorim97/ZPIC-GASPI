@@ -6,8 +6,8 @@
 #include "emf.h"
 #include "current.h"
 
-#define STATIC_WINDOW 0
-#define MOVING_WINDOW 1
+#define STATIC_WINDOW false
+#define MOVING_WINDOW true
 
 typedef struct {
 

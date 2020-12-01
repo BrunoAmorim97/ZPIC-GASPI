@@ -868,9 +868,12 @@ void emf_update_gc(t_emf* emf)
 	}
 }
 
-void send_emf_gc(t_emf* emf, const bool moving_window_iter)
+void send_emf_gc(t_emf* emf)
 {
 	const int nrow = emf->nrow_local; // Local nrow
+
+	// true if window will be moved this iteration, false otherwise
+	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	const bool moving_window = emf->moving_window;
 
 	const t_vfld* const restrict B = emf->B;
@@ -959,9 +962,12 @@ void send_emf_gc(t_emf* emf, const bool moving_window_iter)
 }
 
 // Wait and save received EMF from each dir
-void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
+void wait_save_emf_gc(t_emf* emf)
 {
 	const int nrow = emf->nrow_local; // Local nrow
+
+	// true if window will be moved this iteration, false otherwise
+	const bool moving_window_iter = emf->moving_window && ( (emf->iter * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
 	const bool moving_window = emf->moving_window;
 
 	t_vfld* const restrict B = emf->B;
@@ -1040,39 +1046,43 @@ void wait_save_emf_gc(t_emf* emf, const bool moving_window_iter)
 
 void emf_move_window(t_emf* emf)
 {
-	// printf("PROC %d MOVING WINDOW NOW!\n", proc_rank); fflush(stdout);
-
-	const int nrow = emf->nrow_local; // Local nrow
-
-	const int nxl0 = emf->nx_local[0];
-	const int nxl1 = emf->nx_local[1];
-
-	t_vfld* const restrict B = emf->B;
-	t_vfld* const restrict E = emf->E;
-
-	// For every row
-	for (int j = 0; j < nxl1; j++)
+	// if window will be moved this iteration
+	if (emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) ))
 	{
-		// Shift data left 1 cell
-		// Dont update the last column of real cells, it will be overwritten later
-		memmove(&B[-1 + j * nrow], &B[j * nrow], nxl0 * sizeof(t_vfld));
-		memmove(&E[-1 + j * nrow], &E[j * nrow], nxl0 * sizeof(t_vfld));
-	}
+		// printf("PROC %d MOVING WINDOW NOW!\n", proc_rank); fflush(stdout);
 
-	// If proc is on the right edge of the simulation space
-	if (is_on_edge[1])
-	{
+		const int nrow = emf->nrow_local; // Local nrow
+
+		const int nxl0 = emf->nx_local[0];
+		const int nxl1 = emf->nx_local[1];
+
+		t_vfld* const restrict B = emf->B;
+		t_vfld* const restrict E = emf->E;
+
 		// For every row
-		for (int j = -gc[1][0]; j < nxl1 + gc[1][1]; j++)
+		for (int j = 0; j < nxl1; j++)
 		{
-			// Zero 3 leftmost cells on each row
-			memset(&B[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
-			memset(&E[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
+			// Shift data left 1 cell
+			// Dont update the last column of real cells, it will be overwritten later
+			memmove(&B[-1 + j * nrow], &B[j * nrow], nxl0 * sizeof(t_vfld));
+			memmove(&E[-1 + j * nrow], &E[j * nrow], nxl0 * sizeof(t_vfld));
 		}
-	}
 
-	// Increase moving window counter
-	emf->n_move++;
+		// If proc is on the right edge of the simulation space
+		if (is_on_edge[1])
+		{
+			// For every row
+			for (int j = -gc[1][0]; j < nxl1 + gc[1][1]; j++)
+			{
+				// Zero 3 leftmost cells on each row
+				memset(&B[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
+				memset(&E[(nxl0 - 1) + j * nrow], 0, (1 + gc[0][1]) * sizeof(t_vfld) );
+			}
+		}
+
+		// Increase moving window counter
+		emf->n_move++;	
+	}
 }
 
 /* void emf_advance( t_emf *emf, const t_current *current )

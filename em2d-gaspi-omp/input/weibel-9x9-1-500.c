@@ -16,8 +16,8 @@ void sim_init( t_simulation* sim )
 	int ndump = 10;
 
 	// Initialize particles
-	// const int n_species = 2;
-	const int n_species = 1;
+	const int n_species = 2;
+	// const int n_species = 1;
 	t_species* species = (t_species *) malloc(n_species * sizeof( t_species ));
 
 	int ppc[] = {1,1};
@@ -29,7 +29,7 @@ void sim_init( t_simulation* sim )
 	spec_new( &species[0], "electrons", -1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	ufl[2] = -ufl[2];
-	// spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
+	spec_new( &species[1], "positrons", +1.0, ppc, ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
 	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species, STATIC_WINDOW);

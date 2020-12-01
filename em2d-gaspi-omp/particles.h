@@ -10,6 +10,8 @@
 #ifndef __PARTICLES__
 #define __PARTICLES__
 
+#include <stdint.h>
+
 #include "zpic.h"
 #include "emf.h"
 #include "current.h"
@@ -23,6 +25,8 @@ typedef struct
 	t_part_data ux, uy, uz;		// velocity
 } t_part;
 
+typedef int_fast8_t t_part_dir;
+
 enum density_type { UNIFORM, STEP, SLAB };
 
 typedef struct {
@@ -34,7 +38,6 @@ typedef struct {
 
 } t_density;
 
-
 typedef struct {
 
 	char name[MAX_SPNAME_LEN];
@@ -44,6 +47,9 @@ typedef struct {
 	t_part* part;
 	int np;
 	int np_max;
+
+	// Array used to save the dir of each particle
+	t_part_dir* part_dirs;
 
 	// Number of rows on each line of the global simulation space
 	int nrow;
@@ -100,7 +106,10 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current);
 
 void wait_save_particles(t_species* species_array, const int n_spec);
 
-void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ]);
+void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
+						const bool moving_window, const int spec_id);
+
+void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int part_seg_write_index[NUM_ADJ]);
 
 void inject_particles(t_species* spec);
 

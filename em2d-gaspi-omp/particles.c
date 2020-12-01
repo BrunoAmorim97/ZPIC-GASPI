@@ -316,6 +316,10 @@ void check_part_buffer_size(t_species* spec, int np_inj)
 		spec->np_max = ((spec->np_max + np_inj) / 1024 + 1) * 1024;
 		spec->part = realloc((void*)spec->part, spec->np_max * sizeof(t_part));
 
+		// Not using realloc since we do not need to keep the old data
+		free(spec->part_dirs);
+		spec->part_dirs = malloc(spec->np_max * sizeof(t_part_dir));
+
 		// check if realloc was successful
 		assert(spec->part);
 	}
@@ -378,7 +382,7 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	// Initialize particle buffer
 	spec->np_max = 0;
 	spec->part = NULL;
-
+	spec->part_dirs = NULL;
 
 	// Initialize density profile
 	if (density)
@@ -851,7 +855,7 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 
 // get the direction from which the particle left the proc zone, based on its cell coordinates
 // If particle does no leave this proc, return -1
-int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
+t_part_dir get_part_seg_direction(const t_part* const part_pointer, const int nx_local[NUM_DIMS])
 {
 	const int ix = part_pointer->ix;
 	const int iy = part_pointer->iy;
@@ -895,13 +899,10 @@ int get_part_seg_direction(const t_part* const part_pointer, const int nx_local[
 	return -1;
 }
 
-// Check for particles leaving the proc zone and remove or copy them to the correct segment
-void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ])
+// Add fake particle to the start of the particles of this species on each segment.
+void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
+						const bool moving_window, const int spec_id)
 {
-	const int spec_id = spec->id;
-	const bool moving_window = spec->moving_window;
-
-	// Add fake particles to each segment
 	// This particle will be used to transmit the number of particles on this write.
 	for (int dir = 0; dir < NUM_ADJ; dir++)
 	{
@@ -914,11 +915,11 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		{
 			//.ix = -42,
 			.iy = -42,
-			.x = -0.42,
-			.y = -0.42,
-			.ux = -0.42,
-			.uy = -0.42,
-			.uz = -0.42
+			.x = 0.42,
+			.y = 0.42,
+			.ux = 0.42,
+			.uy = 0.42,
+			.uz = 0.42
 		};
 
 		// Save the index of the fake particle
@@ -930,76 +931,75 @@ void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], i
 		// Increment part send count for this segment, for this species
 		num_part_to_send[spec_id][dir]++;
 	}
+}
 
-	static int part_dirs_size = 0;
-	static int_fast8_t* part_dirs = NULL;
+// Check for particles leaving the proc zone and remove or copy them to the correct segment
+void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int part_seg_write_index[NUM_ADJ])
+{
+	t_part* restrict parts = spec->part;
+	t_part_dir* restrict part_dirs = spec->part_dirs;
+	
 	const int np = spec->np;
 
-	// Keep track of the number of dirs the part_dirs array can hold, alloc more space if needed
-	if (part_dirs_size < np)
-	{
-		// Round up to KB
-		part_dirs_size = ((np / 1024) + 1) * 1024;
-		
-		// Not using realloc since we do not need to keep the old data
-		free(part_dirs);
-		part_dirs = malloc(part_dirs_size * sizeof(int_fast8_t));
-	}
-
 	// Check for particles leaving the proc zone
-	#pragma omp parallel for
-	for (int i = 0; i < np; i++)
+	#pragma omp for schedule(guided, 1024)
+	for (int part_dir_i = 0; part_dir_i < np; part_dir_i++)
 	{
-		part_dirs[i] = get_part_seg_direction(&spec->part[i], spec->nx_local);
+		part_dirs[part_dir_i] = get_part_seg_direction(&parts[part_dir_i], spec->nx_local);
 	}
 
-	int i = 0;
-	int part_dir_i = 0;
-	while(i < spec->np)
+	#pragma omp master
 	{
-		const int_fast8_t part_dir = part_dirs[part_dir_i];
+		const bool moving_window = spec->moving_window;
 
-		if(moving_window)
+		int part_i = 0;
+		int part_dir_i = 0;
+		while(part_i < spec->np)
 		{
-			// If proc is on the left edge of the simulation space and particle leaves through the left edge	
-			if (is_on_edge[0] && (part_dir == LEFT || part_dir == UP_LEFT || part_dir == DOWN_LEFT))
+			const t_part_dir part_dir = part_dirs[part_dir_i];
+
+			if(moving_window)
 			{
+				// If proc is on the left edge of the simulation space and particle leaves through the left edge	
+				if (is_on_edge[0] && (part_dir == LEFT || part_dir == UP_LEFT || part_dir == DOWN_LEFT))
+				{
+					// Remove particle
+					memcpy(&parts[part_i], &parts[--spec->np], sizeof(t_part));
+					// Reorder part_dir array to match particle array order
+					memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(t_part_dir));
+					continue;
+				}
+
+				// If proc is on the right edge of the simulation space and particle leaves through the right edge	
+				if (is_on_edge[1] && (part_dir == RIGHT || part_dir == UP_RIGHT || part_dir == DOWN_RIGHT))
+				{
+					// Remove particle
+					memcpy(&parts[part_i], &parts[--spec->np], sizeof(t_part));
+					// Reorder part_dir array to match particle array order
+					memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(t_part_dir));
+					continue;
+				}
+			}
+
+			// Check if particle left the proc zone, if so, copy it to the correct send segment
+			if (part_dir >= 0)
+			{
+				// Copy particle to segment
+				memcpy(&particle_segments[part_dir][part_seg_write_index[part_dir]++], &parts[part_i], sizeof(t_part));
+
+				// Increment part send count for this segment, for this species
+				num_part_to_send[spec->id][part_dir]++;
+
 				// Remove particle
-				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
+				memcpy(&parts[part_i], &parts[--spec->np], sizeof(t_part));
 				// Reorder part_dir array to match particle array order
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
+				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(t_part_dir));
 				continue;
 			}
 
-			// If proc is on the right edge of the simulation space and particle leaves through the right edge	
-			if (is_on_edge[1] && (part_dir == RIGHT || part_dir == UP_RIGHT || part_dir == DOWN_RIGHT))
-			{
-				// Remove particle
-				memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-				// Reorder part_dir array to match particle array order
-				memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
-				continue;
-			}
+			part_dir_i++;
+			part_i++;
 		}
-
-		// Check if particle left the proc zone, if so, copy it to the correct send segment
-		if (part_dir >= 0)
-		{
-			// Copy particle to segment
-			memcpy(&particle_segments[part_dir][part_seg_write_index[part_dir]++], &spec->part[i], sizeof(t_part));
-
-			// Increment part send count for this segment, for this species
-			num_part_to_send[spec->id][part_dir]++;
-
-			// Remove particle
-			memcpy(&spec->part[i], &spec->part[--spec->np], sizeof(t_part));
-			// Reorder part_dir array to match particle array order
-			memcpy(&part_dirs[part_dir_i], &part_dirs[spec->np], sizeof(int_fast8_t));
-			continue;
-		}
-
-		part_dir_i++;
-		i++;
 	}
 }
 
@@ -1034,8 +1034,6 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 
 	// Make sure it is safe to change the segment data
 	SUCCESS_OR_DIE(gaspi_wait(Q_PARTICLES, GASPI_BLOCK));
-
-	// printf("Sending particles from species %d\n", spec_id); fflush(stdout);
 
 	// Send particles on each segment
 	for (int dir = 0; dir < NUM_ADJ; dir++)
@@ -1072,6 +1070,8 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 		// 	continue;
 		// }
 
+		// printf("Sending %5d particles to dir %d from species %d\n", num_part_to_send[spec_id][dir], dir, spec_id); fflush(stdout);
+
 		// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
 		// {
 		// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];
@@ -1095,7 +1095,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current)
 	const t_part_data qnx = spec->q * spec->dx[0] / spec->dt;
 	const t_part_data qny = spec->q * spec->dx[1] / spec->dt;
 
-	#pragma omp single nowait
+	#pragma omp single
 	spec->iter++;
 
 	const int moving_window_iter = spec->moving_window && ( (spec->iter * spec->dt) > (spec->dx[0] * (spec->n_move + 1)) );
