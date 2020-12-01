@@ -177,7 +177,7 @@ void sim_iter(t_simulation *sim)
 void sim_set_spec_moving_window(t_simulation *sim)
 {
 	for (int i = 0; i < sim->n_species; i++)
-		sim->species[i].moving_window = 1;
+		sim->species[i].moving_window = true;
 }
 
 void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species,

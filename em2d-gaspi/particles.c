@@ -1117,11 +1117,11 @@ void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index
 		{
 			//.ix = -42,
 			.iy = -42,
-			// .x = 0.42,
-			// .y = 0.42,
-			// .ux = 0.42,
-			// .uy = 0.42,
-			// .uz = 0.42
+			.x = 0.42,
+			.y = 0.42,
+			.ux = 0.42,
+			.uy = 0.42,
+			.uz = 0.42
 		};
 
 		// Save the index of the fake particle
