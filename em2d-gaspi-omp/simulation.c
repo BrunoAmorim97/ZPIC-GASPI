@@ -169,7 +169,7 @@ void sim_iter(t_simulation *sim)
 			add_fake_particles(fake_part_index, part_seg_write_index, num_part_to_send, sim->species[spec_i].moving_window, spec_i);
 
 			// Check for particles leaving this proc, copy them to particle segments if needed
-			check_leaving_particles(&sim->species[spec_i], num_part_to_send, part_seg_write_index);
+			check_remove_leaving_particles(&sim->species[spec_i], num_part_to_send, part_seg_write_index);
 
 			// Send particles on the particle segments
 			#pragma omp master
@@ -398,6 +398,8 @@ void gaspi_report(t_simulation *sim)
 		const t_vfld *const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
 
+		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
+
 		// Copy data from simulation arrays to the segment
 		for (int y = 0; y < size_y; y++)
 		{
@@ -408,8 +410,6 @@ void gaspi_report(t_simulation *sim)
 
 		gaspi_offset_t local_offset = i * size_x * size_y * sizeof(t_vfld);															  // in bytes
 		gaspi_offset_t remote_offset = (global_buff_offset + proc_block_low[0] + (proc_block_low[1] * global_nrow)) * sizeof(t_vfld); // in bytes
-
-		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
 
 		// Send data on segment
 		for (int y = 0; y < size_y; y++)

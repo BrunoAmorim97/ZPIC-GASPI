@@ -109,7 +109,7 @@ void wait_save_particles(t_species* species_array, const int n_spec);
 void add_fake_particles(int fake_part_index[][NUM_ADJ], int part_seg_write_index[NUM_ADJ], int num_part_to_send[][NUM_ADJ],
 						const bool moving_window, const int spec_id);
 
-void check_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int part_seg_write_index[NUM_ADJ]);
+void check_remove_leaving_particles(t_species* spec, int num_part_to_send[][NUM_ADJ], int part_seg_write_index[NUM_ADJ]);
 
 void inject_particles(t_species* spec);
 
