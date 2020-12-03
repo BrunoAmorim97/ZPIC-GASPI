@@ -380,6 +380,8 @@ void gaspi_report(t_simulation *sim)
 		const t_vfld *const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
 
+		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
+
 		// Copy data from simulation arrays to the segment
 		for (int y = 0; y < size_y; y++)
 		{
@@ -390,8 +392,6 @@ void gaspi_report(t_simulation *sim)
 
 		gaspi_offset_t local_offset = i * size_x * size_y * sizeof(t_vfld);															  // in bytes
 		gaspi_offset_t remote_offset = (global_buff_offset + proc_block_low[0] + (proc_block_low[1] * global_nrow)) * sizeof(t_vfld); // in bytes
-
-		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
 
 		// Send data on segment
 		for (int y = 0; y < size_y; y++)
