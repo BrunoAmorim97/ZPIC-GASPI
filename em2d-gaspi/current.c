@@ -24,8 +24,6 @@ extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern gaspi_rank_t proc_rank;
 extern gaspi_rank_t num_procs;
 
-extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
-
 extern t_vfld* current_segments[NUM_ADJ];
 extern t_vfld* current_kernel_smoothing_segments[NUM_ADJ];
 

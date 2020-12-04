@@ -36,11 +36,11 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // Include Simulation parameters here
 // #include "input/(simulation name)-(num cells x)x(num cells y)-(particles per cell)-(num iterations).c"
 
-#include "input/weibel-128x128-256-500.c"
+// #include "input/weibel-128x128-256-500.c"
 // #include "input/weibel-9x9-1-500.c"
 // #include "input/weibel-512x512-64-500.c"
 // #include "input/weibel-512x512-256-500.c"
-// #include "input/lwfa-2000x256-8-1450.c"
+#include "input/lwfa-2000x256-8-1450.c"
 
 gaspi_rank_t proc_rank;
 gaspi_rank_t num_procs;
@@ -50,6 +50,9 @@ int dims[NUM_DIMS];
 
 // Process coordinates
 int proc_coords[NUM_DIMS];
+
+// Constant representing the selected space decomposition
+int sim_decomp = DECOMP_CHECKERBOARD;
 
 // index 0 for simulation space left edge, 1 for right edge
 bool is_on_edge[2];
@@ -138,16 +141,6 @@ int main(int argc, char* argv[])
 	SUCCESS_OR_DIE(gaspi_proc_num(&num_procs));
 
 	// printf("Hello from rank %d of %d\n", proc_rank, num_procs);
-
-	create_dims(num_procs);
-	cart_coords(proc_rank, proc_coords);
-
-	// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
-
-	if (proc_rank == ROOT)
-	{
-		printf("Dims:[%d,%d] with %d procs\n", dims[0], dims[1], num_procs);
-	}
 
 	// Initialize simulation
 	t_simulation sim;

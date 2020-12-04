@@ -9,8 +9,9 @@
 
 #include "../simulation.h"
 
-void sim_init( t_simulation* sim ){
-
+void sim_init( t_simulation* sim )
+{
+	set_sim_decomp(DECOMP_ROW);
 	// Time step
 	float dt = 0.014;
 	float tmax = 20.314;

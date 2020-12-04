@@ -13,6 +13,7 @@ extern int proc_coords[NUM_DIMS];
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
 extern int dims[NUM_DIMS];
+extern int sim_decomp;
 
 extern const int gc[NUM_DIMS][NUM_DIMS];
 
@@ -178,6 +179,11 @@ void sim_set_spec_moving_window(t_simulation *sim)
 {
 	for (int i = 0; i < sim->n_species; i++)
 		sim->species[i].moving_window = true;
+}
+
+void set_sim_decomp(const int decomp)
+{
+	sim_decomp = decomp;
 }
 
 void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt, float tmax, int ndump, t_species *species, int n_species,

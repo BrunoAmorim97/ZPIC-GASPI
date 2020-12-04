@@ -1,5 +1,7 @@
 #include "gaspi_aux.h"
 
+extern int sim_decomp;
+
 extern int proc_block_low[NUM_DIMS];
 extern int proc_block_high[NUM_DIMS];
 extern int proc_block_size[NUM_DIMS];
@@ -11,6 +13,7 @@ extern int dims[NUM_DIMS];
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
 extern unsigned int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
+extern gaspi_rank_t num_procs;
 extern gaspi_rank_t proc_rank;
 
 int cart_rank(int coords[NUM_DIMS])
@@ -28,15 +31,14 @@ void cart_coords(int rank, int coords[NUM_DIMS])
 	is_on_edge[1] = coords[0] == dims[0] - 1;
 }
 
-void create_dims(int num_procs)
+void create_dims(const int num_procs, const int sim_decomp, const int nx[NUM_DIMS])
 {
 	int num_factors;
 	int* factors = get_factors(num_procs, &num_factors);
 
-	assign_factors(factors, num_factors, dims);
+	assign_factors(factors, num_factors, dims, sim_decomp, nx);
 	free(factors);
 }
-
 
 int* get_factors(int num, int* num_factors)
 {
@@ -80,8 +82,12 @@ int* get_factors(int num, int* num_factors)
 	return factors;
 }
 
-void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
+void assign_factors(const int* factors, const int num_factors, int dims[NUM_DIMS], const int sim_decomp, const int nx[NUM_DIMS])
 {
+	// Max of divisions allowed on the y axis
+	// Each proc must have at least 2 lines
+	const int max_blocks_y = nx[1] / 2;
+
 	dims[0] = 1;
 	dims[1] = 1;
 
@@ -89,15 +95,16 @@ void assign_factors(int* factors, int num_factors, int dims[NUM_DIMS])
 	for (int i = num_factors - 1; i >= 0; i--)
 	{
 		// assign to dimention with the lowest number of divisions
-		if (dims[0] < dims[1])
-			dims[0] *= factors[i];
+		// if using row decomposition, assign to y axis when possible
+		if ( (sim_decomp == DECOMP_ROW && (dims[1] * factors[i] <= max_blocks_y)) || (sim_decomp == DECOMP_CHECKERBOARD && dims[1] <= dims[0]) )
+			dims[1] *= factors[i];
 		
 		else
-			dims[1] *= factors[i];	
+			dims[0] *= factors[i];
 	}
 
-	// Prioritize divisions on the y axis
-	if (dims[0] > dims[1])
+	// make sure the y axis has more divisions
+	if (dims[0] > dims[1] && dims[0] <= max_blocks_y)
 	{
 		int aux = dims[0];
 		dims[0] = dims[1];
@@ -114,6 +121,15 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 		//only need to assign the blocks once
 		blocks_set = true;
 
+		create_dims(num_procs, sim_decomp, nx);
+		cart_coords(proc_rank, proc_coords);
+
+		// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
+
+		if (proc_rank == ROOT)
+		{
+			printf("Dims:[%d,%d] with %d procs\n", dims[0], dims[1], num_procs);
+		}
 
 		proc_block_low[0] = BLOCK_LOW(proc_coords[0], dims[0], nx[0]);
 		proc_block_low[1] = BLOCK_LOW(proc_coords[1], dims[1], nx[1]);

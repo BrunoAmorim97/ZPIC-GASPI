@@ -14,6 +14,12 @@
 #define BLOCK_SIZE(id, p, n) (BLOCK_HIGH(id, p, n) - BLOCK_LOW(id, p, n) + 1)
 // #define BLOCK_OWNER(index, p, n) (((p) * ((index) + 1) - 1) / (n))
 
+enum decomp_types
+{
+	DECOMP_CHECKERBOARD,
+	DECOMP_ROW
+};
+
 #define NUM_ADJ 8
 enum dir
 {
@@ -99,8 +105,8 @@ enum notification_id
 };
 
 int *get_factors(int num, int *num_factors);
-void assign_factors(int *factors, int num_factors, int dims[NUM_DIMS]);
-void create_dims(int num_procs);
+void assign_factors(const int* factors, const int num_factors, int dims[NUM_DIMS], const int sim_decomp, const int nx[NUM_DIMS]);
+void create_dims(const int num_procs, const int sim_decomp, const int nx[NUM_DIMS]);
 int cart_rank(int coords[NUM_DIMS]);
 void cart_coords(int rank, int coords[NUM_DIMS]);
 void assign_proc_blocks(int const nx[NUM_DIMS]);

@@ -37,7 +37,6 @@ extern const int gc[NUM_DIMS][NUM_DIMS];
 extern int part_send_seg_size[NUM_ADJ];
 
 extern gaspi_rank_t neighbour_rank[NUM_ADJ];
-extern int neighbour_nx[NUM_ADJ][NUM_DIMS];
 
 extern t_part* particle_segments[NUM_ADJ];
 

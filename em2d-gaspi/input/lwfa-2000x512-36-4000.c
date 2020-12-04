@@ -9,8 +9,8 @@
 
 #include "../simulation.h"
 
-void sim_init(t_simulation* sim) {
-
+void sim_init(t_simulation* sim)
+{
 	// Time step
 	float dt = 0.009;
 	float tmax = 36;
