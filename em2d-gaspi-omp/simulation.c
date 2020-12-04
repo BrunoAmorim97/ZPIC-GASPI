@@ -132,6 +132,9 @@ void sim_iter(t_simulation *sim)
 	t_current* const restrict current = &sim->current;
 	t_emf* const restrict emf = &sim->emf;
 
+	// true if window will be moved this iteration, false otherwise
+	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+
 	current_zero(current);
 	
 	// Advance species
@@ -160,10 +163,10 @@ void sim_iter(t_simulation *sim)
 			yee_e(emf, current);
 			yee_b(emf);
 
-			send_emf_gc(emf);
+			send_emf_gc(emf, moving_window_iter);
 
 			// Move emf window, if needed
-			emf_move_window(emf);
+			if(moving_window_iter) emf_move_window(emf);
 		}
 
 		for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
@@ -186,7 +189,7 @@ void sim_iter(t_simulation *sim)
 		inject_particles(&sim->species[spec_i]);
 	}
 
-	wait_save_emf_gc(emf);
+	wait_save_emf_gc(emf, moving_window_iter);
 
 	// wait for particle writes and copy them from segments to species array
 	wait_save_particles(sim->species, sim->n_species);
