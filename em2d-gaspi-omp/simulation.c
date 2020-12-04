@@ -161,6 +161,9 @@ void sim_iter(t_simulation *sim)
 			yee_b(emf);
 
 			send_emf_gc(emf);
+
+			// Move emf window, if needed
+			emf_move_window(emf);
 		}
 
 		for (int spec_i = 0; spec_i < sim->n_species; spec_i++)
@@ -182,9 +185,6 @@ void sim_iter(t_simulation *sim)
 		// Inject new particles, if needed
 		inject_particles(&sim->species[spec_i]);
 	}
-
-	// Move emf window, if needed
-	emf_move_window(emf);
 
 	wait_save_emf_gc(emf);
 

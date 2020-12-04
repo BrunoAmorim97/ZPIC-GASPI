@@ -967,7 +967,7 @@ void wait_save_emf_gc(t_emf* emf)
 	const int nrow = emf->nrow_local; // Local nrow
 
 	// true if window will be moved this iteration, false otherwise
-	const bool moving_window_iter = emf->moving_window && ( (emf->iter * emf->dt) > (emf->dx[0] * (emf->n_move + 1)) );
+	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * emf->dt) > (emf->dx[0] * emf->n_move) );
 	const bool moving_window = emf->moving_window;
 
 	t_vfld* const restrict B = emf->B;
