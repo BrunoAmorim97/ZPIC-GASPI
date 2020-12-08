@@ -401,13 +401,13 @@ void gaspi_report(t_simulation *sim)
 	const t_vfld *const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
 	const gaspi_segment_id_t remote_segments[NUM_REPORTING_DATA_TYPES] = {CURRENT_REPORT, EMF_B_REPORT, EMF_E_REPORT};
 
+	SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
+
 	for (int i = 0; i < NUM_REPORTING_DATA_TYPES; i++)
 	{
 
 		const t_vfld *const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
-
-		SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
 
 		// Copy data from simulation arrays to the segment
 		for (int y = 0; y < size_y; y++)
