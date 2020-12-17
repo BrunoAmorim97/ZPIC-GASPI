@@ -366,7 +366,7 @@ void gaspi_report(t_simulation *sim)
 	// printf("GASPI REPORT\n"); fflush(stdout);
 	static bool created_segments = false;
 
-	t_current *current = &sim->current;
+	t_current* current = &sim->current;
 	const int size_x = current->nx_local[0];
 	const int size_y = current->nx_local[1];
 	const int nrow = current->nrow_local; // Local nrow
@@ -398,7 +398,7 @@ void gaspi_report(t_simulation *sim)
 	int copy_index = 0;
 	const size_t size_x_bytes = size_x * sizeof(t_vfld);
 
-	const t_vfld *const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
+	const t_vfld* const restrict data_pointers[NUM_REPORTING_DATA_TYPES] = {sim->current.J, sim->emf.B, sim->emf.E};
 	const gaspi_segment_id_t remote_segments[NUM_REPORTING_DATA_TYPES] = {CURRENT_REPORT, EMF_B_REPORT, EMF_E_REPORT};
 
 	SUCCESS_OR_DIE(gaspi_wait(Q_REPORTING, GASPI_BLOCK));
@@ -406,7 +406,7 @@ void gaspi_report(t_simulation *sim)
 	for (int i = 0; i < NUM_REPORTING_DATA_TYPES; i++)
 	{
 
-		const t_vfld *const restrict data_array = data_pointers[i];
+		const t_vfld* const restrict data_array = data_pointers[i];
 		const gaspi_segment_id_t remote_segment = remote_segments[i];
 
 		// Copy data from simulation arrays to the segment
