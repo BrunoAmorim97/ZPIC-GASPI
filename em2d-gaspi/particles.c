@@ -957,6 +957,8 @@ void send_spec(t_species* spec_array, const int num_spec, int num_part_to_send[]
 			// 	continue;
 			// }
 
+			// printf("Sent %d particles\n", num_part_to_send[spec_id][dir]); fflush(stdout);
+
 			// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
 			// {
 			// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];

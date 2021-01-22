@@ -10,4 +10,5 @@ times
 *.out
 .gpi2.*
 em2d-mpi-pedro/
+python-notebooks/
 out-*

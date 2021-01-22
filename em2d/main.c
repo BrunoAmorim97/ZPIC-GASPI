@@ -30,9 +30,13 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include "timer.h"
 
 // Include Simulation parameters here
-// #include "input/lwfa-2000x512-36-4000.c"
 // #include "input/weibel-9x9-1-500.c"
-#include "input/weibel-128x128-256-500.c"
+// #include "input/weibel-128x128-256-500.c"
+// #include "input/weibel-512x512-16-500.c"
+// #include "input/weibel-512x512-36-500.c"
+
+#include "input/lwfa-2000x256-8-1450.c"
+// #include "input/lwfa-2000x512-8-4000.c"
 
 
 int main()

@@ -9,23 +9,22 @@
 
 #include "../simulation.h"
 
-void sim_init( t_simulation* sim ){
-
+void sim_init( t_simulation* sim )
+{
 	// Time step
-	float dt = 0.014;
-	float tmax = 20.314;
+	float dt = 0.009;
+	float tmax = 36;
 
 	// Simulation box
-	int   nx[2]  = { 2000, 256 };
-	float box[2] = { 40.0, 51.2 };
+	int   nx[2]  = { 2000, 512 };
+	float box[2] = { 20.0, 25.6 };
 
 	// Diagnostic frequency
-	int ndump = 50;//1450;
+	int ndump = 80;
 
-    // Initialize particles
+	// Initialize particles
 	const int n_species = 1;
 
-	// Use 4x2 particles per cell
 	int ppc[] = {4,2};
 
 	// Density profile
@@ -35,7 +34,7 @@ void sim_init( t_simulation* sim ){
 	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species);
 
 	// Set moving window (this must come after sim_new)
 	sim_set_moving_window( sim );
@@ -51,7 +50,7 @@ void sim_init( t_simulation* sim ){
 		.focus = 20.0,
 		.axis = 12.8,
 		.polarization = M_PI_2
-    };
+	};
 	sim_add_laser( sim, &laser );
 
 	// Set current smoothing (this must come after sim_new)
@@ -61,11 +60,12 @@ void sim_init( t_simulation* sim ){
 	};
 
 	sim_set_smooth( sim, &smooth );
+
 }
 
 
-void sim_report( t_simulation* sim )
-{
+void sim_report( t_simulation* sim ){
+
 	// Jx, Jy, Jz
 	current_report( &sim->current, 0 );
 	current_report( &sim->current, 1 );
