@@ -70,8 +70,6 @@ int main()
 	t1 = timer_ticks();
 	fprintf(stdout, "\nSimulation ended.\n\n");
 
-	// sim_report( &sim );
-
 	// Simulation times
 	sim_timings( &sim, t0, t1 );
 

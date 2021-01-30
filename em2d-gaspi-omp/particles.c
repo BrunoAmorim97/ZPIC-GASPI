@@ -1,12 +1,3 @@
-/*
- *  particles.c
- *  zpic
- *
- *  Created by Ricardo Fonseca on 11/8/10.
- *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
- *
- */
-
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -23,9 +14,6 @@
 
 #include "zdf.h"
 #include "timer.h"
-
-static double _spec_time = 0.0;
-static double _spec_npush = 0.0;
 
 extern int proc_rank;
 
@@ -46,28 +34,6 @@ extern t_current_reduce current_reduce_priv;
 #pragma omp threadprivate(current_reduce_priv)
 
 extern t_current_reduce current_reduce_out;
-
-/**
- * Returns the total time spent pushing particles (includes boundaries and moving window)
- * @return  Total time in seconds
- */
-double spec_time(void)
-{
-	return _spec_time;
-}
-
-/**
- * Returns the performance achieved by the code (push time)
- * @return  Performance in seconds per particle
- */
-double spec_perf(void)
-{
-	return (_spec_npush > 0) ? _spec_time / _spec_npush : 0.0;
-}
-
-/*********************************************************************************************
- Initialization
- *********************************************************************************************/
 
 void spec_set_u(t_species* spec, const int start, const int range[NUM_DIMS][NUM_DIMS])
 {
@@ -152,48 +118,6 @@ void spec_set_u(t_species* spec, const int start, const int range[NUM_DIMS][NUM_
 			}
 		}
 	}
-
-	/* int index = 0;
-	for (int y = 0; y < spec->nx_local[1]; y++)
-	{
-		for (int x = 0; x < spec->nx_local[0]; x++)
-		{
-			for (int i = 0; i < npc; i++)
-			{
-				printf("%f " , spec->part[index++].ux); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout);
-
-	index = 0;
-	for (int y = 0; y < spec->nx_local[1]; y++)
-	{
-		for (int x = 0; x < spec->nx_local[0]; x++)
-		{
-			for (int i = 0; i < npc; i++)
-			{
-				printf("%f " , spec->part[index++].uy); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout);
-
-	index = 0;
-	for (int y = 0; y < spec->nx_local[1]; y++)
-	{
-		for (int x = 0; x < spec->nx_local[0]; x++)
-		{
-			for (int i = 0; i < npc; i++)
-			{
-				printf("%f " , spec->part[index++].uz); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout); */
 
 	// old implementation
 	/*
@@ -440,12 +364,6 @@ void spec_new(t_species* spec, char name[], const t_part_data m_q, const int ppc
 	spec_inject_particles(spec, range, range_local);
 }
 
-/*********************************************************************************************
-
- Current deposition
-
- *********************************************************************************************/
-
 void dep_current_zamb(int ix, int iy, int di, int dj,
 	float x0, float y0, float dx, float dy,
 	float qnx, float qny, float qvz,
@@ -603,13 +521,6 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 	}
 }
 
-
-/*********************************************************************************************
-
- Particle advance
-
- *********************************************************************************************/
-
 void interpolate_fld(const t_vfld* restrict const E, const t_vfld* restrict const B, const int nrow,
 	const t_part* restrict const part, t_vfld* restrict const Ep, t_vfld* restrict const Bp)
 {
@@ -759,8 +670,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 
 	for (int spec_i = 0; spec_i < num_spec; spec_i++)
 	{
-		// printf("Receiving particles from species %d\n\n", spec_i); fflush(stdout);
-
 		// Index of first received particle of this species on each segment.
 		int spec_starting_index[NUM_ADJ];
 		for (int dir = 0; dir < NUM_ADJ; dir++)
@@ -801,8 +710,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			// -1 because of the fake particle
 			const int num_part = particle_segments[dir][spec_starting_index[dir]].ix - 1;
 
-			// printf("from dir %d fake part %d %d\n", dir, particle_segments[dir][spec_starting_index[dir]]. ix,particle_segments[dir][spec_starting_index[dir]].iy);
-
 			num_new_part_spec[spec_i] += num_part;
 			num_new_part[spec_i][dir] = num_part;
 
@@ -824,13 +731,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 			const int num_part = num_new_part[spec_i][dir];
 			const int starting_index = spec_starting_index[dir] + 1;
 
-			// printf("dir: %d, num_part:%d\n", dir, num_part);
-			// for (int i = 0; i < num_part; i++)
-			// {
-			// 	t_part part = particle_segments[dir][starting_index + i];
-			// 	printf("New Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
-			// }
-
 			memcpy(&species_array[spec_i].part[copy_index], &particle_segments[dir][starting_index], num_part * sizeof(t_part));
 			copy_index += num_part;
 		}
@@ -838,17 +738,6 @@ void wait_save_particles(t_species* species_array, const int num_spec)
 		// update the number of particles
 		species_array[spec_i].np += num_new_part_spec[spec_i];
 	}
-
-	// // Print particles
-	// for (int i = 0; i < num_spec; i++)
-	// {
-	// 	printf("part from species %d: %d\n", i, species_array[i].np);
-	// 	for (int j = 0; j < species_array[i].np; j++)
-	// 	{
-	// 		t_part part = species_array[i].part[j];
-	// 		printf("Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
-	// 	}
-	// }
 }
 
 
@@ -1024,9 +913,6 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 			num_part_seg += num_part_to_send[spec_i_2][dir];
 		}
 
-		// printf("ON TOTAL sending %5d particles to proc %d to dir %d\n", num_part_seg, neighbour_rank[dir], OPPOSITE_DIR(dir));
-		// printf("We have room to send %d particles\n\n", part_send_seg_size[dir]);
-
 		if (num_part_seg > (unsigned int)part_send_seg_size[dir])
 		{
 			fprintf(stderr, "Particle segment size exceeded, seg at dir %d has room for %d particles and tried to send %d\n", dir, part_send_seg_size[dir], num_part_seg);
@@ -1070,20 +956,6 @@ void send_spec(t_species* spec, const int num_spec, int num_part_to_send[][NUM_A
 			Q_PARTICLES,			// The queue where to post the request.
 			GASPI_BLOCK				// Timeout in milliseconds.
 		));
-
-		// if (num_part_to_send[spec_id][dir] == 1)
-		// {
-		// 	continue;
-		// }
-
-		// printf("Sending %5d particles to dir %d from species %d\n", num_part_to_send[spec_id][dir], dir, spec_id); fflush(stdout);
-
-		// for (int i = 0; i < num_part_to_send[spec_id][dir]; i++)
-		// {
-		// 	t_part part = particle_segments[dir][fake_part_index[spec_id][dir] + i];
-		// 	printf("Sent particle to dir %d (proc %d) ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", dir, neighbour_rank[dir], part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz);
-		// }
-		// printf("\n"); fflush(stdout);
 	}
 }
 
@@ -1215,13 +1087,6 @@ void inject_particles(t_species* spec)
 		}
 	}
 }
-
-/*********************************************************************************************
-
- Charge Deposition
-
- *********************************************************************************************/
-
 
 void spec_deposit_charge(const t_species* spec, t_part_data* charge)
 {

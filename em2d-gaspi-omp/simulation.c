@@ -227,8 +227,6 @@ void sim_new(t_simulation *sim, int nx[NUM_DIMS], float box[NUM_DIMS], float dt,
 
 	const int nx_local[NUM_DIMS] = {BLOCK_SIZE(proc_coords[0], dims[0], nx[0]), BLOCK_SIZE(proc_coords[1], dims[1], nx[1])};
 
-	// printf("size at proc %2d is %d %d\n", proc_rank, nx_local[0], nx_local[1]);
-
 	// If this check fails change number of nodes or increase simulation nx size, number of procs should not be a prime number
 	// Proc simulation regions need to have at least 2 cells on each dimention
 	// On moving window simulations, procs need at least 3 cells on the x axis
@@ -363,7 +361,6 @@ void gaspi_report(t_simulation *sim)
 {
 	#define NUM_REPORTING_DATA_TYPES 3
 
-	// printf("GASPI REPORT\n"); fflush(stdout);
 	static bool created_segments = false;
 
 	t_current* current = &sim->current;
@@ -488,110 +485,3 @@ void gaspi_report(t_simulation *sim)
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 }
-
-/* 		t_current* current = &sim->current;
-		t_vfld* J = sim->current.J;
-		for (int y = -gc[1][0]; y < current->nx[1] + gc[1][1]; y++)
-		{
-			if (y == 0 || y == current->nx[1])
-			{
-				printf("\n");
-			}
-			
-			for (int x = -gc[0][0]; x < current->nx[0] + gc[0][1]; x++)
-			{
-				if (x == 0 || x == current->nx[0])
-				{
-					printf("    ");
-				}
-				
-				printf("%f ", J[y * current->nrow + x].z);
-			}
-			printf("\n");
-		}
-		printf("\n===EMF===\n");
-
-		t_emf* emf = &sim->emf;
-		t_vfld* E = sim->emf.E;
-		for (int y = -gc[1][0]; y < emf->nx[1] + gc[1][1]; y++)
-		{
-			if (y == 0 || y == emf->nx[1])
-			{
-				printf("\n");
-			}
-			
-			for (int x = -gc[0][0]; x < emf->nx[0] + gc[0][1]; x++)
-			{
-				if (x == 0 || x == emf->nx[0])
-				{
-					printf("    ");
-				}
-				
-				printf("%f ", E[y * emf->nrow + x].z);
-			}
-			printf("\n");
-		}
-		printf("\n"); fflush(stdout); */
-
-/* printf("CURRENT X\n");
-		for (int y = -gc[1][0]; y < current->nx[1] + gc[1][1]; y++)
-		{
-			if (y == 0 || y == current->nx[1])
-			{
-				printf("\n");
-			}
-
-			for (int x = -gc[0][0]; x < current->nx[0] + gc[0][1]; x++)
-			{
-				if (x == 0 || x == current->nx[0])
-				{
-					printf("    ");
-				}
-				
-				printf("%f ", current->J[y * current->nrow + x].x);
-			}
-			printf("\n");
-		}
-		printf("\n");
-
-		printf("CURRENT Y\n");
-		for (int y = -gc[1][0]; y < current->nx[1] + gc[1][1]; y++)
-		{
-			if (y == 0 || y == current->nx[1])
-			{
-				printf("\n");
-			}
-
-			for (int x = -gc[0][0]; x < current->nx[0] + gc[0][1]; x++)
-			{
-				if (x == 0 || x == current->nx[0])
-				{
-					printf("    ");
-				}
-				
-				printf("%f ", current->J[y * current->nrow + x].y);
-			}
-			printf("\n");
-		}
-		printf("\n");
-
-		printf("CURRENT Z\n");
-		for (int y = -gc[1][0]; y < current->nx[1] + gc[1][1]; y++)
-		{
-			if (y == 0 || y == current->nx[1])
-			{
-				printf("\n");
-			}
-
-			for (int x = -gc[0][0]; x < current->nx[0] + gc[0][1]; x++)
-			{
-				if (x == 0 || x == current->nx[0])
-				{
-					printf("    ");
-				}
-				
-				printf("%f ", current->J[y * current->nrow + x].z);
-			}
-			printf("\n");
-		}
-		printf("\n"); */

@@ -1,12 +1,3 @@
-/*
- *  current.h
- *  zpic
- *
- *  Created by Ricardo Fonseca on 12/8/10.
- *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
- *
- */
-
 #ifndef __CURRENT__
 #define __CURRENT__
 

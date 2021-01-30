@@ -23,23 +23,11 @@ void sim_iter( t_simulation* sim )
 	current_zero( &sim->current );
 	for (int i = 0; i < sim->n_species; i++)
 	{
-		// printf("Advancing particles from species %d\n", i); fflush(stdout);
 		spec_advance(&sim->species[i], &sim->emf, &sim->current );
 	}
 
 	// Update current boundary conditions and advance iteration, CHANGES CURRENT MATRIX
 	current_update( &sim->current );
-
-	// // Print particles
-	// for (int i = 0; i < sim->n_species; i++)
-	// {
-	// 	printf("part from species %d: %d\n", i, sim->species[i].np);
-	// 	for (int j = 0; j < sim->species[i].np; j++)
-	// 	{
-	// 		t_part part = sim->species[i].part[j];
-	// 		printf("Part: ix:%d, iy:%d, x:%f, y:%f, ux:%f, uy:%f, uz:%f\n", part.ix, part.iy, part.x, part.y, part.ux, part.uy, part.uz); fflush(stdout);
-	// 	}	
-	// }
 	
 	// Advance EM fields
 	emf_advance( &sim->emf, &sim->current );
@@ -47,7 +35,6 @@ void sim_iter( t_simulation* sim )
 
 void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 )
 {
-
 	int npart = 0;
 	int i;
 

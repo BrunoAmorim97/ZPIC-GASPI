@@ -124,8 +124,6 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 		create_dims(num_procs, sim_decomp, nx);
 		cart_coords(proc_rank, proc_coords);
 
-		// printf("I have proc coords x:%d y:%d\n", proc_coords[0], proc_coords[1]);
-
 		if (proc_rank == ROOT)
 		{
 			printf("Dims:[%d,%d] with %d procs\n", dims[0], dims[1], num_procs);
@@ -139,10 +137,6 @@ void assign_proc_blocks(const int nx[NUM_DIMS])
 
 		proc_block_size[0] = BLOCK_SIZE(proc_coords[0], dims[0], nx[0]);
 		proc_block_size[1] = BLOCK_SIZE(proc_coords[1], dims[1], nx[1]);
-
-		// printf("proc low x:%d y:%d\n", proc_block_low[0], proc_block_low[1]);
-		// printf("proc high x:%d y:%d\n", proc_block_high[0], proc_block_high[1]);
-		// printf("proc size x:%d y:%d\n", proc_block_size[0], proc_block_size[1]); fflush(stdout);
 	}
 }
 
@@ -181,14 +175,8 @@ void discover_neighbours(int proc_coords[NUM_DIMS], int dims[NUM_DIMS], int nx[N
 			}
 
 			neighbour_rank[dir++] = cart_rank(coords);
-			// printf("rank at x:%d y:%d dir:%d = %d\n", new_x, new_y, dir-1, neighbour_rank[dir-1]);
 		}
 	}
-
-	// for (int dir = 0; dir < NUM_ADJ; dir++)
-	// {
-	// 	printf("Me proc: %d, on dir %d have proc %d, he has x:%d y:%d\n", proc_rank, dir, neighbour_rank[dir], neighbour_nx[dir][0], neighbour_nx[dir][1]);
-	// } fflush(stdout);
 }
 
 // returns true if this proc can send/receive data to/from neighbour at direction dir, false otherwise

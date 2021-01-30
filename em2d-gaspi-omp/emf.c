@@ -1,12 +1,3 @@
-/*
- *  emf.c
- *  zpic
- *
- *  Created by Ricardo Fonseca on 10/8/10.
- *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -18,8 +9,6 @@
 #include "timer.h"
 
 #include <GASPI.h>
-
-static double _emf_time = 0.0;
 
 extern const int gc[NUM_DIMS][NUM_DIMS];
 extern int dims[NUM_DIMS];
@@ -40,134 +29,6 @@ extern gaspi_rank_t proc_rank;
 extern t_vfld* emf_segments[NUM_ADJ];
 extern t_vfld* emf_b_segments[NUM_ADJ];
 extern t_vfld* emf_e_segments[NUM_ADJ];
-
-void print_emf_e(t_emf* emf)
-{
-	printf("EMF E X\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow_local + x].x);
-		}
-		printf("\n");
-	}
-	printf("EMF E Y\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow_local + x].y);
-		}
-		printf("\n");
-	}
-	printf("EMF E Z\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow_local + x].z);
-		}
-		printf("\n");
-	}
-	fflush(stdout);
-}
-
-void print_emf_b(t_emf* emf)
-{
-	printf("EMF B X\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow_local + x].x);
-		}
-		printf("\n");
-	}
-	printf("EMF B Y\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow_local + x].y);
-		}
-		printf("\n");
-	}
-	printf("EMF B Z\n");
-	for (int y = -gc[1][0]; y < emf->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < emf->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow_local + x].z);
-		}
-		printf("\n");
-	}
-}
-
-double emf_time(void)
-{
-	return _emf_time;
-}
 
 // size_x moving window iterations difference to normal iterations, perspective of the sender
 int get_moving_iter_size_x_diff(const int dir)
@@ -205,31 +66,6 @@ int get_moving_iter_starting_write_x_diff(const int dir)
 	return 0;
 }
 
-/*	=== moving window edge proc diffs ===
-// In moving window simulations
-if (moving_window)
-{
-	// If proc is on the left edge of the simulation space
-	if (is_on_edge[0])
-	{
-		sizes[DOWN][0] += gc[0][0];
-		starting_send_coord[DOWN][0] -= gc[0][0];
-		starting_write_coord[DOWN][0] -= gc[0][0];
-
-		sizes[UP][0] += gc[0][0];
-		starting_send_coord[UP][0] -= gc[0][0];
-		starting_write_coord[UP][0] -= gc[0][0];
-	}
-
-	// If proc is on the right edge of the simulation space
-	if (is_on_edge[1])
-	{
-		sizes[DOWN][0] += gc[0][1];
-
-		sizes[UP][0] += gc[0][1];
-	}
-}*/
-
 // x_size normal iterations difference to normal iterations on moving window simulations
 int get_moving_window_edge_proc_size_x_diff(const int dir)
 {
@@ -264,13 +100,6 @@ int get_moving_window_edge_proc_coord_x_diff(const int dir)
 
 	return 0;
 }
-
-
-/*********************************************************************************************
-
- Constructor / Destructor
-
- *********************************************************************************************/
 
 void create_emf_segments(const int nx_local[NUM_DIMS])
 {
@@ -383,12 +212,6 @@ void emf_new(t_emf* emf, const int nx[NUM_DIMS], const int nx_local[NUM_DIMS], c
 	emf->moving_window = moving_window;
 	emf->n_move = 0;
 }
-/*********************************************************************************************
-
- Laser Pulses
-
-*********************************************************************************************/
-
 
 t_fld gauss_phase(const t_emf_laser* const laser, const t_fld z, const t_fld r)
 {
@@ -618,10 +441,6 @@ void emf_add_laser(t_emf* const emf, t_emf_laser* laser)
 	default:
 		break;
 	}
-
-	// printf("AFTER EMF LAZER GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
 }
 
 /*********************************************************************************************
@@ -737,13 +556,6 @@ void emf_report(const t_emf* emf, const char field, const char fc)
 	free(buf);
 
 }
-
-
-/*********************************************************************************************
-
- Field solver
-
- *********************************************************************************************/
 
 void yee_b(t_emf* emf)
 {
@@ -1073,47 +885,6 @@ void emf_move_window(t_emf* emf)
 	emf->n_move++;
 }
 
-/* void emf_advance( t_emf *emf, const t_current *current )
-{
-	// uint64_t t0 = timer_ticks();
-	const float dt = emf->dt;
-
-	// Advance EM field using Yee algorithm modified for having E and B time centered
-
-	// yee_b( emf, dt/2.0f ); // this is now done in sim_iter
-
-	yee_e( emf, current, dt );
-
-	yee_b( emf, dt/2.0f );
-
-	// printf("BEFORE EMF GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
-
-	// 1 if window will be moved this iteration, 0 otherwise
-	const bool moving_window_iter = emf->moving_window && ( ((emf->iter + 1) * dt) > (emf->dx[0] * (emf->n_move + 1)) );
-
-	// Update guard cells with new values
-
-	send_emf_gc(emf, moving_window_iter);
-
-	// Move window if needed
-	if(moving_window_iter)
-		emf_move_window(emf);
-
-	wait_save_emf_gc(emf, moving_window_iter);
-
-	// printf("AFTER EMF GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
-
-	// Advance internal iteration number
-	emf->iter++;
-
-	// Update timing information
-	// _emf_time += timer_interval_seconds(t0, timer_ticks());
-} */
-
 void emf_get_energy(const t_emf* emf, double energy[])
 {
 	int i, j;
@@ -1135,5 +906,4 @@ void emf_get_energy(const t_emf* emf, double energy[])
 	}
 
 	for (i = 0; i < 6; i++) energy[i] *= 0.5 * emf->dx[0] * emf->dx[1];
-
 }

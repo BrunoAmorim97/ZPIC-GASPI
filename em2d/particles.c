@@ -61,48 +61,6 @@ void spec_set_u( t_species* spec, const int start, const int end )
 		spec->part[i].uy = spec->ufl[1] + spec->uth[1] * rand_norm(); 
 		spec->part[i].uz = spec->ufl[2] + spec->uth[2] * rand_norm();
 	}
-
-/* 	int index = 0;
-	for (int y = 0; y < spec->nx[1]; y++)
-	{
-		for (int x = 0; x < spec->nx[0]; x++)
-		{
-			for (int i = 0; i < spec->ppc[0] * spec->ppc[1]; i++)
-			{
-				printf("%f " , spec->part[index++].ux); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout);
-
-	index = 0;
-	for (int y = 0; y < spec->nx[1]; y++)
-	{
-		for (int x = 0; x < spec->nx[0]; x++)
-		{
-			for (int i = 0; i < spec->ppc[0] * spec->ppc[1]; i++)
-			{
-				printf("%f " , spec->part[index++].uy); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout);
-
-	index = 0;
-	for (int y = 0; y < spec->nx[1]; y++)
-	{
-		for (int x = 0; x < spec->nx[0]; x++)
-		{
-			for (int i = 0; i < spec->ppc[0] * spec->ppc[1]; i++)
-			{
-				printf("%f " , spec->part[index++].uz); fflush(stdout);
-			}
-		}
-		printf("\n"); fflush(stdout);
-	}
-	printf("\n"); fflush(stdout); */
 }
 
 void spec_set_x( t_species* spec, const int range[][2] )
@@ -212,7 +170,6 @@ void spec_set_x( t_species* spec, const int range[][2] )
 
 void spec_inject_particles( t_species* spec, const int range[][2] )
 {
-	// printf("===INJECTING PARTICLES===\n"); fflush(stdout);
 	int start = spec->np;
 
 	// Get maximum number of particles to inject
@@ -570,7 +527,6 @@ void dep_current_zamb(int ix, int iy, int di, int dj,
 		wp2[0] = 0.5f*(S0x[0] + S1x[0]);
 		wp2[1] = 0.5f*(S0x[1] + S1x[1]);
 		
-		// CHANGING GLOBAL CURRENT MATRIX
 		J[ vp[k].ix + nrow*vp[k].iy     ].x += wl1 * wp1[0];
 		J[ vp[k].ix + nrow*(vp[k].iy+1) ].x += wl1 * wp1[1];
 
@@ -724,11 +680,6 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		spec->part[i].ux = ux;
 		spec->part[i].uy = uy;
 		spec->part[i].uz = uz;
-
-		// if (ux == 0.0f && uy == 0.0f && uz == 0.0f)
-		// {
-		// 	continue;
-		// }
 		
 		// push particle
 		rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
@@ -788,7 +739,6 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
 			i++;
 		}
-
 	}
 
 	else
@@ -796,55 +746,10 @@ void spec_advance( t_species* spec, t_emf* emf, t_current* current )
 		// Use periodic boundaries in both directions
 		for (i=0; i<spec->np; i++)
 		{
-
-			// int old_ix = spec->part[i].ix;
-			// int old_iy = spec->part[i].iy;
-
 			spec->part[i].ix += (( spec->part[i].ix < 0 ) ? nx0 : 0 ) - (( spec->part[i].ix >= nx0 ) ? nx0 : 0);
 			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
-
-			// if (spec->part[i].ix != old_ix || old_iy != spec->part[i].iy)
-			// {
-			// 	printf("particle old ix:%d iy:%d\n", old_ix, old_iy); fflush(stdout);
-			// 	printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec->part[i].ix, spec->part[i].iy, spec->part[i].x, spec->part[i].y); fflush(stdout);
-			// }
 		}
 	}
-
-
-/* 	else
-	{
-		i = 0;
-		int last = spec->np;
-		// Use periodic boundaries in both directions
-		while(i<last)
-		{
-
-			int old_ix = spec->part[i].ix;
-			int old_iy = spec->part[i].iy;
-
-			spec->part[i].ix += (( spec->part[i].ix < 0 ) ? nx0 : 0 ) - (( spec->part[i].ix >= nx0 ) ? nx0 : 0);
-			spec->part[i].iy += (( spec->part[i].iy < 0 ) ? nx1 : 0 ) - (( spec->part[i].iy >= nx1 ) ? nx1 : 0);
-
-			if (spec->part[i].ix != old_ix || old_iy != spec->part[i].iy)
-			{
-				// printf("particle old ix:%d iy:%d\n", old_ix, old_iy); fflush(stdout);
-				// printf("particle new ix:%d iy:%d, x:%f y:%f\n\n", spec->part[i].ix, spec->part[i].iy, spec->part[i].x, spec->part[i].y); fflush(stdout);
-
-				//switch moved particle with the last particle of the array, same as the gaspi version
-				t_part temp = spec->part[i];
-				spec->part[i] = spec->part[last-1];
-				spec->part[last-1] = temp;
-
-				last--;
-				continue;
-			}
-			i++;
-		}
-	} */
-
-
-	// printf("\n===\n\n"); fflush(stdout);
 	
 	_spec_time += timer_interval_seconds( t0, timer_ticks() );
 }
@@ -1226,6 +1131,4 @@ void spec_report( const t_species *spec, const int rep_type,
 			spec_rep_particles( spec );
 			break;
 	}
-	
-	
 }

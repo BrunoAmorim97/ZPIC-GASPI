@@ -24,133 +24,6 @@ double emf_time(void)
 	return _emf_time;
 }
 
-void print_emf_e(t_emf *emf)
-{
-	printf("EMF E X\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow + x].x);
-		}
-		printf("\n");
-	}
-	printf("EMF E Y\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow + x].y);
-		}
-		printf("\n");
-	}
-	printf("EMF E Z\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->E[y * emf->nrow + x].z);
-		}
-		printf("\n");
-	}
-}
-void print_emf_b(t_emf *emf)
-{
-	printf("EMF B X\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow + x].x);
-		}
-		printf("\n");
-	}
-	printf("EMF B Y\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow + x].y);
-		}
-		printf("\n");
-	}
-	printf("EMF B Z\n");
-
-	for (int y = -emf->gc[1][0]; y < emf->nx[1] + emf->gc[1][1]; y++)
-	{
-		if (y == 0 || y == emf->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -emf->gc[0][0]; x < emf->nx[0] + emf->gc[0][1]; x++)
-		{
-			if (x == 0 || x == emf->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", emf->B[y * emf->nrow + x].z);
-		}
-		printf("\n");
-	}
-}
-
 /*********************************************************************************************
  
  Constructor / Destructor
@@ -414,10 +287,6 @@ void emf_add_laser(t_emf *const emf, t_emf_laser *laser)
 
 	// Set guard cell values
 	emf_update_gc(emf);
-
-	// printf("AFTER EMF LAZER GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
 }
 
 /*********************************************************************************************
@@ -667,8 +536,6 @@ void emf_move_window(t_emf *emf)
 {
 	if ((emf->iter * emf->dt) > emf->dx[0] * (emf->n_move + 1))
 	{
-		// printf("MOVING EMF WINDOW NOW!\n"); fflush(stdout);
-
 		int i, j;
 		const int nrow = emf->nrow;
 
@@ -710,10 +577,6 @@ void emf_advance(t_emf *emf, const t_current *current)
 
 	yee_b(emf, dt / 2.0f);
 
-	// printf("BEFORE EMF GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
-
 	// Update guard cells with new values
 	emf_update_gc(emf);
 
@@ -725,10 +588,6 @@ void emf_advance(t_emf *emf, const t_current *current)
 	{
 		emf_move_window(emf);
 	}
-
-	// printf("AFTER EMF GC UPDATE\n");
-	// print_emf_e(emf);
-	// print_emf_b(emf);
 
 	// Update timing information
 	_emf_time += timer_interval_seconds(t0, timer_ticks());

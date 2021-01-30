@@ -1,12 +1,3 @@
-/*
- *  current.c
- *  zpic
- *
- *  Created by Ricardo Fonseca on 12/8/10.
- *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
- *
- */
-
 #include "current.h"
 
 #include <stdlib.h>
@@ -45,82 +36,9 @@ extern t_current_reduce current_reduce_priv;
 
 extern t_current_reduce current_reduce_out;
 
-void print_local_current(t_current* current)
-{
-	t_vfld* J = current->J;
-	int nrow = current->nrow_local;
-	printf("CURRENT X\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].x);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-
-	printf("CURRENT Y\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].y);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-
-	printf("CURRENT Z\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].z);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-}
-
-
 // Called by every thread to alloc its private current buffer
 void alloc_private_current_reduce(t_current* current)
 {
-	// printf("alloc_private_current_reduce\n"); fflush(stdout);
 	current_reduce_priv.J_buff = malloc(current->J_buff_size);
 	current_reduce_priv.J_buff_size = current->J_buff_size;
 	current_reduce_priv.J_buff_num_cells = current->J_buff_size / sizeof(t_vfld);
@@ -132,7 +50,6 @@ void alloc_private_current_reduce(t_current* current)
 // Called once to set the output struct for the current reduce
 void set_current_reduce_out(t_current* current)
 {
-	// printf("set_current_reduce_out\n"); fflush(stdout);
 	current_reduce_out.J_buff = current->J_buff;
 	current_reduce_out.J_buff_size = current->J_buff_size;
 	current_reduce_out.J_buff_num_cells = current->J_buff_size / sizeof(t_vfld);
@@ -143,7 +60,6 @@ void set_current_reduce_out(t_current* current)
 
 t_current_reduce reset_thread_current()
 {
-	// printf("reset_thread_current\n"); fflush(stdout);
 	// zero field
 	memset(current_reduce_priv.J_buff, 0, current_reduce_priv.J_buff_size);
 
@@ -152,7 +68,6 @@ t_current_reduce reset_thread_current()
 
 void add_thread_current(t_current_reduce current_out, t_current_reduce current_in)
 {
-	// printf("add_thread_current\n"); fflush(stdout);
 	const unsigned int num_cells = current_in.J_buff_num_cells;
 
 	const t_vfld* const restrict J_in = current_in.J_buff;
@@ -160,13 +75,11 @@ void add_thread_current(t_current_reduce current_out, t_current_reduce current_i
 
 	for (unsigned int i = 0; i < num_cells; i++)
 	{
-		// printf("J_out %f J_in %f, J_out + J_in %f\n", J_out[i].x, J_in[i].x, J_out[i].x + J_in[i].x);
 		J_out[i].x += J_in[i].x;
 		J_out[i].y += J_in[i].y;
 		J_out[i].z += J_in[i].z;
 	}
 }
-
 
 
 void curr_set_moving_window(t_current* curr)
@@ -512,9 +425,6 @@ void send_current(t_current* current)
 
 void wait_save_update_current(t_current* current)
 {
-	// printf("BEFORE CURRENT GC ADD\n");
-	// print_local_current(current);
-
 	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
@@ -573,7 +483,6 @@ void wait_save_update_current(t_current* current)
 		}
 
 		// Process received write
-		// printf("Processing write from dir %d\n", dir); fflush(stdout);
 
 		// The cells this proc will receive from dir, are the same this proc has to send to that direction
 		const int starting_column = curr_cell_to_send_starting_coord[dir][0];
@@ -588,8 +497,6 @@ void wait_save_update_current(t_current* current)
 		{
 			for (int x = starting_column; x < max_column; x++)
 			{
-				// printf("adding to cell x:%d y:%d, value.z:%f\n", x, y, current_segments[dir][seg_index].z); fflush(stdout);
-
 				J[x + y * nrow].x += current_segments[dir][seg_index].x;
 				J[x + y * nrow].y += current_segments[dir][seg_index].y;
 				J[x + y * nrow].z += current_segments[dir][seg_index].z;
@@ -601,9 +508,6 @@ void wait_save_update_current(t_current* current)
 		// next dir
 		dir = (dir + 1) % NUM_ADJ;
 	}
-
-	// printf("AFTER CURRENT GC ADD\n");
-	// print_local_current(current);
 }
 
 void send_current_kernel_gc(t_current* current, const int num_dirs, const int dirs[], const int smoothing_pass_iter)
@@ -654,17 +558,10 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		gaspi_offset_t local_offset = copy_index * sizeof(t_vfld); // in bytes
 		remote_offset *= sizeof(t_vfld);
 
-		// printf("Sending kernel gc to dir %d iter %d:\n", dir, smoothing_pass_iter);
-		// printf("local_offset = %ld, size = %ld, remote_offset = %ld\n", local_offset, curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld), remote_offset); fflush(stdout);
 		// Copy data to segment
 		for (int row = starting_row; row < max_row; row++)
 		{
 			memcpy(&current_kernel_smoothing_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
-
-			// for (int i = copy_index; i < copy_index + num_columns ; i++)
-			// {
-			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
-			// }
 
 			copy_index += num_columns;
 		}
@@ -738,16 +635,10 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		gaspi_notification_t value;
 		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
 
-		// printf("Received kernel gc from dir %d iter %d with value %d\n", dir, smoothing_pass_iter, value-1);
-		// printf("local_offset = %ld, size = %ld\n", copy_index*sizeof(t_vfld), curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] * sizeof(t_vfld)); fflush(stdout);
 		for (int row = starting_row; row < max_row; row++)
 		{
-			// for (int i = copy_index; i < copy_index + num_columns ; i++)
-			// {
-			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
-			// }
-
 			memcpy(&J[starting_column + row * nrow], &current_kernel_smoothing_segments[dir][copy_index], num_columns * sizeof(t_vfld));
+
 			copy_index += num_columns;
 		}
 	}
@@ -897,9 +788,6 @@ void kernel_x(t_current* const current, const t_fld sa, const t_fld sb, const in
 
 	// Update x boundaries
 	kernel_gc_update(current, NUM_KERNEL_X_DIRS, kernel_x_directions, smoothing_pass_iter);
-
-	// printf("AFTER X KERNEL\n");
-	// print_local_current(current);
 }
 
 void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
@@ -943,9 +831,6 @@ void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const in
 
 	// Update y boundaries
 	kernel_gc_update(current, NUM_KERNEL_Y_DIRS, kernel_y_directions, smoothing_pass_iter);
-
-	// printf("AFTER Y KERNEL\n");
-	// print_local_current(current);
 }
 
 void current_smooth(t_current* const current)

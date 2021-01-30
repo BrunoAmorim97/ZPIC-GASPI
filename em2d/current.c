@@ -15,72 +15,6 @@
 
 #include "zdf.h"
 
-void print_current(t_current* current)
-{
-	printf("CURRENT X\n");
-	for (int y = -current->gc[1][0]; y < current->nx[1] + current->gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -current->gc[0][0]; x < current->nx[0] + current->gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", current->J[y * current->nrow + x].x);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	printf("CURRENT Y\n");
-	for (int y = -current->gc[1][0]; y < current->nx[1] + current->gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -current->gc[0][0]; x < current->nx[0] + current->gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", current->J[y * current->nrow + x].y);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	printf("CURRENT Z\n");
-	for (int y = -current->gc[1][0]; y < current->nx[1] + current->gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -current->gc[0][0]; x < current->nx[0] + current->gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", current->J[y * current->nrow + x].z);
-		}
-		printf("\n");
-	}
-	printf("\n");
-}
-
 void current_new(t_current* current, int nx[], t_fld box[], float dt)
 {
 	int i;
@@ -157,9 +91,6 @@ void current_update(t_current* current)
 	const int nrow = current->nrow;
 	t_vfld *restrict const J = current->J;
 
-	// printf("BEFORE CURRENT GC ADD\n");
-	// print_current(current);
-
 	// x
 	if (!current->moving_window)
 	{
@@ -205,14 +136,8 @@ void current_update(t_current* current)
 		}
 	}
 
-	// printf("AFTER CURRENT GC ADD\n");
-	// print_current(current);
-
 	// Smoothing
 	current_smooth(current);
-
-	// printf("CURR AFTER SMOOTHING\n"); fflush(stdout);
-	// print_current(current);
 
 	current->iter++;
 }
@@ -364,9 +289,6 @@ void kernel_x(t_current* const current, const t_fld sa, const t_fld sb)
 				J[idx + current->nx[0] + i] = J[idx + i];
 		}
 	}
-
-	// printf("AFTER X KERNEL\n");
-	// print_current(current);
 }
 
 void kernel_y(t_current* const current, const t_fld sa, const t_fld sb)

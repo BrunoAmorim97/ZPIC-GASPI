@@ -40,77 +40,6 @@ const int kernel_x_directions[NUM_KERNEL_X_DIRS] = { LEFT, RIGHT };
 #define NUM_KERNEL_Y_DIRS 6
 const int kernel_y_directions[NUM_KERNEL_Y_DIRS] = { DOWN_LEFT, DOWN, DOWN_RIGHT, UP_LEFT, UP, UP_RIGHT };
 
-void print_local_current(t_current* current)
-{
-	t_vfld* J = current->J;
-	int nrow = current->nrow_local;
-	printf("CURRENT X\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].x);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-
-	printf("CURRENT Y\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].y);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-
-	printf("CURRENT Z\n");
-	for (int y = -gc[1][0]; y < current->nx_local[1] + gc[1][1]; y++)
-	{
-		if (y == 0 || y == current->nx_local[1])
-		{
-			printf("\n");
-		}
-
-		for (int x = -gc[0][0]; x < current->nx_local[0] + gc[0][1]; x++)
-		{
-			if (x == 0 || x == current->nx_local[0])
-			{
-				printf("    ");
-			}
-
-			printf("%f ", J[y * nrow + x].z);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	fflush(stdout);
-}
-
 void curr_set_moving_window(t_current* curr)
 {
 	curr->moving_window = 1;
@@ -454,9 +383,6 @@ void send_current(t_current* current)
 
 void wait_save_update_current(t_current* current)
 {
-	// printf("BEFORE CURRENT GC ADD\n");
-	// print_local_current(current);
-
 	t_vfld* restrict const J = current->J;
 	const int nrow = current->nrow_local; // Local nrow
 
@@ -593,17 +519,10 @@ void send_current_kernel_gc(t_current* current, const int num_dirs, const int di
 		gaspi_offset_t local_offset = copy_index * sizeof(t_vfld); // in bytes
 		remote_offset *= sizeof(t_vfld);
 
-		// printf("Sending kernel gc to dir %d iter %d:\n", dir, smoothing_pass_iter);
-		// printf("local_offset = %ld, size = %ld, remote_offset = %ld\n", local_offset, curr_kernel_size[dir][0] * curr_kernel_size[dir][1] * sizeof(t_vfld), remote_offset); fflush(stdout);
 		// Copy data to segment
 		for (int row = starting_row; row < max_row; row++)
 		{
 			memcpy(&current_kernel_smoothing_segments[dir][copy_index], &J[starting_column + row * nrow], column_size_bytes);
-
-			// for (int i = copy_index; i < copy_index + num_columns ; i++)
-			// {
-			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
-			// }
 
 			copy_index += num_columns;
 		}
@@ -677,16 +596,10 @@ void wait_save_kernel_gc(t_current* current, const int num_dirs, const int dirs[
 		gaspi_notification_t value;
 		SUCCESS_OR_DIE(gaspi_notify_reset(DIR_TO_CURR_KER_SEG_ID(dir), id, &value));
 
-		// printf("Received kernel gc from dir %d iter %d with value %d\n", dir, smoothing_pass_iter, value-1);
-		// printf("local_offset = %ld, size = %ld\n", copy_index*sizeof(t_vfld), curr_kernel_size[opposite_dir][0] * curr_kernel_size[opposite_dir][1] * sizeof(t_vfld)); fflush(stdout);
 		for (int row = starting_row; row < max_row; row++)
 		{
-			// for (int i = copy_index; i < copy_index + num_columns ; i++)
-			// {
-			// 	printf("%f\n", current_kernel_smoothing_segments[dir][i].x); fflush(stdout);
-			// }
-
 			memcpy(&J[starting_column + row * nrow], &current_kernel_smoothing_segments[dir][copy_index], num_columns * sizeof(t_vfld));
+			
 			copy_index += num_columns;
 		}
 	}
@@ -836,9 +749,6 @@ void kernel_x(t_current* const current, const t_fld sa, const t_fld sb, const in
 
 	// Update x boundaries
 	kernel_gc_update(current, NUM_KERNEL_X_DIRS, kernel_x_directions, smoothing_pass_iter);
-
-	// printf("AFTER X KERNEL\n");
-	// print_local_current(current);
 }
 
 void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const int smoothing_pass_iter)
@@ -882,9 +792,6 @@ void kernel_y(t_current* const current, const t_fld sa, const t_fld sb, const in
 
 	// Update y boundaries
 	kernel_gc_update(current, NUM_KERNEL_Y_DIRS, kernel_y_directions, smoothing_pass_iter);
-
-	// printf("AFTER Y KERNEL\n");
-	// print_local_current(current);
 }
 
 void current_smooth(t_current* const current)

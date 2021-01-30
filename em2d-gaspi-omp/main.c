@@ -1,22 +1,3 @@
-/*
-Copyright (C) 2017 Instituto Superior Tecnico
-
-This file is part of the ZPIC Educational code suite
-
-The ZPIC Educational code suite is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-The ZPIC Educational code suite is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -140,8 +121,6 @@ int main(int argc, char* argv[])
 	SUCCESS_OR_DIE(gaspi_proc_rank(&proc_rank));
 	SUCCESS_OR_DIE(gaspi_proc_num(&num_procs));
 
-	// printf("Hello from rank %d of %d\n", proc_rank, num_procs);
-
 	// Initialize simulation
 	t_simulation sim;
 	sim_init(&sim);
@@ -156,8 +135,6 @@ int main(int argc, char* argv[])
 	int n;
 	float t;
 	uint64_t t0, t1;
-
-	// printf("%d %d\n", sim.species[0].np, sim.species[1].np);
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	t0 = timer_ticks();
@@ -178,9 +155,6 @@ int main(int argc, char* argv[])
 		if (report(n, sim.ndump)) gaspi_report(&sim);
 
 		sim_iter(&sim);
-
-		// printf("proc %d has %7d %7d particles\n", proc_rank, sim.species[0].np, sim.species[1].np); fflush(stdout);
-		// printf("proc %d has %7d particles\n", proc_rank, sim.species[0].np); fflush(stdout);
 	}
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
@@ -197,12 +171,12 @@ int main(int argc, char* argv[])
 
 	SUCCESS_OR_DIE(gaspi_barrier(GASPI_GROUP_ALL, GASPI_BLOCK));
 	
-	printf("Proc %2d finished with ", proc_rank);
-	for (int i = 0; i < sim.n_species; i++)
-	{
-		printf("%7d ", sim.species[i].np);
-	}
-	printf("particles\n"); fflush(stdout);
+	// printf("Proc %2d finished with ", proc_rank);
+	// for (int i = 0; i < sim.n_species; i++)
+	// {
+	// 	printf("%7d ", sim.species[i].np);
+	// }
+	// printf("particles\n"); fflush(stdout);
 
 	SUCCESS_OR_DIE(gaspi_proc_term(GASPI_BLOCK));
 	MPI_Finalize();
